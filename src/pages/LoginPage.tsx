@@ -12,36 +12,53 @@ const FEATURES = [
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const { data, setData } = useFinance();
+  const { loginWithPassword, isAuthenticated, data } = useFinance();
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      nav(data.isAdmin ? '/admin' : '/dashboard');
+    }
+  }, [isAuthenticated, data.isAdmin, nav]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@finsight.com' && password === 'admin123') {
-      setData({ isAdmin: true });
-      nav('/admin');
-    } else if (email && password.length >= 6) {
-      setData({ isAdmin: false, userEmail: email });
-      nav(data.isOnboarded ? '/dashboard' : '/onboarding');
+    setError('');
+    setLoading(true);
+
+    const result = loginWithPassword(email, password);
+    setLoading(false);
+
+    if (result.success) {
+      // Check onboarding status
+      const users = JSON.parse(localStorage.getItem('fs_users') || '{}');
+      const isOb = users[email.trim().toLowerCase()]?.isOnboarded;
+      if (email.trim().toLowerCase() === 'admin@finsight.com') {
+        nav('/admin');
+      } else {
+        nav(isOb ? '/dashboard' : '/onboarding');
+      }
     } else {
-      setError('Invalid email or password.');
+      setError(result.error || 'Login failed.');
     }
   };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
       {/* Blobs */}
-      <div style={{ position: 'absolute', width: 600, height: 600, background: '#a78bfa', filter: 'blur(180px)', opacity: 0.12, top: '0%', left: '10%', borderRadius: '50%' }} />
-      <div style={{ position: 'absolute', width: 500, height: 500, background: '#f472b6', filter: 'blur(180px)', opacity: 0.1, bottom: '0%', right: '10%', borderRadius: '50%' }} />
+      <div className="blob blob-1" />
+      <div className="blob blob-2" />
 
-      <div style={{ display: 'flex', width: '100%', maxWidth: 1080, minHeight: 600, background: 'var(--surface)', backdropFilter: 'blur(30px)', border: '1px solid var(--border)', borderRadius: 32, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.15)', position: 'relative', zIndex: 1 }}>
+      <div className="panel" style={{ display: 'flex', width: '100%', maxWidth: 1080, minHeight: 600, overflow: 'hidden', padding: 0, zIndex: 1, border: '1px solid var(--border)', background: 'var(--surface)' }}>
         {/* Left — Brand */}
         <motion.div
-          style={{ flex: 1.2, padding: '60px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)' }}
-          initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}
+          style={{ flex: 1.2, padding: '60px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}
+          initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
             <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 46, height: 46 }} />
@@ -82,7 +99,7 @@ export default function LoginPage() {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 48px', background: 'var(--bg2)' }}>
           <motion.div
             style={{ width: '100%', maxWidth: 360 }}
-            initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+            initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
           >
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>Welcome back</div>
             <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Log in to your account</h2>
@@ -91,28 +108,28 @@ export default function LoginPage() {
             <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               {error && <div style={{ padding: 12, background: 'rgba(248,113,113,0.1)', color: '#f87171', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>{error}</div>}
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text2)', marginBottom: 6 }}>Email address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={{ width: '100%', padding: '13px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+                <label className="label">Email address</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className="input" />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text2)' }}>Password</label>
+                  <label className="label" style={{ marginBottom: 0 }}>Password</label>
                   <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 500 }}>Forgot?</Link>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" required style={{ width: '100%', padding: '13px 16px', paddingRight: 44, borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+                  <input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" required className="input" style={{ paddingRight: 44 }} />
                   <button type="button" onClick={() => setShow(!show)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', padding: 4 }}>
                     {show ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              <button type="submit" style={{ width: '100%', padding: '14px 0', borderRadius: 999, border: 'none', background: 'var(--grad)', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 4, boxShadow: '0 4px 20px rgba(167,139,250,0.3)', fontFamily: 'inherit' }}>
-                Continue
+              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: 8 }} disabled={loading}>
+                {loading ? 'Logging in...' : 'Continue'}
               </button>
 
-              <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', marginTop: 8 }}>
                 Don't have an account? <Link to="/signup" style={{ fontWeight: 600 }}>Sign up free</Link>
               </p>
             </form>

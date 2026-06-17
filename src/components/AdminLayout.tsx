@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon } from 'lucide-react';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon, Timer } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 const NAV_ITEMS = [
@@ -11,78 +11,116 @@ const NAV_ITEMS = [
 ];
 
 export default function AdminLayout() {
-  const { data, setData } = useFinance();
+  const { logoutUser, sessionTimeLeft } = useFinance();
   const nav = useNavigate();
   const loc = useLocation();
   const [isDark, setIsDark] = useState(!document.body.classList.contains('light'));
 
-  useEffect(() => {
-    if (!data.isAdmin) nav('/login');
-  }, [data.isAdmin, nav]);
+  const logout = () => { logoutUser(); nav('/login'); };
 
-  const logout = () => {
-    setData({ isAdmin: false });
-    nav('/login');
-  };
+  const sessionHours = Math.floor(sessionTimeLeft / 3600000);
+  const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
+  const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
+  const sessionLow = sessionHours === 0 && sessionMins < 5;
 
   const toggleTheme = () => {
     const isLight = document.body.classList.toggle('light');
     setIsDark(!isLight);
   };
 
-  if (!data.isAdmin) return null;
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'Inter', sans-serif" }}>
       {/* Sidebar */}
-      <div style={{ width: 280, background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '32px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
-          <div style={{ width: 40, height: 40, background: 'var(--grad)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+      <aside style={{
+        width: 280,
+        padding: '24px 16px',
+        background: 'var(--bg2)',
+        borderRight: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}>
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', marginBottom: 8 }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 12,
+            background: 'var(--grad)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', flexShrink: 0,
+          }}>
             <ShieldAlert size={20} strokeWidth={2.5} />
           </div>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: 0.5 }}>Executive</div>
-            <div style={{ fontSize: 10, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 600 }}>Central Control</div>
+            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: 0.3 }}>Executive</div>
+            <div style={{
+              fontSize: 10, fontWeight: 700,
+              background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              textTransform: 'uppercase', letterSpacing: 1.5,
+            }}>
+              Central Control
+            </div>
           </div>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+        <div style={{ height: 1, background: 'var(--border)', margin: '4px 14px 12px' }} />
+
+        {/* Nav */}
+        <div className="section-label">Navigation</div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
           {NAV_ITEMS.map(n => {
             const active = loc.pathname === n.path;
             return (
               <NavLink
                 key={n.path}
                 to={n.path}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, textDecoration: 'none',
-                  background: active ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
-                  color: active ? 'var(--purple)' : 'var(--text2)',
-                  fontWeight: active ? 600 : 500,
-                  transition: 'all 0.2s'
-                }}
+                className={`nav-item${active ? ' active' : ''}`}
               >
-                <n.icon size={20} />
+                <n.icon size={18} />
                 {n.label}
               </NavLink>
             );
           })}
         </nav>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 'auto' }}>
-          <button onClick={toggleTheme} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: 'none', background: 'transparent', color: 'var(--text2)', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
-            {isDark ? <Sun size={18} /> : <Moon size={18} />} {isDark ? 'Light Mode' : 'Dark Mode'}
-          </button>
+        {/* Session timer pill */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '6px 12px', margin: '0 4px',
+          borderRadius: 999,
+          background: sessionLow ? 'rgba(248,113,113,0.08)' : 'var(--surface)',
+          border: `1px solid ${sessionLow ? 'rgba(248,113,113,0.15)' : 'var(--border)'}`,
+          fontSize: 11, fontWeight: 600,
+          color: sessionLow ? 'var(--red)' : 'var(--text3)',
+        }}>
+          <Timer size={12} />
+          <span>
+            {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}:{sessionSecs.toString().padStart(2, '0')}
+          </span>
+          <div style={{
+            width: 5, height: 5, borderRadius: '50%',
+            background: sessionLow ? 'var(--red)' : 'var(--green)',
+            animation: sessionLow ? 'pulse 1s infinite' : 'none',
+            marginLeft: 'auto',
+          }} />
+        </div>
 
-          <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: 'none', background: 'var(--surface)', color: 'var(--red)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-            <LogOut size={18} /> Secure Logout
+        {/* Bottom actions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
+          <button onClick={toggleTheme} className="btn-ghost">
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+          <button onClick={logout} className="btn-ghost danger">
+            <LogOut size={18} />
+            <span>Secure Logout</span>
           </button>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, padding: '40px 56px', overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', maxHeight: '100vh' }}>
         <Outlet />
-      </div>
+      </main>
     </div>
   );
 }
