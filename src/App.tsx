@@ -18,6 +18,10 @@ import AdminUsersPage from './pages/AdminUsersPage';
 import AdminRevenuePage from './pages/AdminRevenuePage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import ComingSoonPage from './pages/ComingSoonPage';
+import TransactionsPage from './pages/TransactionsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import GoalsPage from './pages/GoalsPage';
+import ExportPage from './pages/ExportPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useFinance();
@@ -56,6 +60,10 @@ export default function App() {
             <Route path="premium" element={<PremiumPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="support" element={<SupportPage />} />
+            <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="goals" element={<GoalsPage />} />
+            <Route path="export" element={<ExportPage />} />
             <Route path="coming-soon" element={<ComingSoonPage />} />
           </Route>
         </Routes>

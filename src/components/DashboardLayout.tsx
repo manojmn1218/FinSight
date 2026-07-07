@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, Sun, Moon, User, Timer } from 'lucide-react';
+import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, Sun, Moon, User, Timer, Upload, BarChart3, Target, Download, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
+import { detectRecurringGrouped } from '../utils/transactionParser';
 
 const MAIN_NAV = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/transactions', label: 'Transactions', icon: Upload },
+  { path: '/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/reports', label: 'Reports', icon: FileText },
   { path: '/insights', label: 'Insights', icon: Lightbulb },
 ];
 
 const ACCOUNT_NAV = [
+  { path: '/goals', label: 'Goals', icon: Target },
+  { path: '/export', label: 'Export', icon: Download },
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/premium', label: 'Premium', icon: Crown },
   { path: '/support', label: 'Support', icon: HelpCircle },
@@ -21,6 +26,15 @@ export default function DashboardLayout() {
   const nav = useNavigate();
   const { data, logoutUser, sessionTimeLeft } = useFinance();
   const [isDark, setIsDark] = useState(!document.body.classList.contains('light'));
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Count recurring alerts for badge
+  const recurringAlertCount = useMemo(() => {
+    const txns = data.transactions || [];
+    if (txns.length === 0) return 0;
+    const groups = detectRecurringGrouped(txns);
+    return groups.filter(g => g.isHighCost).length;
+  }, [data.transactions]);
 
   const logout = () => { logoutUser(); nav('/login'); };
 
@@ -39,13 +53,22 @@ export default function DashboardLayout() {
   const renderNav = (items: typeof MAIN_NAV) => items.map(lnk => {
     const active = loc.pathname.startsWith(lnk.path);
     const Icon = lnk.icon;
+    const showBadge = lnk.path === '/analytics' && recurringAlertCount > 0;
     return (
       <Link
         key={lnk.path}
         to={lnk.path}
         className={`nav-item${active ? ' active' : ''}`}
+        onClick={() => setMobileOpen(false)}
       >
-        <Icon size={18} />
+        <div style={{ position: 'relative', display: 'flex' }}>
+          <Icon size={18} />
+          {showBadge && (
+            <span className="notif-badge" style={{ position: 'absolute', top: -6, right: -8 }}>
+              {recurringAlertCount}
+            </span>
+          )}
+        </div>
         <span>{lnk.label}</span>
       </Link>
     );
@@ -53,8 +76,29 @@ export default function DashboardLayout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="btn-ghost"
+        style={{
+          position: 'fixed', top: 12, left: 12, zIndex: 150, padding: 8,
+          display: 'none',
+        }}
+        id="mobile-menu-btn"
+      >
+        {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`sidebar-collapsible${mobileOpen ? ' open' : ''}`} style={{
         width: 260,
         padding: '24px 16px',
         background: 'var(--bg2)',
@@ -74,7 +118,7 @@ export default function DashboardLayout() {
           }}>
             {initials}
           </div>
-          <div style={{ overflow: 'hidden' }}>
+          <div className="sidebar-user-info" style={{ overflow: 'hidden' }}>
             <div style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {data.userName || 'User'}
             </div>
@@ -113,7 +157,7 @@ export default function DashboardLayout() {
           color: sessionLow ? 'var(--red)' : 'var(--text3)',
         }}>
           <Timer size={12} />
-          <span>
+          <span className="sidebar-session-text">
             {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}:{sessionSecs.toString().padStart(2, '0')}
           </span>
           <div style={{
@@ -138,7 +182,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '32px 40px', background: 'var(--bg)', overflowY: 'auto', maxHeight: '100vh' }}>
+      <main className="main-content-area" style={{ flex: 1, padding: '32px 40px', background: 'var(--bg)', overflowY: 'auto', maxHeight: '100vh' }}>
         <motion.div
           key={loc.pathname}
           initial={{ opacity: 0, y: 12 }}
@@ -148,6 +192,13 @@ export default function DashboardLayout() {
           <Outlet />
         </motion.div>
       </main>
+
+      {/* Mobile menu button styles (inline for simplicity) */}
+      <style>{`
+        @media (max-width: 768px) {
+          #mobile-menu-btn { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }

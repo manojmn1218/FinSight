@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
   const an = (i: number) => ({
     initial: { opacity: 0, y: 16 },
     animate: { opacity: 1, y: 0 },
-    transition: { delay: i * 0.05, duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+    transition: { delay: i * 0.05, duration: 0.4, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] },
   });
 
   const tooltipStyle = { background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, color: 'var(--text)', boxShadow: 'var(--shadow)' };

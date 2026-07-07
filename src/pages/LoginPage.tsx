@@ -105,11 +105,11 @@ export default function LoginPage() {
             <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Log in to your account</h2>
             <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 28 }}>Enter your credentials to access your dashboard</p>
 
-            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <form onSubmit={submit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               {error && <div style={{ padding: 12, background: 'rgba(248,113,113,0.1)', color: '#f87171', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>{error}</div>}
               <div>
                 <label className="label">Email address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className="input" />
+                <input type="email" autoComplete="new-password" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className="input" />
               </div>
 
               <div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
                   <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 500 }}>Forgot?</Link>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" required className="input" style={{ paddingRight: 44 }} />
+                  <input type={show ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" required className="input" style={{ paddingRight: 44 }} />
                   <button type="button" onClick={() => setShow(!show)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', padding: 4 }}>
                     {show ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>

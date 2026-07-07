@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import type { Transaction, FinancialGoal } from '../utils/types';
 
 interface ExpenseItem {
   name: string;
@@ -16,6 +17,9 @@ interface FinData {
   isOnboarded: boolean;
   isAdmin: boolean;
   currentPlan: string;
+  transactions: Transaction[];
+  financialGoals: FinancialGoal[];
+  statementUploaded: boolean;
 }
 
 interface UserCredential {
@@ -40,6 +44,14 @@ interface FinCtx {
   registerUser: (email: string, password: string, name: string) => { success: boolean; error?: string };
   logoutUser: () => void;
   sessionTimeLeft: number;
+  // Transaction methods
+  addTransactions: (txns: Transaction[]) => void;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => void;
+  deleteTransaction: (id: string) => void;
+  // Goal methods
+  addGoal: (goal: FinancialGoal) => void;
+  updateGoal: (id: string, updates: Partial<FinancialGoal>) => void;
+  deleteGoal: (id: string) => void;
 }
 
 // Simple SHA-256 hash using SubtleCrypto (sync fallback for SSR)
@@ -84,6 +96,9 @@ const INIT: FinData = {
   savingsPercent: 20,
   isOnboarded: false,
   isAdmin: false,
+  transactions: [],
+  financialGoals: [],
+  statementUploaded: false,
 };
 
 const Ctx = createContext<FinCtx | null>(null);
@@ -111,11 +126,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   });
 
   const data = useMemo(() => {
+    const ensureArrays = (u: FinData): FinData => ({
+      ...u,
+      transactions: u.transactions || [],
+      financialGoals: u.financialGoals || [],
+    });
     if (currentUserEmail === 'admin@finsight.com') {
-      return { ...INIT, isAdmin: true };
+      const u = usersMap[currentUserEmail] || INIT;
+      return ensureArrays({ ...u, isAdmin: true });
     }
     if (currentUserEmail && usersMap[currentUserEmail]) {
-      return usersMap[currentUserEmail];
+      return ensureArrays(usersMap[currentUserEmail]);
     }
     return INIT;
   }, [currentUserEmail, usersMap]);
@@ -230,15 +251,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const loginWithPassword = useCallback((email: string, password: string): { success: boolean; error?: string } => {
     const trimmedEmail = email.trim().toLowerCase();
 
-    // Admin bypass
-    if (trimmedEmail === 'admin@finsight.com' && password === 'admin123') {
-      setCurrentUserEmail(trimmedEmail);
-      const now = Date.now();
-      setSessionStart(now);
-      localStorage.setItem('fs_session_start', String(now));
-      return { success: true };
-    }
-
     const cred = credsMap[trimmedEmail];
     if (!cred) {
       return { success: false, error: 'No account found with this email.' };
@@ -317,8 +329,65 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const savingsAmount = Math.round((data.monthlyIncome * data.savingsPercent) / 100);
   const budget = data.monthlyIncome - totalExpenses - savingsAmount;
 
+  // --- Transaction CRUD ---
+  const addTransactions = useCallback((txns: Transaction[]) => {
+    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
+    setUsersMap(prev => {
+      const user = prev[currentUserEmail] || { ...INIT, userEmail: currentUserEmail };
+      const existing = user.transactions || [];
+      const existingIds = new Set(existing.map(t => `${t.date}_${t.amount}_${t.description.slice(0,20)}`));
+      const newTxns = txns.filter(t => !existingIds.has(`${t.date}_${t.amount}_${t.description.slice(0,20)}`));
+      return { ...prev, [currentUserEmail]: { ...user, transactions: [...existing, ...newTxns], statementUploaded: true } };
+    });
+  }, [currentUserEmail]);
+
+  const updateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
+    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
+    setUsersMap(prev => {
+      const user = prev[currentUserEmail];
+      if (!user) return prev;
+      return { ...prev, [currentUserEmail]: { ...user, transactions: (user.transactions || []).map(t => t.id === id ? { ...t, ...updates } : t) } };
+    });
+  }, [currentUserEmail]);
+
+  const deleteTransaction = useCallback((id: string) => {
+    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
+    setUsersMap(prev => {
+      const user = prev[currentUserEmail];
+      if (!user) return prev;
+      return { ...prev, [currentUserEmail]: { ...user, transactions: (user.transactions || []).filter(t => t.id !== id) } };
+    });
+  }, [currentUserEmail]);
+
+  // --- Goal CRUD ---
+  const addGoal = useCallback((goal: FinancialGoal) => {
+    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
+    setUsersMap(prev => {
+      const user = prev[currentUserEmail] || { ...INIT, userEmail: currentUserEmail };
+      return { ...prev, [currentUserEmail]: { ...user, financialGoals: [...(user.financialGoals || []), goal] } };
+    });
+  }, [currentUserEmail]);
+
+  const updateGoal = useCallback((id: string, updates: Partial<FinancialGoal>) => {
+    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
+    setUsersMap(prev => {
+      const user = prev[currentUserEmail];
+      if (!user) return prev;
+      return { ...prev, [currentUserEmail]: { ...user, financialGoals: (user.financialGoals || []).map(g => g.id === id ? { ...g, ...updates } : g) } };
+    });
+  }, [currentUserEmail]);
+
+  const deleteGoal = useCallback((id: string) => {
+    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
+    setUsersMap(prev => {
+      const user = prev[currentUserEmail];
+      if (!user) return prev;
+      return { ...prev, [currentUserEmail]: { ...user, financialGoals: (user.financialGoals || []).filter(g => g.id !== id) } };
+    });
+  }, [currentUserEmail]);
+
   return (
-    <Ctx.Provider value={{ data, setData, reset, totalExpenses, savingsAmount, budget, allUsers, isAuthenticated, loginAs, loginWithPassword, registerUser, logoutUser, sessionTimeLeft }}>
+    <Ctx.Provider value={{ data, setData, reset, totalExpenses, savingsAmount, budget, allUsers, isAuthenticated, loginAs, loginWithPassword, registerUser, logoutUser, sessionTimeLeft, addTransactions, updateTransaction, deleteTransaction, addGoal, updateGoal, deleteGoal }}>
       {children}
     </Ctx.Provider>
   );
