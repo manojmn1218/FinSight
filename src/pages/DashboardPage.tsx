@@ -275,11 +275,22 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Health Score Gauge */}
-          <motion.div className="panel" style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: 180 }} {...an(5)}>
-            <HealthGauge score={txnStats.healthScore} label="Health" />
-            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8, textAlign: 'center' }}>
-              {txnStats.healthScore >= 75 ? 'Excellent financial health' : txnStats.healthScore >= 50 ? 'Room for improvement' : 'Needs attention'}
-            </p>
+          <motion.div className="panel" style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: 180, position: 'relative', overflow: 'hidden' }} {...an(5)}>
+            {data.currentPlan === 'Basic' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, textAlign: 'center', padding: '10px 0' }}>
+                <Lock size={20} color="var(--purple)" />
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Health Score</span>
+                <span style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.4 }}>Available on Pro plan</span>
+                <Link to="/premium" className="badge" style={{ background: 'var(--grad)', color: '#fff', padding: '4px 10px', marginTop: 4 }}>Unlock ⚡</Link>
+              </div>
+            ) : (
+              <>
+                <HealthGauge score={txnStats.healthScore} label="Health" />
+                <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8, textAlign: 'center' }}>
+                  {txnStats.healthScore >= 75 ? 'Excellent financial health' : txnStats.healthScore >= 50 ? 'Room for improvement' : 'Needs attention'}
+                </p>
+              </>
+            )}
           </motion.div>
         </div>
 
@@ -370,27 +381,46 @@ export default function DashboardPage() {
         )}
 
         {/* AI Insight */}
-        <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 20px', borderLeft: '3px solid var(--amber)' }} {...an(9)}>
-          <Sparkles size={18} color="var(--amber)" style={{ flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: 'var(--amber)' }}>AI Insight</h4>
-            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }}>
-              {(() => {
-                const topCat = txnStats.categoryBreakdown[0];
-                const spendPct = txnStats.totalIncome > 0 ? Math.round((txnStats.totalExpenses / txnStats.totalIncome) * 100) : 0;
-                if (spendPct > 90)
-                  return `⚠️ You're spending ${spendPct}% of your income. ${topCat ? `Biggest: ${topCat.name} (${fmt(topCat.value)}). ` : ''}Reduce discretionary spending to build an emergency fund.`;
-                if (spendPct > 70)
-                  return `You're spending ${spendPct}% of your income. ${topCat ? `${topCat.name} leads at ${fmt(topCat.value)}. ` : ''}Aim to bring spending below 70% for a healthy savings buffer.`;
-                return `Great job! Saving ${txnStats.savingsRate}% of income (${fmt(txnStats.netCashFlow)} net). ${topCat ? `Top spend: ${topCat.name} at ${fmt(topCat.value)}. ` : ''}Avg daily: ${fmt(txnStats.avgDailySpending)}.`;
-              })()}
-            </p>
-          </div>
-        </motion.div>
+        {data.currentPlan === 'Basic' ? (
+          <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '16px 20px', borderLeft: '3px solid var(--purple)' }} {...an(9)}>
+            <Lock size={18} color="var(--purple)" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--purple)', marginBottom: 2 }}>AI Spending Insights</h4>
+              <p style={{ fontSize: 13, color: 'var(--text2)' }}>Get automated spending insights and anomaly detection with the Pro plan.</p>
+            </div>
+            <Link to="/premium" className="btn-primary" style={{ padding: '6px 14px', fontSize: 12 }}>Unlock</Link>
+          </motion.div>
+        ) : (
+          <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 20px', borderLeft: '3px solid var(--amber)' }} {...an(9)}>
+            <Sparkles size={18} color="var(--amber)" style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: 'var(--amber)' }}>AI Insight</h4>
+              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }}>
+                {(() => {
+                  const topCat = txnStats.categoryBreakdown[0];
+                  const spendPct = txnStats.totalIncome > 0 ? Math.round((txnStats.totalExpenses / txnStats.totalIncome) * 100) : 0;
+                  if (spendPct > 90)
+                    return `⚠️ You're spending ${spendPct}% of your income. ${topCat ? `Biggest: ${topCat.name} (${fmt(topCat.value)}). ` : ''}Reduce discretionary spending to build an emergency fund.`;
+                  if (spendPct > 70)
+                    return `You're spending ${spendPct}% of your income. ${topCat ? `${topCat.name} leads at ${fmt(topCat.value)}. ` : ''}Aim to bring spending below 70% for a healthy savings buffer.`;
+                  return `Great job! Saving ${txnStats.savingsRate}% of income (${fmt(txnStats.netCashFlow)} net). ${topCat ? `Top spend: ${topCat.name} at ${fmt(topCat.value)}. ` : ''}Avg daily: ${fmt(txnStats.avgDailySpending)}.`;
+                })()}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Recurring Payment Alerts */}
         {recurringGroups.length > 0 && (
-          <motion.div className="panel" style={{ padding: 20 }} {...an(10)}>
+          <motion.div className="panel" style={{ padding: 20, position: 'relative', overflow: 'hidden' }} {...an(10)}>
+            {data.currentPlan === 'Basic' && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(13,17,23,0.85)', backdropFilter: 'blur(4px)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20, textAlign: 'center' }}>
+                <Lock size={24} color="var(--purple)" />
+                <h4 style={{ fontSize: 15, fontWeight: 700 }}>Smart Recurring Payment Detection</h4>
+                <p style={{ fontSize: 12, color: 'var(--text2)', maxWidth: 320, lineHeight: 1.5 }}>Unlock subscription tracking, alerts for price increases, and potential annual saving estimates.</p>
+                <Link to="/premium" className="btn-primary" style={{ padding: '8px 20px', fontSize: 13, marginTop: 4 }}>Upgrade to Pro</Link>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600 }}>
                 <RefreshCw size={16} color="var(--purple)" /> Recurring Payments

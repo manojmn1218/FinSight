@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Plus, Trash2, X, Calendar, DollarSign } from 'lucide-react';
+import { Target, Plus, Trash2, X, Calendar, DollarSign, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import type { FinancialGoal } from '../utils/types';
+import { Link } from 'react-router-dom';
 
 const COLORS = ['#818cf8', '#f472b6', '#34d399', '#f0b429', '#60a5fa', '#c084fc', '#fb7185', '#38bdf8'];
 
@@ -153,24 +154,39 @@ export default function GoalsPage() {
               <button className="btn-ghost" style={{ position: 'absolute', top: 16, right: 16, padding: 8 }} onClick={() => setShowModal(false)}>
                 <X size={20} />
               </button>
-              <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Create Financial Goal</h2>
-              <form onSubmit={createGoal} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label className="label">Goal Name</label>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Emergency Fund" className="input" required />
+              {data.currentPlan === 'Basic' && goals.length >= 3 ? (
+                <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                  <Lock size={36} color="var(--purple)" style={{ margin: '0 auto 16px' }} />
+                  <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>Goal Limit Reached</h2>
+                  <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 24, lineHeight: 1.5 }}>
+                    Free accounts are limited to tracking up to 3 financial goals simultaneously. Upgrade to Pro for unlimited goals, daily contribution logging, and budget health calculators.
+                  </p>
+                  <Link to="/premium" className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                    Upgrade to Pro ⚡
+                  </Link>
                 </div>
-                <div>
-                  <label className="label">Target Amount (₹)</label>
-                  <input type="number" value={target} onChange={e => setTarget(e.target.value)} placeholder="100000" className="input" required min="1" />
-                </div>
-                <div>
-                  <label className="label">Target Date</label>
-                  <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="input" required />
-                </div>
-                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: 8 }}>
-                  <Target size={16} /> Create Goal
-                </button>
-              </form>
+              ) : (
+                <>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Create Financial Goal</h2>
+                  <form onSubmit={createGoal} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div>
+                      <label className="label">Goal Name</label>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Emergency Fund" className="input" required />
+                    </div>
+                    <div>
+                      <label className="label">Target Amount (₹)</label>
+                      <input type="number" value={target} onChange={e => setTarget(e.target.value)} placeholder="100000" className="input" required min="1" />
+                    </div>
+                    <div>
+                      <label className="label">Target Date</label>
+                      <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="input" required />
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: 8 }}>
+                      <Target size={16} /> Create Goal
+                    </button>
+                  </form>
+                </>
+              )}
             </motion.div>
           </div>
         )}

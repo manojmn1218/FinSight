@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Lightbulb, TrendingUp, TrendingDown, AlertCircle, ArrowRight, ShoppingBag, RefreshCw, PiggyBank, CalendarDays, Flame, Target, CreditCard, Wallet } from 'lucide-react';
+import { Lightbulb, TrendingUp, TrendingDown, AlertCircle, ArrowRight, ShoppingBag, RefreshCw, PiggyBank, CalendarDays, Flame, Target, CreditCard, Wallet, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORY_CONFIG } from '../utils/types';
@@ -12,6 +12,31 @@ export default function InsightsPage() {
   const usedPct = data.monthlyIncome > 0 ? Math.round((totalExpenses / data.monthlyIncome) * 100) : 0;
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;
+
+  if (data.currentPlan === 'Basic') {
+    return (
+      <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '65vh', textAlign: 'center', padding: 20 }}>
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', bounce: 0.4 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(167,139,250,0.15)', color: 'var(--purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <Lock size={40} />
+          </div>
+        </motion.div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Unlock AI-Powered Insights</h2>
+        <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 440, marginBottom: 32, lineHeight: 1.6 }}>
+          AI Insights analyzes your actual statement details to spot transaction anomalies, detect hidden subscription creep, optimize savings targets, and predict cash flow trends.
+        </p>
+        <Link to="/premium" className="btn-primary" style={{ padding: '12px 32px', fontSize: 15 }}>
+          Upgrade to Pro ⚡
+        </Link>
+        <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 40, fontSize: 12, color: 'var(--text3)' }}>
+          <span>📈 Saving predictions</span>
+          <span>🚨 Creep alerts</span>
+          <span>📊 Tax optimization</span>
+        </div>
+      </div>
+    );
+  }
+
 
   // --- Build rich, transaction-based insights ---
   const insights = useMemo(() => {

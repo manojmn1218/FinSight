@@ -5,6 +5,7 @@ import { useFinance } from '../context/FinanceContext';
 import { parseStatementPdf, PasswordRequiredError } from '../utils/transactionParser';
 import { CATEGORIES, CATEGORY_CONFIG } from '../utils/types';
 import type { Category } from '../utils/types';
+import { Link } from 'react-router-dom';
 
 const fmt = (n: number) => (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
 
@@ -72,6 +73,10 @@ export default function TransactionsPage() {
 
   // --- Upload handler ---
   const handleFile = async (file: File) => {
+    if (data.currentPlan === 'Basic' && (data.statementUploadsCount || 0) >= 3) {
+      setParseError('Statement upload limit reached: Basic accounts are limited to 3 PDF uploads. Upgrade to Pro for unlimited statements.');
+      return;
+    }
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       setParseError('Please upload a PDF file.');
       return;
@@ -130,6 +135,22 @@ export default function TransactionsPage() {
         <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Transactions</h1>
         <p style={{ color: 'var(--text2)', fontSize: 14 }}>Upload bank statements and manage your transaction history.</p>
       </div>
+
+      {/* Upload limit warning for Basic users */}
+      {data.currentPlan === 'Basic' && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', background: 'rgba(129,140,248,0.06)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}
+        >
+          <span style={{ color: 'var(--text2)' }}>
+            📁 Statement Uploads: <strong>{data.statementUploadsCount || 0}/3</strong> processed on free plan.
+          </span>
+          {(data.statementUploadsCount || 0) >= 3 ? (
+            <Link to="/premium" style={{ color: 'var(--purple)', fontWeight: 650, textDecoration: 'none' }}>Upgrade to Pro for Unlimited Uploads →</Link>
+          ) : (
+            <span style={{ color: 'var(--text3)' }}>Basic plan limit</span>
+          )}
+        </motion.div>
+      )}
 
       {/* Upload zone */}
       <div

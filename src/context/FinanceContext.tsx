@@ -20,6 +20,7 @@ interface FinData {
   transactions: Transaction[];
   financialGoals: FinancialGoal[];
   statementUploaded: boolean;
+  statementUploadsCount?: number;
 }
 
 interface UserCredential {
@@ -99,6 +100,7 @@ const INIT: FinData = {
   transactions: [],
   financialGoals: [],
   statementUploaded: false,
+  statementUploadsCount: 0,
 };
 
 const Ctx = createContext<FinCtx | null>(null);
@@ -337,7 +339,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const existing = user.transactions || [];
       const existingIds = new Set(existing.map(t => `${t.date}_${t.amount}_${t.description.slice(0,20)}`));
       const newTxns = txns.filter(t => !existingIds.has(`${t.date}_${t.amount}_${t.description.slice(0,20)}`));
-      return { ...prev, [currentUserEmail]: { ...user, transactions: [...existing, ...newTxns], statementUploaded: true } };
+      const uploadsCount = (user.statementUploadsCount || 0) + 1;
+      return { ...prev, [currentUserEmail]: { ...user, transactions: [...existing, ...newTxns], statementUploaded: true, statementUploadsCount: uploadsCount } };
     });
   }, [currentUserEmail]);
 

@@ -11,6 +11,7 @@ const MAIN_NAV = [
   { path: '/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/reports', label: 'Reports', icon: FileText },
   { path: '/insights', label: 'Insights', icon: Lightbulb },
+  { path: '/portfolio', label: 'Portfolio', icon: Crown },
 ];
 
 const ACCOUNT_NAV = [

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, Sparkles, BarChart3, RefreshCw, ArrowRight, AlertTriangle, CheckCircle2, Calendar } from 'lucide-react';
+import { TrendingUp, Sparkles, BarChart3, RefreshCw, ArrowRight, AlertTriangle, CheckCircle2, Calendar, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { computeMonthSummaries, detectRecurringGrouped } from '../utils/transactionParser';
 import { CATEGORY_CONFIG } from '../utils/types';
@@ -166,7 +166,15 @@ export default function AnalyticsPage() {
 
       {/* Savings trend */}
       {savingsTimeline.length > 1 && (
-        <motion.div className="panel" style={{ padding: 24 }} {...an(2)}>
+        <motion.div className="panel" style={{ padding: 24, position: 'relative', overflow: 'hidden' }} {...an(2)}>
+          {data.currentPlan === 'Basic' && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(13,17,23,0.85)', backdropFilter: 'blur(4px)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20, textAlign: 'center' }}>
+              <Lock size={24} color="var(--purple)" />
+              <h4 style={{ fontSize: 16, fontWeight: 700 }}>Cumulative Savings Trend</h4>
+              <p style={{ fontSize: 12, color: 'var(--text2)', maxWidth: 360, lineHeight: 1.5 }}>Track your total savings growth over time and view projections.</p>
+              <Link to="/premium" className="btn-primary" style={{ padding: '8px 20px', fontSize: 13, marginTop: 4 }}>Unlock Premium</Link>
+            </div>
+          )}
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>Cumulative Savings Trend</h3>
           <div style={{ height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -191,7 +199,15 @@ export default function AnalyticsPage() {
       {/* Budget Recommendations + Recurring Payments (enhanced) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* Recommendations */}
-        <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} {...an(3)}>
+        <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', overflow: 'hidden' }} {...an(3)}>
+          {data.currentPlan === 'Basic' && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(13,17,23,0.85)', backdropFilter: 'blur(4px)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20, textAlign: 'center', borderRadius: 'var(--radius)' }}>
+              <Lock size={20} color="var(--purple)" />
+              <h4 style={{ fontSize: 14, fontWeight: 700 }}>AI Smart Recommendations</h4>
+              <p style={{ fontSize: 11, color: 'var(--text2)', maxWidth: 260, lineHeight: 1.4 }}>Get customized saving recommendations and budget allocations based on your cash flow.</p>
+              <Link to="/premium" className="badge" style={{ background: 'var(--grad)', color: '#fff', padding: '5px 12px', marginTop: 2 }}>Unlock ⚡</Link>
+            </div>
+          )}
           <h3 style={{ fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={18} color="var(--amber)" /> AI Recommendations
           </h3>
@@ -204,7 +220,15 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Enhanced Recurring Payments */}
-        <motion.div className="panel" style={{ padding: 24 }} {...an(4)}>
+        <motion.div className="panel" style={{ padding: 24, position: 'relative', overflow: 'hidden' }} {...an(4)}>
+          {data.currentPlan === 'Basic' && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(13,17,23,0.85)', backdropFilter: 'blur(4px)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20, textAlign: 'center' }}>
+              <Lock size={20} color="var(--purple)" />
+              <h4 style={{ fontSize: 14, fontWeight: 700 }}>Recurring Payment Detection</h4>
+              <p style={{ fontSize: 11, color: 'var(--text2)', maxWidth: 260, lineHeight: 1.4 }}>Identify duplicate charges and subcription services dynamically from statements.</p>
+              <Link to="/premium" className="badge" style={{ background: 'var(--grad)', color: '#fff', padding: '5px 12px', marginTop: 2 }}>Unlock ⚡</Link>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
               <RefreshCw size={16} color="var(--purple)" /> Recurring Payments

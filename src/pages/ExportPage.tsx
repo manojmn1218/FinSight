@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileSpreadsheet, FileText, Calendar, CheckCircle2 } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, Calendar, CheckCircle2, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { computeMonthSummaries } from '../utils/transactionParser';
 import { CATEGORY_CONFIG } from '../utils/types';
+import { useNavigate } from 'react-router-dom';
 
 export default function ExportPage() {
   const { data } = useFinance();
+  const nav = useNavigate();
   const txns = data.transactions || [];
   const goals = data.financialGoals || [];
   const summaries = useMemo(() => computeMonthSummaries(txns), [txns]);
+
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -193,19 +196,35 @@ export default function ExportPage() {
           )}
         </button>
 
-        <button className="panel panel-glow" onClick={exportTextReport} disabled={txns.length === 0}
-          style={{ padding: 28, border: 'none', cursor: txns.length === 0 ? 'not-allowed' : 'pointer', textAlign: 'left', opacity: txns.length === 0 ? 0.5 : 1, fontFamily: 'inherit', color: 'var(--text)' }}>
-          <FileText size={28} color="var(--purple)" style={{ marginBottom: 12 }} />
-          <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Export as Report</h4>
-          <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 12 }}>
-            Download a formatted text report with summaries, breakdowns, and insights.
-          </p>
-          {exported === 'txt' ? (
-            <span style={{ color: 'var(--green)', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> Downloaded!</span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}><Download size={11} /> .txt</span>
-          )}
-        </button>
+        {data.currentPlan === 'Basic' ? (
+          <button className="panel panel-glow" onClick={() => nav('/premium')}
+            style={{ padding: 28, border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'var(--text)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Lock size={12} color="var(--purple)" />
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 0.5 }}>PRO ONLY</span>
+            </div>
+            <FileText size={28} color="var(--text3)" style={{ marginBottom: 12, opacity: 0.5 }} />
+            <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: 'var(--text2)' }}>Export as Report</h4>
+            <p style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.5, marginBottom: 12 }}>
+              Download a formatted text report with summaries, breakdowns, and insights.
+            </p>
+            <span className="badge" style={{ background: 'var(--grad)', color: '#fff' }}><Lock size={11} /> Unlock Report Export</span>
+          </button>
+        ) : (
+          <button className="panel panel-glow" onClick={exportTextReport} disabled={txns.length === 0}
+            style={{ padding: 28, border: 'none', cursor: txns.length === 0 ? 'not-allowed' : 'pointer', textAlign: 'left', opacity: txns.length === 0 ? 0.5 : 1, fontFamily: 'inherit', color: 'var(--text)' }}>
+            <FileText size={28} color="var(--purple)" style={{ marginBottom: 12 }} />
+            <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Export as Report</h4>
+            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 12 }}>
+              Download a formatted text report with summaries, breakdowns, and insights.
+            </p>
+            {exported === 'txt' ? (
+              <span style={{ color: 'var(--green)', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> Downloaded!</span>
+            ) : (
+              <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}><Download size={11} /> .txt</span>
+            )}
+          </button>
+        )}
       </motion.div>
     </div>
   );
