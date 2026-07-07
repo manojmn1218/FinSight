@@ -10,25 +10,18 @@ const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 interface Asset {
   id: string;
   name: string;
-  category: 'Mutual Funds' | 'Equity' | 'Crypto' | 'Gold' | 'Real Estate';
+  category: 'Mutual Funds' | 'Equity' | 'Crypto' | 'Gold' | 'Real Estate' | 'Cash & Bank';
   value: number;
+  isAutoDetected?: boolean;
 }
 
-const DEFAULT_ASSETS: Asset[] = [
-  { id: '1', name: 'Nifty 50 Index Fund', category: 'Mutual Funds', value: 250000 },
-  { id: '2', name: 'HDFC Bank Equity', category: 'Equity', value: 120000 },
-  { id: '3', name: 'Bitcoin (BTC)', category: 'Crypto', value: 85000 },
-  { id: '4', name: 'Sovereign Gold Bonds', category: 'Gold', value: 50000 },
-  { id: '5', name: 'Residential Plot', category: 'Real Estate', value: 1500000 },
-];
-
-const HISTORICAL_NET_WORTH = [
-  { month: 'Jan', worth: 1720000 },
-  { month: 'Feb', worth: 1780000 },
-  { month: 'Mar', worth: 1810000 },
-  { month: 'Apr', worth: 1890000 },
-  { month: 'May', worth: 1940000 },
-  { month: 'Jun', worth: 2005000 },
+const HISTORICAL_NET_WORTH_FALLBACK = [
+  { month: 'Jan', worth: 50000 },
+  { month: 'Feb', worth: 55000 },
+  { month: 'Mar', worth: 60000 },
+  { month: 'Apr', worth: 65000 },
+  { month: 'May', worth: 70000 },
+  { month: 'Jun', worth: 75000 },
 ];
 
 const CATEGORY_COLORS = {
@@ -37,33 +30,35 @@ const CATEGORY_COLORS = {
   'Crypto': '#f472b6',
   'Gold': '#f0b429',
   'Real Estate': '#34d399',
+  'Cash & Bank': '#a78bfa',
 };
 
 export default function PortfolioPage() {
   const { data } = useFinance();
   const isWealth = data.currentPlan === 'Wealth';
+  const txns = data.transactions || [];
 
-  // State for user assets (loaded from local storage if available)
-  const [assets, setAssets] = useState<Asset[]>(() => {
+  // State for user manually added assets (loaded from local storage if available)
+  const [manualAssets, setManualAssets] = useState<Asset[]>(() => {
     try {
       const saved = localStorage.getItem(`fs_assets_${data.userEmail}`);
-      return saved ? JSON.parse(saved) : DEFAULT_ASSETS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return DEFAULT_ASSETS;
+      return [];
     }
   });
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<Asset['category']>('Mutual Funds');
+  const [category, setCategory] = useState<Exclude<Asset['category'], 'Cash & Bank'>>('Mutual Funds');
   const [value, setValue] = useState('');
 
   // Advisor state
   const [advisorBooked, setAdvisorBooked] = useState(false);
   const [advisorDate, setAdvisorDate] = useState('');
 
-  const saveAssets = (newAssets: Asset[]) => {
-    setAssets(newAssets);
+  const saveManualAssets = (newAssets: Asset[]) => {
+    setManualAssets(newAssets);
     try {
       localStorage.setItem(`fs_assets_${data.userEmail}`, JSON.stringify(newAssets));
     } catch (e) {
@@ -80,23 +75,103 @@ export default function PortfolioPage() {
       category,
       value: Number(value),
     };
-    saveAssets([...assets, newAsset]);
+    saveManualAssets([...manualAssets, newAsset]);
     setName('');
     setValue('');
     setShowAddModal(false);
   };
 
   const deleteAsset = (id: string) => {
-    saveAssets(assets.filter(a => a.id !== id));
+    saveManualAssets(manualAssets.filter(a => a.id !== id));
   };
 
+  // ─── Real Dynamic Cash & Bank Balance ───
+  const bankBalance = useMemo(() => {
+    if (txns.length > 0) {
+      const sortedTxns = [...txns].sort((a, b) => a.date.localeCompare(b.date));
+      const lastTx = [...sortedTxns].reverse().find(t => t.balance != null);
+      if (lastTx?.balance != null) return lastTx.balance;
+    }
+    return data.totalBalance || 0;
+  }, [txns, data.totalBalance]);
+
+  // ─── Real Dynamic Auto-Detected Investments from Statement ───
+  const detectedInvestments = useMemo(() => {
+    const list: Asset[] = [];
+    const mutualFundKeywords = ['mutual fund', 'sip', 'groww', 'zerodha', 'smallcase', 'etf', 'axis mutual', 'sbi mutual', 'icici mutual', 'nippon', 'mirae', 'parag parikh', 'quant mutual', 'dsp blackrock', 'tata mutual', 'motilal oswal', 'mirae asset', 'franklin templeton', 'l&t mutual', 'canara robeco', 'sundaram', 'kotak mutual', 'baroda pioneer', 'invesco', 'idfc mutual', 'hsbc mutual', 'tata aia', 'lic mutual'];
+    const cryptoKeywords = ['crypto', 'coinngx', 'wazirx', 'binance', 'coinbase', 'crypto.com', 'eth ', 'btc ', 'solana', 'coindcx', 'zebpay'];
+    const goldKeywords = ['sovereign gold', 'gold bond', ' sgb', 'mmtc', 'safe gold', 'digital gold'];
+
+    let mutualFundTotal = 0;
+    let cryptoTotal = 0;
+    let goldTotal = 0;
+
+    for (const tx of txns) {
+      if (tx.amount < 0) { // investment outflow from bank account
+        const desc = tx.description.toLowerCase();
+        const amt = Math.abs(tx.amount);
+
+        if (mutualFundKeywords.some(kw => desc.includes(kw))) {
+          mutualFundTotal += amt;
+        } else if (cryptoKeywords.some(kw => desc.includes(kw))) {
+          cryptoTotal += amt;
+        } else if (goldKeywords.some(kw => desc.includes(kw))) {
+          goldTotal += amt;
+        }
+      }
+    }
+
+    if (mutualFundTotal > 0) {
+      list.push({
+        id: 'detect_mf',
+        name: 'Detected Mutual Funds / SIPs',
+        category: 'Mutual Funds',
+        value: Math.round(mutualFundTotal),
+        isAutoDetected: true,
+      });
+    }
+
+    if (cryptoTotal > 0) {
+      list.push({
+        id: 'detect_crypto',
+        name: 'Detected Crypto Portfolios',
+        category: 'Crypto',
+        value: Math.round(cryptoTotal),
+        isAutoDetected: true,
+      });
+    }
+
+    if (goldTotal > 0) {
+      list.push({
+        id: 'detect_gold',
+        name: 'Detected Sovereign Gold Bonds',
+        category: 'Gold',
+        value: Math.round(goldTotal),
+        isAutoDetected: true,
+      });
+    }
+
+    return list;
+  }, [txns]);
+
+  // ─── Consolidated real asset portfolio ───
+  const consolidatedAssets = useMemo(() => {
+    const bankAsset: Asset = {
+      id: 'real_bank_bal',
+      name: 'Bank Account Balance',
+      category: 'Cash & Bank',
+      value: Math.round(bankBalance),
+    };
+    return [bankAsset, ...detectedInvestments, ...manualAssets];
+  }, [bankBalance, detectedInvestments, manualAssets]);
+
   const totalPortfolioValue = useMemo(() => {
-    return assets.reduce((sum, a) => sum + a.value, 0);
-  }, [assets]);
+    return consolidatedAssets.reduce((sum, a) => sum + a.value, 0);
+  }, [consolidatedAssets]);
 
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = {};
-    assets.forEach(a => {
+    consolidatedAssets.forEach(a => {
       totals[a.category] = (totals[a.category] || 0) + a.value;
     });
     return Object.entries(totals).map(([cat, val]) => ({
@@ -104,7 +179,44 @@ export default function PortfolioPage() {
       value: val,
       color: CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#64748b',
     })).sort((a, b) => b.value - a.value);
-  }, [assets]);
+  }, [consolidatedAssets]);
+
+  // ─── Real Net Worth growth timeline from transaction history ───
+  const netWorthTimeline = useMemo(() => {
+    if (txns.length === 0) {
+      // If onboarding profile exists, pre-populate using manual onboarding values
+      const onboardingWorth = (data.totalBalance || 0) + manualAssets.reduce((s, a) => s + a.value, 0);
+      return HISTORICAL_NET_WORTH_FALLBACK.map((item, idx) => ({
+        month: item.month,
+        worth: onboardingWorth > 0 ? Math.round(onboardingWorth * (0.9 + idx * 0.02)) : item.worth,
+      }));
+    }
+
+    const sortedTxns = [...txns].sort((a, b) => a.date.localeCompare(b.date));
+    const monthMap = new Map<string, number>();
+
+    // Calculate manual assets value to add to net worth
+    const manualVal = manualAssets.reduce((s, a) => s + a.value, 0);
+
+    for (const tx of sortedTxns) {
+      if (tx.balance != null) {
+        const monthKey = tx.date.slice(0, 7); // YYYY-MM
+        monthMap.set(monthKey, tx.balance + manualVal);
+      }
+    }
+
+    const list = [...monthMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, val]) => {
+        const date = new Date(month + '-01');
+        return {
+          month: date.toLocaleDateString('en-US', { month: 'short' }),
+          worth: Math.round(val),
+        };
+      });
+
+    return list.length > 0 ? list : HISTORICAL_NET_WORTH_FALLBACK;
+  }, [txns, data.totalBalance, manualAssets]);
 
   const tooltipStyle = { background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, color: 'var(--text)', boxShadow: 'var(--shadow)' };
   const an = (i: number) => ({ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { delay: i * 0.05, duration: 0.4, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] } });
@@ -231,7 +343,7 @@ export default function PortfolioPage() {
         <motion.div className="panel panel-glow" style={{ padding: 20 }} {...an(2)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(129,140,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wallet size={18} color="var(--purple)" />
+              <Briefcase size={18} color="var(--purple)" />
             </div>
             <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Asset Classes</span>
           </div>
@@ -256,11 +368,11 @@ export default function PortfolioPage() {
         {/* Net Worth Growth */}
         <motion.div className="panel" style={{ padding: 24 }} {...an(4)}>
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <LineChart size={18} color="var(--purple)" /> Net Worth growth (6 Months)
+            <LineChart size={18} color="var(--purple)" /> Net Worth growth (statement balance)
           </h3>
           <div style={{ height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={HISTORICAL_NET_WORTH} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <AreaChart data={netWorthTimeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#818cf8" stopOpacity={0.25} />
@@ -269,7 +381,7 @@ export default function PortfolioPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 100000).toFixed(1)}L`} />
+                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [fmt(Number(v)), 'Net Worth']} />
                 <Area type="monotone" dataKey="worth" stroke="#818cf8" strokeWidth={2.5} fill="url(#netWorthGrad)" />
               </AreaChart>
@@ -320,7 +432,7 @@ export default function PortfolioPage() {
             <h3 style={{ fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Briefcase size={16} color="var(--purple)" /> Consolidated Asset Portfolio
             </h3>
-            <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>{assets.length} items</span>
+            <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>{consolidatedAssets.length} items</span>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="summary-table">
@@ -333,9 +445,14 @@ export default function PortfolioPage() {
                 </tr>
               </thead>
               <tbody>
-                {assets.map(a => (
+                {consolidatedAssets.map(a => (
                   <tr key={a.id}>
-                    <td style={{ fontWeight: 600 }}>{a.name}</td>
+                    <td style={{ fontWeight: 600 }}>
+                      {a.name}
+                      {a.isAutoDetected && (
+                        <span className="badge" style={{ background: 'rgba(52,211,153,0.1)', color: 'var(--green)', fontSize: 9, marginLeft: 8 }}>Auto-Detected</span>
+                      )}
+                    </td>
                     <td>
                       <span className="badge" style={{
                         background: `${CATEGORY_COLORS[a.category]}15`,
@@ -346,9 +463,13 @@ export default function PortfolioPage() {
                     </td>
                     <td style={{ fontWeight: 650, fontVariantNumeric: 'tabular-nums' }}>{fmt(a.value)}</td>
                     <td>
-                      <button className="btn-ghost danger" onClick={() => deleteAsset(a.id)} style={{ padding: 6 }}>
-                        <Trash2 size={14} />
-                      </button>
+                      {!a.isAutoDetected && a.id !== 'real_bank_bal' ? (
+                        <button className="btn-ghost danger" onClick={() => deleteAsset(a.id)} style={{ padding: 6 }}>
+                          <Trash2 size={14} />
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>Auto</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -428,7 +549,7 @@ export default function PortfolioPage() {
                   <select
                     className="input"
                     value={category}
-                    onChange={e => setCategory(e.target.value as Asset['category'])}
+                    onChange={e => setCategory(e.target.value as Exclude<Asset['category'], 'Cash & Bank'>)}
                     style={{ background: 'var(--bg2)', color: 'var(--text)' }}
                   >
                     {['Mutual Funds', 'Equity', 'Crypto', 'Gold', 'Real Estate'].map(c => (
