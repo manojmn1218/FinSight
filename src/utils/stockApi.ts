@@ -57,14 +57,14 @@ export async function fetchStockQuote(symbol: string): Promise<StockQuote | null
 
   const url = `${BASE_URL}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
   
-  let data: any;
+  let data: unknown;
 
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
   } catch (err) {
-    throw new Error('Network error or Alpha Vantage server unreachable.');
+    throw new Error('Network error or Alpha Vantage server unreachable.', { cause: err });
   }
 
   const alphaData = data as AlphaVantageGlobalQuote;

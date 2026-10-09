@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       consentId: data.id || consentId,
       status: data.status || 'PENDING',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Setu] Consent status error:', err);
     return res.status(500).json({
       error: 'Failed to check consent status. Please try again.',

@@ -95,8 +95,8 @@ function uid(): string {
 
 // --- Date parsing ---
 const DATE_PATTERNS = [
-  /(\d{2})[\/\-](\d{2})[\/\-](\d{4})/,  // DD/MM/YYYY or DD-MM-YYYY
-  /(\d{4})[\/\-](\d{2})[\/\-](\d{2})/,  // YYYY/MM/DD or YYYY-MM-DD
+  /(\d{2})[-/](\d{2})[-/](\d{4})/,  // DD/MM/YYYY or DD-MM-YYYY
+  /(\d{4})[-/](\d{2})[-/](\d{2})/,  // YYYY/MM/DD or YYYY-MM-DD
   /(\d{2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i, // DD Mon YYYY
   /(\d{2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{2})/i, // DD Mon YY
 ];
@@ -204,7 +204,7 @@ export function extractTransactions(lines: string[]): Transaction[] {
     // Clean up
     desc = desc.replace(/[,\s]+/g, ' ').replace(/^\s+|\s+$/g, '').replace(/\s{2,}/g, ' ');
     // Remove trailing/leading special chars
-    desc = desc.replace(/^[\s\-\/\|]+|[\s\-\/\|]+$/g, '').trim();
+    desc = desc.replace(/^[-\s/|]+|[-\s/|]+$/g, '').trim();
 
     if (desc.length < 2) desc = 'Transaction';
 
@@ -280,12 +280,13 @@ export async function parsePdfFile(file: File, password?: string): Promise<strin
   let pdf;
   try {
     pdf = await loadingTask.promise;
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as { name?: string; message?: string } | null;
     // pdf.js throws PasswordException when password is needed
     if (
-      err?.name === 'PasswordException' ||
-      err?.message?.includes('password') ||
-      err?.message?.includes('Password')
+      errorObj?.name === 'PasswordException' ||
+      errorObj?.message?.includes('password') ||
+      errorObj?.message?.includes('Password')
     ) {
       throw new PasswordRequiredError();
     }

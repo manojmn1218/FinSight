@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Check, X, Crown, Sparkles, Zap, Shield, Star, ArrowRight, ChevronDown, CreditCard, TrendingUp, BarChart3, Target, Download, Bell, Lock, Cpu, Users, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Check, X, Crown, Sparkles, Zap, Shield, Star, ArrowRight, ChevronDown, CreditCard, BarChart3, Download, Bell, Lock, Cpu, Users, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 

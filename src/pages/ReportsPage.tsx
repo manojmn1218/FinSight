@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { FileText, ShieldAlert, CheckCircle2, AlertTriangle, Printer, Sparkles, TrendingUp, TrendingDown, BookOpen, Scale, Landmark } from 'lucide-react';
+import { FileText, Printer, BookOpen, Scale, Landmark } from 'lucide-react';
 import { CATEGORY_CONFIG } from '../utils/types';
 import { computeMonthSummaries } from '../utils/transactionParser';
 import type { Category } from '../utils/types';
@@ -70,7 +70,6 @@ export default function ReportsPage() {
   // --- Executive Audit Opinion / Health metrics ---
   const healthRatios = useMemo(() => {
     const fixedCategories = ['Rent', 'Utilities', 'Bills', 'Education', 'Health'];
-    const discretionaryCategories = ['Food & Dining', 'Shopping', 'Transport', 'Subscriptions', 'ATM', 'Other'];
 
     let fixedSpent = 0;
     let discretionarySpent = 0;

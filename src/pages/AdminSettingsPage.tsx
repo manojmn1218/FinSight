@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Shield, Globe, Key, AlertTriangle, Save } from 'lucide-react';
-
-const panel: React.CSSProperties = {
-  background: 'var(--surface)',
-  backdropFilter: 'blur(16px)',
-  border: '1px solid var(--border)',
-  borderRadius: 20,
-  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-};
+import { Shield, Globe, AlertTriangle, Save } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [maintMode, setMaintMode] = useState(false);

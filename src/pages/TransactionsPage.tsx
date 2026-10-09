@@ -13,7 +13,7 @@ const fmt = (n: number) => (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleStri
 
 export default function TransactionsPage() {
   const { data, addTransactions, updateTransaction, deleteTransaction } = useFinance();
-  const txns = data.transactions || [];
+  const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
   const [dragOver, setDragOver] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -361,7 +361,7 @@ export default function TransactionsPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Filter size={14} color="var(--text3)" />
-              <select value={catFilter} onChange={e => { setCatFilter(e.target.value as any); setPage(0); }}
+              <select value={catFilter} onChange={e => { setCatFilter(e.target.value as Category | 'all'); setPage(0); }}
                 className="input" style={{ width: 'auto', padding: '6px 10px', fontSize: 12 }}>
                 <option value="all">All Categories</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}

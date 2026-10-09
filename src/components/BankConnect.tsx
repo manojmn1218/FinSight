@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Phone, ArrowRight, Loader2, CheckCircle2, AlertCircle, Shield, X, Landmark, RefreshCw, ExternalLink, Wifi } from 'lucide-react';
-import { createConsent, fetchBankData, pollConsentStatus } from '../utils/setuApi';
+import { createConsent, fetchBankData } from '../utils/setuApi';
 import type { BankDataResult } from '../utils/setuApi';
 
 interface BankConnectProps {
@@ -20,15 +20,34 @@ interface BankConnectProps {
 type Step = 'input' | 'consent' | 'fetching' | 'success' | 'error';
 
 export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectProps) {
-  const [step, setStep] = useState<Step>('input');
+  const [step, setStep] = useState<Step>(() => {
+    if (typeof window === 'undefined') return 'input';
+    const params = new URLSearchParams(window.location.search);
+    const setuConsent = params.get('setu_consent');
+    const cId = params.get('consentId');
+    if (setuConsent && cId && (setuConsent === 'mock_approved' || setuConsent === 'callback')) {
+      return 'fetching';
+    }
+    return 'input';
+  });
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
-  const [consentId, setConsentId] = useState('');
+  const [consentId, setConsentId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    const setuConsent = params.get('setu_consent');
+    const cId = params.get('consentId');
+    if (setuConsent && cId && (setuConsent === 'mock_approved' || setuConsent === 'callback')) {
+      return cId;
+    }
+    return '';
+  });
   const [fetchResult, setFetchResult] = useState<BankDataResult | null>(null);
   const [statusMsg, setStatusMsg] = useState('');
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
-  // Reset state when modal opens
-  useEffect(() => {
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setStep('input');
       setPhone('');
@@ -37,20 +56,13 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
       setFetchResult(null);
       setStatusMsg('');
     }
-  }, [isOpen]);
+  }
 
-  // Check URL params for consent callback (when user returns from Setu)
+  // Clean URL params on mount if returned from Setu
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const setuConsent = params.get('setu_consent');
-    const cId = params.get('consentId');
-    if (setuConsent && cId) {
-      // Clean URL params
+    if (params.get('setu_consent')) {
       window.history.replaceState({}, '', window.location.pathname);
-      if (setuConsent === 'mock_approved' || setuConsent === 'callback') {
-        setConsentId(cId);
-        setStep('fetching');
-      }
     }
   }, []);
 
@@ -83,8 +95,9 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
         setStatusMsg('Redirecting to consent approval…');
         window.location.href = redirectUrl;
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to create consent request.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create consent request.';
+      setError(msg);
       setStep('error');
     }
   }, [phone]);
@@ -111,9 +124,10 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
 
         setFetchResult(result);
         setStep('success');
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled) return;
-        setError(err.message || 'Failed to fetch bank data.');
+        const msg = err instanceof Error ? err.message : 'Failed to fetch bank data.';
+        setError(msg);
         setStep('error');
       }
     }

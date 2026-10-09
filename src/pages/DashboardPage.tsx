@@ -34,7 +34,7 @@ function HealthGauge({ score, label }: { score: number; label: string }) {
 
 export default function DashboardPage() {
   const { data } = useFinance();
-  const txns: Transaction[] = data.transactions || [];
+  const txns: Transaction[] = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;
 
   // ─── Compute everything from transactions ───
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: any, n: any) => [`₹${Number(v).toLocaleString('en-IN')}`, String(n).charAt(0).toUpperCase() + String(n).slice(1)]} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown, n: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, String(n).charAt(0).toUpperCase() + String(n).slice(1)]} />
                   <Bar dataKey="income" fill="#34d399" radius={[4, 4, 0, 0]} barSize={20} name="Income" />
                   <Bar dataKey="expenses" fill="#f472b6" radius={[4, 4, 0, 0]} barSize={20} name="Expenses" />
                 </BarChart>
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                       <Pie data={txnStats.categoryBreakdown} dataKey="value" innerRadius={48} outerRadius={76} paddingAngle={4} strokeWidth={0}>
                         {txnStats.categoryBreakdown.map(e => <Cell key={e.name} fill={e.color} />)}
                       </Pie>
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -372,7 +372,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Net Savings']} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Net Savings']} />
                   <Area type="monotone" dataKey="net" stroke="#818cf8" strokeWidth={2} fill="url(#gNet)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -666,7 +666,7 @@ export default function DashboardPage() {
                 <Pie data={pieData} dataKey="value" innerRadius={48} outerRadius={76} paddingAngle={4} strokeWidth={0}>
                   {pieData.map(e => <Cell key={e.name} fill={e.color} />)}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
               </PieChart>
             </ResponsiveContainer>
           </div>

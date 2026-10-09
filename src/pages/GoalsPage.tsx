@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Plus, Trash2, X, Calendar, DollarSign, Lock } from 'lucide-react';
+import { Target, Plus, Trash2, X, DollarSign, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import type { FinancialGoal } from '../utils/types';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,7 @@ const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 export default function GoalsPage() {
   const { data, addGoal, updateGoal, deleteGoal } = useFinance();
   const goals = data.financialGoals || [];
+  const [currentTime] = useState(() => Date.now());
 
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
@@ -68,7 +69,7 @@ export default function GoalsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
           {goals.map((g, i) => {
             const pct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
-            const daysLeft = Math.max(0, Math.ceil((new Date(g.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+            const daysLeft = Math.max(0, Math.ceil((new Date(g.deadline).getTime() - currentTime) / (1000 * 60 * 60 * 24)));
             const remaining = Math.max(0, g.targetAmount - g.currentAmount);
             const monthsLeft = Math.max(1, Math.ceil(daysLeft / 30));
             const monthlyNeeded = remaining > 0 ? Math.round(remaining / monthsLeft) : 0;

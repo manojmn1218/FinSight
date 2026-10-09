@@ -120,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       sessionId,
       status: fiData.status,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Setu] Data fetch error:', err);
     return res.status(500).json({
       error: 'Failed to fetch bank data. Please try again.',

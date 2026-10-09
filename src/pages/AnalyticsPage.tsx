@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, Sparkles, BarChart3, RefreshCw, ArrowRight, AlertTriangle, CheckCircle2, Calendar, Lock } from 'lucide-react';
+import { TrendingUp, Sparkles, BarChart3, RefreshCw, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { computeMonthSummaries, detectRecurringGrouped } from '../utils/transactionParser';
 import { CATEGORY_CONFIG } from '../utils/types';
@@ -12,7 +12,7 @@ const fmt = (n: number) => '₹' + Math.abs(n).toLocaleString('en-IN');
 
 export default function AnalyticsPage() {
   const { data } = useFinance();
-  const txns = data.transactions || [];
+  const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
   const summaries = useMemo(() => computeMonthSummaries(txns), [txns]);
   const recurringGroups = useMemo(() => detectRecurringGrouped(txns), [txns]);
@@ -30,11 +30,13 @@ export default function AnalyticsPage() {
 
   // Cumulative savings over time
   const savingsTimeline = useMemo(() => {
+    const result: { name: string; savings: number }[] = [];
     let cumulative = 0;
-    return summaries.map(s => {
+    for (const s of summaries) {
       cumulative += s.netSavings;
-      return { name: s.label, savings: cumulative };
-    });
+      result.push({ name: s.label, savings: cumulative });
+    }
+    return result;
   }, [summaries]);
 
   // Group recurring by category
@@ -124,7 +126,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v || 0).toLocaleString('en-IN')}`, '']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v || 0).toLocaleString('en-IN')}`, '']} />
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
                 <Bar dataKey="totalIncome" name="Income" fill="#34d399" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="totalExpenses" name="Expenses" fill="#f472b6" radius={[6, 6, 0, 0]} />
@@ -144,7 +146,7 @@ export default function AnalyticsPage() {
                     <Pie data={catTotals} dataKey="value" innerRadius={46} outerRadius={72} paddingAngle={3} strokeWidth={0}>
                       {catTotals.map(e => <Cell key={e.name} fill={e.color} />)}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -188,7 +190,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Net Savings']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Net Savings']} />
                 <Area type="monotone" dataKey="savings" stroke="#34d399" strokeWidth={2.5} fill="url(#savGrad)" />
               </AreaChart>
             </ResponsiveContainer>

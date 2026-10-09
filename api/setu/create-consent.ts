@@ -32,7 +32,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Build the consent object per Setu AA spec
     const now = new Date();
-    const consentExpiry = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h from now
     const dataFrom = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000); // 6 months ago
 
     const consentBody = {
@@ -100,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       redirectUrl: data.url,
       status: data.status || 'PENDING',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Setu] Consent creation error:', err);
     return res.status(500).json({
       error: 'Failed to create consent request. Please try again.',

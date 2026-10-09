@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 import { Search, UserX, UserCheck, Edit2, Eye, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
+interface AdminUserRow {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  status: string;
+  lastActive: string;
+  raw: ReturnType<typeof useFinance>['allUsers'][number];
+}
+
 export default function AdminUsersPage() {
   const { allUsers } = useFinance();
   const [search, setSearch] = useState('');
   const [suspended, setSuspended] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUserRow | null>(null);
 
   const users = allUsers.map((u, i) => ({
     id: String(i + 1),

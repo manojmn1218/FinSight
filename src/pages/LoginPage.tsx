@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
-import { Eye, EyeOff, TrendingUp, Shield, Zap, Activity } from 'lucide-react';
+import { Eye, EyeOff, TrendingUp, Shield, Zap } from 'lucide-react';
 
 const FEATURES = [
   { icon: TrendingUp, label: 'Smart Budget Tracking', desc: 'AI-powered spending analysis', bg: '#a78bfa' },

@@ -3,13 +3,12 @@ import { motion } from 'framer-motion';
 import { Download, FileSpreadsheet, FileText, Calendar, CheckCircle2, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { computeMonthSummaries } from '../utils/transactionParser';
-import { CATEGORY_CONFIG } from '../utils/types';
 import { useNavigate } from 'react-router-dom';
 
 export default function ExportPage() {
   const { data } = useFinance();
   const nav = useNavigate();
-  const txns = data.transactions || [];
+  const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const goals = data.financialGoals || [];
   const summaries = useMemo(() => computeMonthSummaries(txns), [txns]);
 

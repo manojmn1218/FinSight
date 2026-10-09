@@ -55,14 +55,7 @@ interface FinCtx {
   deleteGoal: (id: string) => void;
 }
 
-// Simple SHA-256 hash using SubtleCrypto (sync fallback for SSR)
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + '__finsight_salt_2026__');
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+
 
 function hashPasswordSync(password: string): string {
   // Simple deterministic hash for synchronous use
@@ -165,17 +158,18 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return s ? Number(s) : null;
   });
   const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_TIMEOUT_MS);
-  const activityRef = useRef(Date.now());
+  const activityRef = useRef(0);
 
   const isAuthenticated = useMemo(() => {
     if (!currentUserEmail) return false;
     if (!sessionStart) return false;
-    if (Date.now() - sessionStart > SESSION_TIMEOUT_MS) return false;
+    if (sessionTimeLeft <= 0) return false;
     return true;
   }, [currentUserEmail, sessionStart, sessionTimeLeft]);
 
   // Track user activity to extend session
   useEffect(() => {
+    activityRef.current = Date.now();
     const onActivity = () => { activityRef.current = Date.now(); };
     window.addEventListener('mousemove', onActivity);
     window.addEventListener('keydown', onActivity);
@@ -396,6 +390,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useFinance() {
   const c = useContext(Ctx);
   if (!c) throw new Error('useFinance requires FinanceProvider');

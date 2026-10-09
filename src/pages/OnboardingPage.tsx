@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
-import { User, DollarSign, CreditCard, Target, ArrowRight, ArrowLeft, Check, Sparkles, Activity } from 'lucide-react';
+import { User, DollarSign, CreditCard, Target, ArrowRight, ArrowLeft, Check, Sparkles } from 'lucide-react';
 
 const STEPS = [
   { id: 'profile', label: 'Profile', icon: User },

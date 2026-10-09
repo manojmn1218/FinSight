@@ -4,13 +4,7 @@ import { Users, CreditCard, ShieldAlert, Server, ArrowUpRight } from 'lucide-rea
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFinance } from '../context/FinanceContext';
 
-const panel: React.CSSProperties = {
-  background: 'var(--surface)',
-  backdropFilter: 'blur(16px)',
-  border: '1px solid var(--border)',
-  borderRadius: 20,
-  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-};
+
 
 export default function AdminDashboardPage() {
   const { allUsers } = useFinance();

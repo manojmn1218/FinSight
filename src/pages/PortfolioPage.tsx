@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Crown, Plus, Trash2, Calendar, UserCheck, Lock, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Sparkles, Info, Key, RefreshCw, Loader2 } from 'lucide-react';
+import { Crown, Plus, Trash2, Calendar, UserCheck, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Sparkles, Info, Key, RefreshCw, Loader2 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { Link } from 'react-router-dom';
 import { fetchQuotesWithCache, hasApiKey, getApiKey, setApiKey as saveApiKey } from '../utils/stockApi';
@@ -138,7 +138,7 @@ const RISK_STYLES: Record<string, { bg: string; color: string }> = {
 export default function PortfolioPage() {
   const { data } = useFinance();
   const isWealth = data.currentPlan === 'Wealth';
-  const txns = data.transactions || [];
+  const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
   // State for user manually added assets (loaded from local storage if available)
   const [manualAssets, setManualAssets] = useState<Asset[]>(() => {
@@ -361,8 +361,8 @@ export default function PortfolioPage() {
       if (quotes.size === 0) {
         setQuotesError('No data returned. API limit may be reached or symbols unavailable.');
       }
-    } catch (err: any) {
-      setQuotesError(err.message || 'Failed to fetch live data. Check your API key.');
+    } catch (err: unknown) {
+      setQuotesError(err instanceof Error ? err.message : 'Failed to fetch live data. Check your API key.');
     } finally {
       setQuotesLoading(false);
     }
@@ -370,10 +370,18 @@ export default function PortfolioPage() {
 
   // Auto-fetch on mount if API key exists
   useEffect(() => {
-    if (hasApiKey() && isWealth) {
-      fetchLiveQuotes();
-    }
-  }, []);
+    if (!hasApiKey() || !isWealth) return;
+    let ignore = false;
+    const timer = setTimeout(() => {
+      if (!ignore) {
+        fetchLiveQuotes();
+      }
+    }, 0);
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
+  }, [fetchLiveQuotes, isWealth]);
 
   const handleSaveApiKey = () => {
     saveApiKey(apiKeyInput);
@@ -545,7 +553,7 @@ export default function PortfolioPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [fmt(Number(v)), 'Net Worth']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v)), 'Net Worth']} />
                 <Area type="monotone" dataKey="worth" stroke="#818cf8" strokeWidth={2.5} fill="url(#netWorthGrad)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -563,7 +571,7 @@ export default function PortfolioPage() {
                     <Pie data={categoryTotals} dataKey="value" innerRadius={42} outerRadius={68} paddingAngle={4} strokeWidth={0}>
                       {categoryTotals.map(c => <Cell key={c.name} fill={c.color} />)}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [fmt(Number(v)), '']} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v)), '']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
