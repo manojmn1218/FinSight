@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`₹${v.toLocaleString('en-IN')}`, '']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`₹${Number(v || 0).toLocaleString('en-IN')}`, '']} />
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
                 <Bar dataKey="totalIncome" name="Income" fill="#34d399" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="totalExpenses" name="Expenses" fill="#f472b6" radius={[6, 6, 0, 0]} />

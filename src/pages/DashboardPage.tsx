@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar } from 'lucide-react';
+import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
@@ -604,7 +604,7 @@ export default function DashboardPage() {
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
             {greeting}, <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.userName || 'there'}</span> 👋
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--text2)' }}>Upload a bank statement to see your real financial data here.</p>
+          <p style={{ fontSize: 14, color: 'var(--text2)' }}>Upload a bank statement or connect your account to see your real financial data here.</p>
         </div>
         <Link to="/profile" className="btn-outline" style={{ padding: '9px 18px', fontSize: 13 }}>
           <Edit2 size={15} /> Edit Data
@@ -636,11 +636,14 @@ export default function DashboardPage() {
         <Upload size={44} color="var(--purple)" style={{ marginBottom: 16, opacity: 0.8 }} />
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Unlock Your Financial Dashboard</h2>
         <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.6 }}>
-          Upload your bank statement PDF to get automatic expense categorization, monthly summaries, budget health scoring, recurring payment alerts, and AI-powered insights.
+          Upload your bank statement PDF or connect your bank account directly to get automatic expense categorization, monthly summaries, budget health scoring, and recurring payment alerts.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/transactions" className="btn-primary" style={{ padding: '12px 28px' }}>
             <Upload size={16} /> Upload Bank Statement
+          </Link>
+          <Link to="/transactions?connect=true" className="btn-outline" style={{ padding: '12px 28px', borderColor: 'rgba(96,165,250,0.3)', color: '#60a5fa' }}>
+            <Landmark size={16} /> Connect Bank Account
           </Link>
           <Link to="/profile" className="btn-outline" style={{ padding: '12px 28px' }}>
             <Edit2 size={16} /> Enter Data Manually

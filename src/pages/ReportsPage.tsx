@@ -5,6 +5,7 @@ import { CATEGORY_CONFIG } from '../utils/types';
 import { computeMonthSummaries } from '../utils/transactionParser';
 import type { Category } from '../utils/types';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const fmt = (n: number) => '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
 

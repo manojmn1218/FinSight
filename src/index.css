@@ -788,3 +788,15 @@ body.light .app-logo.auth-blend {
     padding: 20px 16px !important;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   SPIN ANIMATION (Loading Spinner)
+   ═══════════════════════════════════════════════ */
+@keyframes spin-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-icon {
+  animation: spin-rotate 1s linear infinite;
+}

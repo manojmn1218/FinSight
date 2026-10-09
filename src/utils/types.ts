@@ -42,6 +42,7 @@ export interface Transaction {
   category: Category;
   isRecurring: boolean;
   balance?: number;
+  source?: 'pdf' | 'setu' | 'manual';  // data source identifier
 }
 
 export interface FinancialGoal {
@@ -70,4 +71,63 @@ export interface RecurringPayment {
   occurrences: number;
   category: Category;
   lastDate: string;
+}
+
+// ═══════════════════════════════════════════════
+// Setu Account Aggregator Types
+// ═══════════════════════════════════════════════
+
+export type SetuConsentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED' | 'EXPIRED' | 'FAILED';
+
+export interface SetuConsentState {
+  consentId: string;
+  status: SetuConsentStatus;
+  redirectUrl: string;
+  mobileNumber: string;
+  createdAt: string;
+}
+
+/** Raw transaction from Setu's FI DEPOSIT response */
+export interface SetuFITransaction {
+  type: 'DEBIT' | 'CREDIT';
+  mode: string;
+  amount: number;
+  currentBalance: string;
+  transactionTimestamp: string;
+  valueDate: string;
+  txnId: string;
+  narration: string;
+  reference: string;
+}
+
+/** Shape of Setu's FI DEPOSIT data */
+export interface SetuFIData {
+  account: {
+    linkedAccRef: string;
+    maskedAccNumber: string;
+    type: string;
+    profile: {
+      holders: {
+        holder: Array<{
+          name: string;
+          email?: string;
+          mobile?: string;
+          pan?: string;
+        }>;
+      };
+    };
+    summary: {
+      currentBalance: string;
+      currency: string;
+      branch: string;
+      facility: string;
+      ifscCode: string;
+      openingDate: string;
+      status: string;
+      type: string;
+    };
+    transactions: {
+      transaction: SetuFITransaction[];
+    };
+  };
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, DollarSign, Target, Save, CheckCircle2 } from 'lucide-react';
+import { User, Target, Save, CheckCircle2 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 export default function ProfilePage() {
@@ -9,10 +9,7 @@ export default function ProfilePage() {
   const [name, setName] = useState(data.userName || '');
   const [email, setEmail] = useState(data.userEmail || '');
   const [plan, setPlan] = useState(data.currentPlan || 'Basic');
-  const [income, setIncome] = useState(String(data.monthlyIncome));
-  const [balance, setBalance] = useState(String(data.totalBalance));
   const [savingsPercent, setSavingsPercent] = useState(String(data.savingsPercent || 20));
-  const [expenses, setExpenses] = useState(data.expenses);
   const [saved, setSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -21,10 +18,7 @@ export default function ProfilePage() {
       userName: name.trim() || 'User',
       userEmail: email.trim() || 'user@example.com',
       currentPlan: plan,
-      monthlyIncome: Number(income) || 0,
-      totalBalance: Number(balance) || 0,
       savingsPercent: Number(savingsPercent) || 0,
-      expenses,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -65,23 +59,11 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          <motion.div className="panel" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <DollarSign size={18} color="var(--green)" /> Financial Baseline
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <label className="label">Monthly Income (₹)</label>
-                <input type="number" value={income} onChange={e => setIncome(e.target.value)} className="input" required />
-              </div>
-              <div>
-                <label className="label">Total Balance (₹)</label>
-                <input type="number" value={balance} onChange={e => setBalance(e.target.value)} className="input" required />
-              </div>
-            </div>
-          </motion.div>
+        </div>
 
-          <motion.div className="panel" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+        {/* Right Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <motion.div className="panel" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Target size={18} color="var(--blue)" /> Savings Goal
             </h3>
@@ -89,31 +71,6 @@ export default function ProfilePage() {
               <label className="label">Target Savings Percentage (%)</label>
               <input type="number" value={savingsPercent} onChange={e => setSavingsPercent(e.target.value)} className="input" required />
               <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 8 }}>Recommended: 20% to 30% of your income.</p>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Right Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <motion.div className="panel" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Expense Categories</h3>
-            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>Update your monthly allocated expenses below to adjust your AI budgeting.</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {expenses.map((ex, i) => (
-                <div key={ex.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: ex.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{ex.name}</span>
-                  <div style={{ position: 'relative', width: 130 }}>
-                    <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 13, pointerEvents: 'none' }}>₹</span>
-                    <input type="number" value={ex.amount} onChange={e => {
-                      const copy = [...expenses];
-                      copy[i] = { ...copy[i], amount: Number(e.target.value) || 0 };
-                      setExpenses(copy);
-                    }} className="input" style={{ paddingLeft: 24 }} />
-                  </div>
-                </div>
-              ))}
             </div>
           </motion.div>
 

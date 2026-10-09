@@ -1,11 +1,13 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, Search, Filter, Trash2, ChevronDown, ArrowUpDown, CheckCircle2, AlertCircle, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
+import { Upload, FileText, Search, Filter, Trash2, ChevronDown, ArrowUpDown, CheckCircle2, AlertCircle, Loader2, Lock, Eye, EyeOff, Landmark } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { parseStatementPdf, PasswordRequiredError } from '../utils/transactionParser';
 import { CATEGORIES, CATEGORY_CONFIG } from '../utils/types';
 import type { Category } from '../utils/types';
 import { Link } from 'react-router-dom';
+import BankConnect from '../components/BankConnect';
+import type { BankDataResult } from '../utils/setuApi';
 
 const fmt = (n: number) => (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
 
@@ -25,6 +27,10 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(0);
   const PER_PAGE = 25;
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // --- Bank Connect state ---
+  const [showBankConnect, setShowBankConnect] = useState(false);
+  const [bankResult, setBankResult] = useState<{ count: number; account: string } | null>(null);
 
   // --- Password modal state ---
   const [needsPassword, setNeedsPassword] = useState(false);
@@ -99,6 +105,17 @@ export default function TransactionsPage() {
     if (file) handleFile(file);
   };
 
+  // --- Bank Connect success handler ---
+  const handleBankSuccess = (result: BankDataResult) => {
+    addTransactions(result.transactions);
+    setBankResult({
+      count: result.transactions.length,
+      account: result.accountInfo?.maskedAccNumber || 'Bank Account',
+    });
+    setParseResult(null);
+    setParseError('');
+  };
+
   // --- Filtering, sorting, pagination ---
   const filtered = useMemo(() => {
     let list = [...txns];
@@ -133,7 +150,7 @@ export default function TransactionsPage() {
       {/* Header */}
       <div>
         <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Transactions</h1>
-        <p style={{ color: 'var(--text2)', fontSize: 14 }}>Upload bank statements and manage your transaction history.</p>
+        <p style={{ color: 'var(--text2)', fontSize: 14 }}>Upload bank statements or connect your bank account to manage your transaction history.</p>
       </div>
 
       {/* Upload limit warning for Basic users */}
@@ -152,37 +169,75 @@ export default function TransactionsPage() {
         </motion.div>
       )}
 
-      {/* Upload zone */}
-      <div
-        className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-        onClick={() => fileRef.current?.click()}
-      >
-        <input ref={fileRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+      {/* Upload & Connect options */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* PDF Upload zone */}
+        <div
+          className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => fileRef.current?.click()}
+          style={{ margin: 0 }}
+        >
+          <input ref={fileRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
-        {parsing ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <Loader2 size={36} color="var(--purple)" style={{ animation: 'spin 1s linear infinite' }} />
-            <p style={{ fontSize: 15, fontWeight: 600 }}>Parsing your statement…</p>
-            <p style={{ fontSize: 13, color: 'var(--text2)' }}>Extracting transactions and categorizing expenses</p>
-          </motion.div>
-        ) : (
-          <>
-            <Upload size={36} color="var(--purple)" style={{ marginBottom: 12 }} />
-            <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>
-              {dragOver ? 'Drop your PDF here' : 'Upload Bank Statement'}
-            </p>
-            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>
-              Drag & drop a PDF or click to browse. Supports SBI, HDFC, ICICI, Axis & more.
-            </p>
-            <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>
-              <FileText size={12} /> PDF files only
-            </span>
-          </>
-        )}
+          {parsing ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <Loader2 size={36} color="var(--purple)" style={{ animation: 'spin 1s linear infinite' }} />
+              <p style={{ fontSize: 15, fontWeight: 600 }}>Parsing your statement…</p>
+              <p style={{ fontSize: 13, color: 'var(--text2)' }}>Extracting transactions and categorizing expenses</p>
+            </motion.div>
+          ) : (
+            <>
+              <Upload size={32} color="var(--purple)" style={{ marginBottom: 10 }} />
+              <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                {dragOver ? 'Drop your PDF here' : 'Upload Bank Statement'}
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 10 }}>
+                Drag & drop a PDF or click to browse.
+              </p>
+              <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>
+                <FileText size={12} /> PDF files only
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Bank Connect zone */}
+        <div
+          className="upload-zone"
+          onClick={() => setShowBankConnect(true)}
+          style={{
+            margin: 0, cursor: 'pointer',
+            background: 'linear-gradient(135deg, rgba(96,165,250,0.04), rgba(129,140,248,0.06))',
+            borderColor: 'rgba(129,140,248,0.15)',
+          }}
+        >
+          <div style={{
+            width: 52, height: 52, borderRadius: 14, marginBottom: 10,
+            background: 'linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.12))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Landmark size={24} color="#818cf8" />
+          </div>
+          <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Connect Bank Account</p>
+          <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 10 }}>
+            Securely fetch transactions via RBI Account Aggregator.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <span className="badge" style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399', fontSize: 10 }}>🔒 RBI Regulated</span>
+            <span className="badge" style={{ background: 'rgba(96,165,250,0.08)', color: '#60a5fa', fontSize: 10 }}>⚡ Instant</span>
+          </div>
+        </div>
       </div>
+
+      {/* BankConnect Modal */}
+      <BankConnect
+        isOpen={showBankConnect}
+        onClose={() => setShowBankConnect(false)}
+        onSuccess={handleBankSuccess}
+      />
 
       {/* Password modal for encrypted PDFs */}
       <AnimatePresence>
@@ -262,6 +317,16 @@ export default function TransactionsPage() {
             <div>
               <span style={{ fontWeight: 600 }}>Successfully parsed {parseResult.count} transactions</span>
               <span style={{ color: 'var(--text2)', marginLeft: 8, fontSize: 13 }}>({parseResult.range})</span>
+            </div>
+          </motion.div>
+        )}
+        {bankResult && (
+          <motion.div className="panel" style={{ padding: '14px 20px', display: 'flex', gap: 12, alignItems: 'center', borderLeft: '3px solid #60a5fa' }}
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <Landmark size={20} color="#60a5fa" />
+            <div>
+              <span style={{ fontWeight: 600 }}>Imported {bankResult.count} transactions from {bankResult.account}</span>
+              <span style={{ color: 'var(--text2)', marginLeft: 8, fontSize: 13 }}>via Account Aggregator</span>
             </div>
           </motion.div>
         )}
