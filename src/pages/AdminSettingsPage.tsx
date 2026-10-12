@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Shield, Globe, AlertTriangle, Save } from 'lucide-react';
+import { Shield, Globe, AlertTriangle, Save, Database, CheckCircle2, Server } from 'lucide-react';
+import { useFinance } from '../context/FinanceContext';
 
 export default function AdminSettingsPage() {
+  const { databaseStatus } = useFinance();
   const [maintMode, setMaintMode] = useState(false);
   const [allowSignups, setAllowSignups] = useState(true);
   const [apiKey, setApiKey] = useState('sk_live_fS8k2jL9...');
@@ -42,6 +44,40 @@ export default function AdminSettingsPage() {
             <button onClick={() => setAllowSignups(!allowSignups)} style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: allowSignups ? 'var(--green)' : 'var(--bg3)', cursor: 'pointer', position: 'relative', transition: 'var(--transition)' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: allowSignups ? 22 : 2, transition: 'var(--transition)' }} />
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel" style={{ padding: 32 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <Database size={20} color="var(--purple)" /> Database & Backend Engine
+        </h2>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'var(--bg2)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Server size={20} color="var(--purple)" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>
+                  {databaseStatus?.connected ? 'MongoDB Atlas Cloud Database' : 'Local Persistent JSON Database'}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
+                  {databaseStatus?.connected
+                    ? 'Connected via Mongoose ODM to cloud cluster'
+                    : `Active storage: ${databaseStatus?.storageFile || 'server/data/finsight_db.json'}`}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, background: 'rgba(52,211,153,0.1)', color: 'var(--green)', fontSize: 13, fontWeight: 600 }}>
+              <CheckCircle2 size={15} />
+              {databaseStatus?.connected ? 'Atlas Connected' : 'Persistent Storage Active'}
+            </div>
+          </div>
+
+          <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, padding: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px dashed var(--border)' }}>
+            💡 <strong>Switch to MongoDB Atlas anytime:</strong> Add your connection string <code>MONGODB_URI=mongodb+srv://...</code> to <code>.env</code>. The backend server automatically establishes a live connection with Mongoose!
           </div>
         </div>
       </div>

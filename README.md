@@ -122,17 +122,18 @@ FinSight is a comprehensive personal finance management platform that transforms
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Frontend** | React 19 + TypeScript 6 | UI components with type safety |
-| **Build** | Vite 8 | Lightning-fast HMR and builds |
-| **Routing** | React Router 7 | SPA navigation with nested routes |
+| **Build & Tooling**| Vite 8 + tsx + concurrently | High-speed HMR and concurrent frontend/backend development |
+| **Backend Server** | Node.js + Express 5 (REST) | Full backend API with JWT authentication and middleware |
+| **Database** | MongoDB Atlas (Mongoose ODM) | Cloud database with smart local persistent JSON fallback |
+| **Security** | bcryptjs + jsonwebtoken | Server-side password hashing (10 salt rounds) & signed JWT tokens |
+| **Routing** | React Router 7 | SPA navigation with protected routes and role checks |
 | **Charts** | Recharts 3 | Area, bar, pie, and composed charts |
 | **Animations** | Framer Motion 12 | Page transitions and micro-animations |
-| **Icons** | Lucide React | 1000+ clean, consistent icons |
-| **PDF Parsing** | pdf.js (pdfjs-dist) | Extract text from bank statement PDFs |
-| **Stock Data** | Alpha Vantage API | Live BSE/NSE stock quotes |
-| **Bank Connect** | Setu Account Aggregator | Direct bank account data via AA framework |
-| **Backend** | Vercel Serverless Functions | Setu API proxy (keeps secrets server-side) |
-| **Deployment** | Vercel | Auto-deploy from Git with edge CDN |
-| **Styling** | Vanilla CSS | Custom design system with CSS variables |
+| **Icons** | Lucide React | Clean, modern vector icons |
+| **PDF Parsing** | pdf.js (pdfjs-dist) | Extract text and transactions from bank statement PDFs |
+| **Stock Data** | Alpha Vantage API | Live BSE/NSE market and equity quotes |
+| **Bank Connect** | Setu Account Aggregator | Direct bank account data via India's AA framework |
+| **Styling** | Vanilla CSS | Bespoke design system with CSS tokens and dark mode |
 
 ---
 
@@ -140,38 +141,53 @@ FinSight is a comprehensive personal finance management platform that transforms
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Browser (Client)                      │
-│                                                              │
-│  ┌──────────┐  ┌───────────┐  ┌──────────┐  ┌────────────┐ │
-│  │  Login /  │  │ Dashboard │  │Analytics │  │  Portfolio  │ │
-│  │  Signup   │  │   Page    │  │  Page    │  │    Page     │ │
-│  └─────┬────┘  └─────┬─────┘  └────┬─────┘  └─────┬──────┘ │
-│        │              │             │              │         │
-│        └──────────────┴──────┬──────┴──────────────┘         │
-│                              │                               │
-│                    ┌─────────┴─────────┐                     │
-│                    │  FinanceContext    │                     │
-│                    │  (State + Auth)    │                     │
-│                    └─────────┬─────────┘                     │
-│                              │                               │
-│              ┌───────────────┼───────────────┐               │
-│              │               │               │               │
-│     ┌────────┴───┐   ┌──────┴─────┐  ┌──────┴──────┐       │
-│     │ localStorage│   │ setuApi.ts │  │ stockApi.ts │       │
-│     │ (Auth+Data) │   │ (Bank API) │  │ (Stocks)    │       │
-│     └────────────┘   └──────┬─────┘  └──────┬──────┘       │
-│                              │               │               │
-└──────────────────────────────┼───────────────┼───────────────┘
-                               │               │
-                    ┌──────────┴──────┐  ┌─────┴──────────┐
-                    │  Vercel Funcs   │  │ Alpha Vantage  │
-                    │  /api/setu/*    │  │   (via proxy)  │
-                    └──────────┬──────┘  └────────────────┘
+│                    FinSight React Frontend                  │
+│                                                             │
+│  ┌──────────┐  ┌───────────┐  ┌──────────┐  ┌────────────┐  │
+│  │  Login /  │  │ Dashboard │  │Analytics │  │  Portfolio  │  │
+│  │  Signup   │  │   Page    │  │  Page    │  │    Page     │  │
+│  └─────┬────┘  └─────┬─────┘  └────┬─────┘  └─────┬──────┘  │
+│        │              │             │              │          │
+│        └──────────────┴──────┬──────┴──────────────┘          │
+│                              │                                │
+│                     ┌────────┴─────────┐                      │
+│                     │  FinanceContext  │                      │
+│                     │  (Optimistic UI) │                      │
+│                     └────────┬─────────┘                      │
+│                              │ (JWT Bearer Token)             │
+│                     ┌────────┴─────────┐                      │
+│                     │  api.ts Service  │                      │
+│                     └────────┬─────────┘                      │
+└──────────────────────────────┼────────────────────────────────┘
                                │
-                    ┌──────────┴──────┐
-                    │   Setu AA API   │
-                    │  (Bank Data)    │
-                    └─────────────────┘
+                HTTP /api REST Requests (Vite Proxy)
+                               │
+┌──────────────────────────────┼────────────────────────────────┐
+│               Node.js Express REST Backend (Port 5000)        │
+│                                                               │
+│  ┌──────────────┐   ┌───────────────┐   ┌─────────────────┐   │
+│  │ Auth Routes  │   │  User Routes  │   │ Transaction API │   │
+│  │ (bcrypt/JWT) │   │ (Profile/Plan)│   │ (CRUD & Import) │   │
+│  └──────┬───────┘   └───────┬───────┘   └────────┬────────┘   │
+│         │                   │                    │            │
+│  ┌──────┴───────┐   ┌───────┴───────┐   ┌────────┴────────┐   │
+│  │ Goals Routes │   │Portfolio Route│   │ Setu AA Routes  │   │
+│  └──────┬───────┘   └───────┬───────┘   └────────┬────────┘   │
+│         │                   │                    │            │
+│         └───────────────────┼────────────────────┘            │
+│                             │                                 │
+│                  ┌──────────┴──────────┐                      │
+│                  │  db.ts (Data Layer) │                      │
+│                  └──────────┬──────────┘                      │
+└─────────────────────────────┼─────────────────────────────────┘
+                              │
+               ┌──────────────┴──────────────┐
+               ▼                             ▼
+    ┌────────────────────┐        ┌───────────────────────┐
+    │   MongoDB Atlas    │   OR   │ Local Persistent DB   │
+    │  (When MONGODB_URI │        │(server/data/db.json)  │
+    │    is configured)  │        │ (Zero-config fallback)│
+    └────────────────────┘        └───────────────────────┘
 ```
 
 ---
@@ -219,6 +235,9 @@ cp .env.example .env
 
 | Variable | Required | Description |
 |----------|:--------:|-------------|
+| `PORT` | No | Backend Express server port (default: `5000`) |
+| `JWT_SECRET` | No (Recommended in prod) | Secret key for signing and verifying JWT authentication tokens |
+| `MONGODB_URI` | No (Cloud Atlas) | MongoDB Atlas connection string (`mongodb+srv://...`). When omitted, FinSight uses local persistent JSON database storage (`server/data/finsight_db.json`) |
 | `SETU_CLIENT_ID` | For bank connect | Setu AA API client ID |
 | `SETU_CLIENT_SECRET` | For bank connect | Setu AA API secret |
 | `SETU_PRODUCT_INSTANCE_ID` | For bank connect | Setu product instance ID |
@@ -226,7 +245,7 @@ cp .env.example .env
 | `SETU_REDIRECT_URL` | No | Redirect URL after consent approval |
 | `VITE_SETU_MOCK` | No | Set to `true` to use mock bank data (default in dev) |
 
-> **Note:** The app works fully without Setu credentials — it falls back to mock data in development. Alpha Vantage API keys are entered by users in the Portfolio page UI.
+> **Note:** The app works fully without cloud credentials! It runs out-of-the-box using the local persistent database and mock bank data. When you are ready to connect MongoDB Atlas, just set `MONGODB_URI` in `.env`.
 
 ---
 

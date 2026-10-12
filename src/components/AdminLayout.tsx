@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon, Timer } from 'lucide-react';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon, Timer, Database } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 const NAV_ITEMS = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/admin/database', icon: Database, label: 'Database Studio' },
   { path: '/admin/users', icon: Users, label: 'User Management' },
   { path: '/admin/revenue', icon: CreditCard, label: 'Revenue Analytics' },
   { path: '/admin/settings', icon: Settings, label: 'Platform Settings' },

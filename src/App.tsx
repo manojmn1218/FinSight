@@ -17,6 +17,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminRevenuePage from './pages/AdminRevenuePage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import AdminDatabasePage from './pages/AdminDatabasePage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import TransactionsPage from './pages/TransactionsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -25,13 +26,27 @@ import ExportPage from './pages/ExportPage';
 import PortfolioPage from './pages/PortfolioPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useFinance();
+  const { isAuthenticated, isLoading } = useFinance();
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--purple)', fontWeight: 600, fontSize: 16 }}>
+        Loading FinSight...
+      </div>
+    );
+  }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, data } = useFinance();
+  const { isAuthenticated, data, isLoading } = useFinance();
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--purple)', fontWeight: 600, fontSize: 16 }}>
+        Loading FinSight...
+      </div>
+    );
+  }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!data.isAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
@@ -52,6 +67,7 @@ export default function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="revenue" element={<AdminRevenuePage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="database" element={<AdminDatabasePage />} />
           </Route>
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />

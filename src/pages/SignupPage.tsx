@@ -22,7 +22,7 @@ export default function SignupPage() {
 
   const allPass = passwordChecks.every(c => c.pass);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -31,9 +31,8 @@ export default function SignupPage() {
       return;
     }
 
-    const result = registerUser(email, password, name);
+    const result = await registerUser(email, password, name);
     if (result.success) {
-      loginAs(email.trim().toLowerCase());
       nav('/onboarding');
     } else {
       setError(result.error || 'Registration failed.');

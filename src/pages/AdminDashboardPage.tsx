@@ -7,9 +7,15 @@ import { useFinance } from '../context/FinanceContext';
 
 
 export default function AdminDashboardPage() {
-  const { allUsers } = useFinance();
+  const { allUsers, databaseStatus } = useFinance();
   const appRevenue = allUsers.reduce((sum, u) => sum + (u.currentPlan === 'Pro' ? 349 : u.currentPlan === 'Wealth' ? 899 : 0), 0);
   const activeUsers = allUsers.filter(u => u.isOnboarded).length;
+
+  const dbStatusText = databaseStatus?.connected
+    ? 'MongoDB Atlas (Connected)'
+    : databaseStatus?.mode
+    ? `${databaseStatus.mode}`
+    : 'Local Persistent DB (Active)';
 
   const chartData = useMemo(() => {
     const today = new Date();
@@ -85,11 +91,11 @@ export default function AdminDashboardPage() {
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20 }}>System Status</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
-              { name: 'Database Cluster', status: 'Healthy', color: 'var(--green)' },
+              { name: 'Database Cluster', status: dbStatusText, color: 'var(--green)' },
               { name: 'Payment Gateway', status: 'Operational', color: 'var(--green)' },
-              { name: 'AI Analytics Engine', status: 'High Load', color: 'var(--amber)' },
-              { name: 'Email Dispatcher', status: 'Healthy', color: 'var(--green)' },
-              { name: 'Security Firewall', status: 'Active (2 blocked)', color: 'var(--purple)' },
+              { name: 'AI Analytics Engine', status: 'Optimal', color: 'var(--green)' },
+              { name: 'Email Dispatcher', status: 'Operational', color: 'var(--green)' },
+              { name: 'Security Firewall', status: 'Active (Protected)', color: 'var(--purple)' },
             ].map(sys => (
               <div key={sys.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
                 <span style={{ fontSize: 14, fontWeight: 500 }}>{sys.name}</span>

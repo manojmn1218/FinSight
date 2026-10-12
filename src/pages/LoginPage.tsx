@@ -26,22 +26,19 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, data.isAdmin, nav]);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const result = loginWithPassword(email, password);
+    const result = await loginWithPassword(email, password);
     setLoading(false);
 
     if (result.success) {
-      // Check onboarding status
-      const users = JSON.parse(localStorage.getItem('fs_users') || '{}');
-      const isOb = users[email.trim().toLowerCase()]?.isOnboarded;
       if (email.trim().toLowerCase() === 'admin@finsight.com') {
         nav('/admin');
       } else {
-        nav(isOb ? '/dashboard' : '/onboarding');
+        nav('/dashboard');
       }
     } else {
       setError(result.error || 'Login failed.');

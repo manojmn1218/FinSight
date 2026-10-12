@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Crown, Plus, Trash2, Calendar, UserCheck, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Sparkles, Info, Key, RefreshCw, Loader2 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { Link } from 'react-router-dom';
+import { api } from '../services/api';
 import { fetchQuotesWithCache, hasApiKey, getApiKey, setApiKey as saveApiKey } from '../utils/stockApi';
 import type { StockQuote } from '../utils/stockApi';
 
@@ -140,15 +141,22 @@ export default function PortfolioPage() {
   const isWealth = data.currentPlan === 'Wealth';
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
-  // State for user manually added assets (loaded from local storage if available)
-  const [manualAssets, setManualAssets] = useState<Asset[]>(() => {
-    try {
-      const saved = localStorage.getItem(`fs_assets_${data.userEmail}`);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // State for user manually added assets (loaded from backend database)
+  const [manualAssets, setManualAssets] = useState<Asset[]>([]);
+
+  useEffect(() => {
+    if (!data.userEmail) return;
+    api.getPortfolio().then(res => {
+      if (res.assets && res.assets.length > 0) {
+        setManualAssets(res.assets.map(a => ({
+          id: a.id || a.symbol,
+          name: a.name || a.symbol,
+          category: (a.assetType === 'crypto' ? 'Crypto' : a.assetType === 'mutual_fund' ? 'Mutual Funds' : 'Equity') as any,
+          value: (a.shares || 1) * (a.avgBuyPrice || 0),
+        })));
+      }
+    }).catch(() => {});
+  }, [data.userEmail]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState('');
@@ -161,11 +169,17 @@ export default function PortfolioPage() {
 
   const saveManualAssets = (newAssets: Asset[]) => {
     setManualAssets(newAssets);
-    try {
-      localStorage.setItem(`fs_assets_${data.userEmail}`, JSON.stringify(newAssets));
-    } catch (e) {
-      console.error(e);
-    }
+    const mapped = newAssets.map(a => ({
+      id: a.id,
+      symbol: a.name.slice(0, 10).toUpperCase(),
+      name: a.name,
+      shares: 1,
+      avgBuyPrice: a.value,
+      assetType: (a.category === 'Crypto' ? 'crypto' : a.category === 'Mutual Funds' ? 'mutual_fund' : 'stock') as any,
+    }));
+    api.savePortfolio(mapped).catch(err => {
+      console.error('[Portfolio] Save failed:', err);
+    });
   };
 
   const addAsset = (e: React.FormEvent) => {

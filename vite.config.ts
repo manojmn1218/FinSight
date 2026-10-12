@@ -11,10 +11,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/alphavantage/, ''),
       },
-      // Setu AA API routes are handled by:
-      // - Vercel serverless functions in production (api/setu/*.ts)
-      // - Mock data in development (src/utils/setuMockData.ts)
-      // No dev proxy needed — setuApi.ts auto-detects dev mode
+      '/api': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+      },
     }
   }
 })

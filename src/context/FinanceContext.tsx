@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { Transaction, FinancialGoal } from '../utils/types';
+import { api, type UserProfile, type DatabaseStatus } from '../services/api';
 
 interface ExpenseItem {
   name: string;
@@ -7,7 +8,7 @@ interface ExpenseItem {
   color: string;
 }
 
-interface FinData {
+export interface FinData {
   userName: string;
   userEmail: string;
   monthlyIncome: number;
@@ -23,55 +24,34 @@ interface FinData {
   statementUploadsCount?: number;
 }
 
-interface UserCredential {
-  passwordHash: string;
-  createdAt: string;
-  lastLogin: string;
-  loginAttempts: number;
-  lockedUntil: string | null;
-}
-
 interface FinCtx {
   data: FinData;
-  setData: (d: Partial<FinData>) => void;
-  reset: () => void;
+  setData: (d: Partial<FinData>) => Promise<void>;
+  reset: () => Promise<void>;
   totalExpenses: number;
   savingsAmount: number;
   budget: number;
   allUsers: FinData[];
   isAuthenticated: boolean;
+  isLoading: boolean;
+  databaseStatus: DatabaseStatus | null;
   loginAs: (email: string) => void;
-  loginWithPassword: (email: string, password: string) => { success: boolean; error?: string };
-  registerUser: (email: string, password: string, name: string) => { success: boolean; error?: string };
+  loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  registerUser: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   sessionTimeLeft: number;
+  refreshUserData: () => Promise<void>;
   // Transaction methods
-  addTransactions: (txns: Transaction[]) => void;
-  updateTransaction: (id: string, updates: Partial<Transaction>) => void;
-  deleteTransaction: (id: string) => void;
+  addTransactions: (txns: Transaction[]) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
   // Goal methods
-  addGoal: (goal: FinancialGoal) => void;
-  updateGoal: (id: string, updates: Partial<FinancialGoal>) => void;
-  deleteGoal: (id: string) => void;
-}
-
-
-
-function hashPasswordSync(password: string): string {
-  // Simple deterministic hash for synchronous use
-  let hash = 0;
-  const salted = password + '__finsight_salt_2026__';
-  for (let i = 0; i < salted.length; i++) {
-    const char = salted.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return 'sync_' + Math.abs(hash).toString(16);
+  addGoal: (goal: FinancialGoal) => Promise<void>;
+  updateGoal: (id: string, updates: Partial<FinancialGoal>) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
 }
 
 const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 const INIT: FinData = {
   userName: '',
@@ -98,59 +78,30 @@ const INIT: FinData = {
 
 const Ctx = createContext<FinCtx | null>(null);
 
-export function FinanceProvider({ children }: { children: React.ReactNode }) {
-  const [usersMap, setUsersMap] = useState<Record<string, FinData>>(() => {
-    try {
-      const s = localStorage.getItem('fs_users');
-      // Migrate old data if present
-      const oldDataStr = localStorage.getItem('fs_data');
-      if (!s && oldDataStr) {
-        const oldData = JSON.parse(oldDataStr);
-        if (oldData.userEmail) {
-          const m = { [oldData.userEmail]: oldData };
-          localStorage.setItem('fs_users', JSON.stringify(m));
-          return m;
-        }
-      }
-      return s ? JSON.parse(s) : {};
-    } catch { return {}; }
-  });
-
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('fs_current_user');
-  });
-
-  const data = useMemo(() => {
-    const ensureArrays = (u: FinData): FinData => ({
-      ...u,
-      transactions: u.transactions || [],
-      financialGoals: u.financialGoals || [],
-    });
-    if (currentUserEmail === 'admin@finsight.com') {
-      const u = usersMap[currentUserEmail] || INIT;
-      return ensureArrays({ ...u, isAdmin: true });
-    }
-    if (currentUserEmail && usersMap[currentUserEmail]) {
-      return ensureArrays(usersMap[currentUserEmail]);
-    }
-    return INIT;
-  }, [currentUserEmail, usersMap]);
-
-  const allUsers = useMemo(() => Object.values(usersMap), [usersMap]);
-
-  useEffect(() => { localStorage.setItem('fs_users', JSON.stringify(usersMap)); }, [usersMap]);
-  useEffect(() => { 
-    if (currentUserEmail) localStorage.setItem('fs_current_user', currentUserEmail); 
-    else localStorage.removeItem('fs_current_user');
-  }, [currentUserEmail]);
-
-  const setData = (d: Partial<FinData>) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => ({
-      ...prev,
-      [currentUserEmail]: { ...prev[currentUserEmail], ...d }
-    }));
+function profileToFinData(profile: UserProfile, txns: Transaction[] = [], goals: FinancialGoal[] = []): FinData {
+  return {
+    userName: profile.name || '',
+    userEmail: profile.email || '',
+    monthlyIncome: profile.monthlyIncome || 0,
+    totalBalance: profile.totalBalance || 0,
+    currentPlan: profile.currentPlan || 'Basic',
+    expenses: profile.expenses && profile.expenses.length > 0 ? profile.expenses : INIT.expenses,
+    savingsPercent: profile.savingsPercent || 20,
+    isOnboarded: !!profile.isOnboarded,
+    isAdmin: !!profile.isAdmin,
+    transactions: txns || [],
+    financialGoals: goals || [],
+    statementUploaded: !!profile.statementUploaded,
+    statementUploadsCount: profile.statementUploadsCount || 0,
   };
+}
+
+export function FinanceProvider({ children }: { children: React.ReactNode }) {
+  const [data, setFinData] = useState<FinData>(INIT);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus | null>(null);
+  const [adminUsersList, setAdminUsersList] = useState<FinData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // --- Session timeout ---
   const [sessionStart, setSessionStart] = useState<number | null>(() => {
@@ -158,7 +109,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return s ? Number(s) : null;
   });
   const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_TIMEOUT_MS);
-  const activityRef = useRef(0);
 
   const isAuthenticated = useMemo(() => {
     if (!currentUserEmail) return false;
@@ -166,20 +116,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     if (sessionTimeLeft <= 0) return false;
     return true;
   }, [currentUserEmail, sessionStart, sessionTimeLeft]);
-
-  // Track user activity to extend session
-  useEffect(() => {
-    activityRef.current = Date.now();
-    const onActivity = () => { activityRef.current = Date.now(); };
-    window.addEventListener('mousemove', onActivity);
-    window.addEventListener('keydown', onActivity);
-    window.addEventListener('click', onActivity);
-    return () => {
-      window.removeEventListener('mousemove', onActivity);
-      window.removeEventListener('keydown', onActivity);
-      window.removeEventListener('click', onActivity);
-    };
-  }, []);
 
   // Session countdown timer
   useEffect(() => {
@@ -189,202 +125,293 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const remaining = Math.max(0, SESSION_TIMEOUT_MS - elapsed);
       setSessionTimeLeft(remaining);
       if (remaining <= 0) {
-        // Auto-logout on timeout
-        setCurrentUserEmail(null);
-        setSessionStart(null);
-        localStorage.removeItem('fs_current_user');
-        localStorage.removeItem('fs_session_start');
+        logoutUser();
       }
     }, 1000);
     return () => clearInterval(interval);
   }, [sessionStart, currentUserEmail]);
 
-  // --- Credentials store ---
-  const [credsMap, setCredsMap] = useState<Record<string, UserCredential>>(() => {
+  // Load user data from backend API
+  const refreshUserData = useCallback(async () => {
+    const token = api.getToken();
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const s = localStorage.getItem('fs_creds');
-      return s ? JSON.parse(s) : {};
-    } catch { return {}; }
-  });
+      const [meRes, txnsRes, goalsRes] = await Promise.all([
+        api.getMe(),
+        api.getTransactions().catch(() => ({ transactions: [] })),
+        api.getGoals().catch(() => ({ goals: [] })),
+      ]);
 
-  useEffect(() => { localStorage.setItem('fs_creds', JSON.stringify(credsMap)); }, [credsMap]);
+      setDatabaseStatus(meRes.databaseStatus);
+      const finData = profileToFinData(meRes.user, txnsRes.transactions, goalsRes.goals);
+      setFinData(finData);
+      setCurrentUserEmail(finData.userEmail);
 
-  const registerUser = useCallback((email: string, password: string, name: string): { success: boolean; error?: string } => {
-    const trimmedEmail = email.trim().toLowerCase();
-    if (credsMap[trimmedEmail]) {
-      return { success: false, error: 'An account with this email already exists.' };
-    }
-    if (password.length < 8) {
-      return { success: false, error: 'Password must be at least 8 characters.' };
-    }
-    if (!/[A-Z]/.test(password)) {
-      return { success: false, error: 'Password must contain at least one uppercase letter.' };
-    }
-    if (!/[0-9]/.test(password)) {
-      return { success: false, error: 'Password must contain at least one number.' };
-    }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      return { success: false, error: 'Password must contain at least one special character.' };
-    }
-    const hash = hashPasswordSync(password);
-    setCredsMap(prev => ({
-      ...prev,
-      [trimmedEmail]: {
-        passwordHash: hash,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        loginAttempts: 0,
-        lockedUntil: null
-      }
-    }));
-    setUsersMap(prev => ({
-      ...prev,
-      [trimmedEmail]: { ...INIT, userEmail: trimmedEmail, userName: name.trim() }
-    }));
-    return { success: true };
-  }, [credsMap]);
-
-  const loginWithPassword = useCallback((email: string, password: string): { success: boolean; error?: string } => {
-    const trimmedEmail = email.trim().toLowerCase();
-
-    const cred = credsMap[trimmedEmail];
-    if (!cred) {
-      return { success: false, error: 'No account found with this email.' };
-    }
-
-    // Check lockout
-    if (cred.lockedUntil && new Date(cred.lockedUntil).getTime() > Date.now()) {
-      const minsLeft = Math.ceil((new Date(cred.lockedUntil).getTime() - Date.now()) / 60000);
-      return { success: false, error: `Account locked. Try again in ${minsLeft} minute(s).` };
-    }
-
-    const hash = hashPasswordSync(password);
-    if (hash !== cred.passwordHash) {
-      const attempts = cred.loginAttempts + 1;
-      const locked = attempts >= MAX_LOGIN_ATTEMPTS;
-      setCredsMap(prev => ({
-        ...prev,
-        [trimmedEmail]: {
-          ...prev[trimmedEmail],
-          loginAttempts: attempts,
-          lockedUntil: locked ? new Date(Date.now() + LOCKOUT_DURATION_MS).toISOString() : null
+      // If user is admin, also load all platform users
+      if (finData.isAdmin) {
+        try {
+          const adminRes = await api.getAdminUsers();
+          setAdminUsersList(adminRes.users.map(u => profileToFinData(u)));
+        } catch (e) {
+          console.warn('[FinanceContext] Could not fetch admin users:', e);
         }
-      }));
-      if (locked) {
-        return { success: false, error: 'Too many failed attempts. Account locked for 15 minutes.' };
       }
-      return { success: false, error: `Incorrect password. ${MAX_LOGIN_ATTEMPTS - attempts} attempt(s) remaining.` };
+    } catch (err) {
+      console.warn('[FinanceContext] Auth check failed:', err);
+      api.setToken(null);
+      setCurrentUserEmail(null);
+      setFinData(INIT);
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    // Success — reset attempts, update lastLogin
-    setCredsMap(prev => ({
-      ...prev,
-      [trimmedEmail]: {
-        ...prev[trimmedEmail],
-        loginAttempts: 0,
-        lockedUntil: null,
-        lastLogin: new Date().toISOString()
+  // Initial load on mount
+  useEffect(() => {
+    refreshUserData();
+  }, [refreshUserData]);
+
+  // Periodic health & db check
+  useEffect(() => {
+    api.getHealth()
+      .then(res => setDatabaseStatus(res.database))
+      .catch(() => {});
+  }, []);
+
+  const loginWithPassword = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await api.login(cleanEmail, password);
+
+      const [txnsRes, goalsRes] = await Promise.all([
+        api.getTransactions().catch(() => ({ transactions: [] })),
+        api.getGoals().catch(() => ({ goals: [] })),
+      ]);
+
+      const finData = profileToFinData(res.user, txnsRes.transactions, goalsRes.goals);
+      setFinData(finData);
+      setCurrentUserEmail(finData.userEmail);
+
+      const now = Date.now();
+      setSessionStart(now);
+      localStorage.setItem('fs_session_start', String(now));
+
+      if (finData.isAdmin) {
+        api.getAdminUsers()
+          .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
+          .catch(() => {});
       }
-    }));
-    setCurrentUserEmail(trimmedEmail);
-    const now = Date.now();
-    setSessionStart(now);
-    localStorage.setItem('fs_session_start', String(now));
-    return { success: true };
-  }, [credsMap]);
 
-  const loginAs = (email: string) => {
-    setCurrentUserEmail(email);
-    if (email !== 'admin@finsight.com' && !usersMap[email]) {
-      setUsersMap(prev => ({
-        ...prev,
-        [email]: { ...INIT, userEmail: email }
-      }));
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Login failed.' };
     }
-    const now = Date.now();
-    setSessionStart(now);
-    localStorage.setItem('fs_session_start', String(now));
-  };
+  }, []);
 
-  const logoutUser = () => {
+  const registerUser = useCallback(async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await api.register(cleanEmail, password, name);
+
+      const finData = profileToFinData(res.user, [], []);
+      setFinData(finData);
+      setCurrentUserEmail(finData.userEmail);
+
+      const now = Date.now();
+      setSessionStart(now);
+      localStorage.setItem('fs_session_start', String(now));
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Registration failed.' };
+    }
+  }, []);
+
+  const logoutUser = useCallback(() => {
+    api.logout().catch(() => {});
     setCurrentUserEmail(null);
     setSessionStart(null);
-    localStorage.removeItem('fs_current_user');
     localStorage.removeItem('fs_session_start');
-  };
+    setFinData(INIT);
+    setAdminUsersList([]);
+  }, []);
 
-  const reset = () => { 
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => ({
+  const loginAs = useCallback((email: string) => {
+    setCurrentUserEmail(email);
+    setFinData(prev => ({ ...prev, userEmail: email }));
+    const now = Date.now();
+    setSessionStart(now);
+    localStorage.setItem('fs_session_start', String(now));
+  }, []);
+
+  const setData = useCallback(async (d: Partial<FinData>) => {
+    // Optimistic UI update
+    setFinData(prev => ({ ...prev, ...d }));
+
+    try {
+      const payload: Partial<UserProfile> = {};
+      if (d.userName !== undefined) payload.name = d.userName;
+      if (d.monthlyIncome !== undefined) payload.monthlyIncome = d.monthlyIncome;
+      if (d.totalBalance !== undefined) payload.totalBalance = d.totalBalance;
+      if (d.savingsPercent !== undefined) payload.savingsPercent = d.savingsPercent;
+      if (d.currentPlan !== undefined) payload.currentPlan = d.currentPlan as any;
+      if (d.isOnboarded !== undefined) payload.isOnboarded = d.isOnboarded;
+      if (d.expenses !== undefined) payload.expenses = d.expenses;
+      if (d.statementUploaded !== undefined) payload.statementUploaded = d.statementUploaded;
+      if (d.statementUploadsCount !== undefined) payload.statementUploadsCount = d.statementUploadsCount;
+
+      await api.updateProfile(payload);
+    } catch (err) {
+      console.error('[FinanceContext] Failed to persist profile changes to backend:', err);
+    }
+  }, []);
+
+  const reset = useCallback(async () => {
+    try {
+      await api.resetProfile();
+      await refreshUserData();
+    } catch (err) {
+      console.error('[FinanceContext] Failed to reset profile:', err);
+    }
+  }, [refreshUserData]);
+
+  // Transaction CRUD
+  const addTransactions = useCallback(async (txns: Transaction[]) => {
+    // Optimistic update
+    setFinData(prev => {
+      const existing = prev.transactions || [];
+      const sigs = new Set(existing.map(t => `${t.date}_${t.amount}_${t.description.slice(0, 20)}`));
+      const toAdd = txns.filter(t => !sigs.has(`${t.date}_${t.amount}_${t.description.slice(0, 20)}`));
+      return {
+        ...prev,
+        transactions: [...existing, ...toAdd],
+        statementUploaded: true,
+        statementUploadsCount: (prev.statementUploadsCount || 0) + 1,
+      };
+    });
+
+    try {
+      await api.addTransactions(txns);
+      // Reload fresh transactions from server
+      const res = await api.getTransactions();
+      setFinData(prev => ({ ...prev, transactions: res.transactions }));
+    } catch (err) {
+      console.error('[FinanceContext] Failed to save transactions to database:', err);
+    }
+  }, []);
+
+  const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
+    setFinData(prev => ({
       ...prev,
-      [currentUserEmail]: { ...INIT, userEmail: currentUserEmail }
+      transactions: (prev.transactions || []).map(t => (t.id === id ? { ...t, ...updates } : t)),
     }));
-  };
+
+    try {
+      await api.updateTransaction(id, updates);
+    } catch (err) {
+      console.error('[FinanceContext] Failed to update transaction on backend:', err);
+    }
+  }, []);
+
+  const deleteTransaction = useCallback(async (id: string) => {
+    setFinData(prev => ({
+      ...prev,
+      transactions: (prev.transactions || []).filter(t => t.id !== id),
+    }));
+
+    try {
+      await api.deleteTransaction(id);
+    } catch (err) {
+      console.error('[FinanceContext] Failed to delete transaction on backend:', err);
+    }
+  }, []);
+
+  // Goal CRUD
+  const addGoal = useCallback(async (goal: FinancialGoal) => {
+    setFinData(prev => ({
+      ...prev,
+      financialGoals: [...(prev.financialGoals || []), goal],
+    }));
+
+    try {
+      const res = await api.addGoal(goal);
+      if (res.goal) {
+        setFinData(prev => ({
+          ...prev,
+          financialGoals: [...(prev.financialGoals || []).filter(g => g.id !== goal.id), res.goal],
+        }));
+      }
+    } catch (err) {
+      console.error('[FinanceContext] Failed to add goal to database:', err);
+    }
+  }, []);
+
+  const updateGoal = useCallback(async (id: string, updates: Partial<FinancialGoal>) => {
+    setFinData(prev => ({
+      ...prev,
+      financialGoals: (prev.financialGoals || []).map(g => (g.id === id ? { ...g, ...updates } : g)),
+    }));
+
+    try {
+      await api.updateGoal(id, updates);
+    } catch (err) {
+      console.error('[FinanceContext] Failed to update goal on backend:', err);
+    }
+  }, []);
+
+  const deleteGoal = useCallback(async (id: string) => {
+    setFinData(prev => ({
+      ...prev,
+      financialGoals: (prev.financialGoals || []).filter(g => g.id !== id),
+    }));
+
+    try {
+      await api.deleteGoal(id);
+    } catch (err) {
+      console.error('[FinanceContext] Failed to delete goal on backend:', err);
+    }
+  }, []);
 
   const totalExpenses = data.expenses.reduce((s, e) => s + e.amount, 0);
   const savingsAmount = Math.round((data.monthlyIncome * data.savingsPercent) / 100);
   const budget = data.monthlyIncome - totalExpenses - savingsAmount;
 
-  // --- Transaction CRUD ---
-  const addTransactions = useCallback((txns: Transaction[]) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => {
-      const user = prev[currentUserEmail] || { ...INIT, userEmail: currentUserEmail };
-      const existing = user.transactions || [];
-      const existingIds = new Set(existing.map(t => `${t.date}_${t.amount}_${t.description.slice(0,20)}`));
-      const newTxns = txns.filter(t => !existingIds.has(`${t.date}_${t.amount}_${t.description.slice(0,20)}`));
-      const uploadsCount = (user.statementUploadsCount || 0) + 1;
-      return { ...prev, [currentUserEmail]: { ...user, transactions: [...existing, ...newTxns], statementUploaded: true, statementUploadsCount: uploadsCount } };
-    });
-  }, [currentUserEmail]);
-
-  const updateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => {
-      const user = prev[currentUserEmail];
-      if (!user) return prev;
-      return { ...prev, [currentUserEmail]: { ...user, transactions: (user.transactions || []).map(t => t.id === id ? { ...t, ...updates } : t) } };
-    });
-  }, [currentUserEmail]);
-
-  const deleteTransaction = useCallback((id: string) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => {
-      const user = prev[currentUserEmail];
-      if (!user) return prev;
-      return { ...prev, [currentUserEmail]: { ...user, transactions: (user.transactions || []).filter(t => t.id !== id) } };
-    });
-  }, [currentUserEmail]);
-
-  // --- Goal CRUD ---
-  const addGoal = useCallback((goal: FinancialGoal) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => {
-      const user = prev[currentUserEmail] || { ...INIT, userEmail: currentUserEmail };
-      return { ...prev, [currentUserEmail]: { ...user, financialGoals: [...(user.financialGoals || []), goal] } };
-    });
-  }, [currentUserEmail]);
-
-  const updateGoal = useCallback((id: string, updates: Partial<FinancialGoal>) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => {
-      const user = prev[currentUserEmail];
-      if (!user) return prev;
-      return { ...prev, [currentUserEmail]: { ...user, financialGoals: (user.financialGoals || []).map(g => g.id === id ? { ...g, ...updates } : g) } };
-    });
-  }, [currentUserEmail]);
-
-  const deleteGoal = useCallback((id: string) => {
-    if (!currentUserEmail || currentUserEmail === 'admin@finsight.com') return;
-    setUsersMap(prev => {
-      const user = prev[currentUserEmail];
-      if (!user) return prev;
-      return { ...prev, [currentUserEmail]: { ...user, financialGoals: (user.financialGoals || []).filter(g => g.id !== id) } };
-    });
-  }, [currentUserEmail]);
+  const allUsers = useMemo(() => {
+    if (adminUsersList.length > 0) return adminUsersList;
+    return currentUserEmail ? [data] : [];
+  }, [adminUsersList, currentUserEmail, data]);
 
   return (
-    <Ctx.Provider value={{ data, setData, reset, totalExpenses, savingsAmount, budget, allUsers, isAuthenticated, loginAs, loginWithPassword, registerUser, logoutUser, sessionTimeLeft, addTransactions, updateTransaction, deleteTransaction, addGoal, updateGoal, deleteGoal }}>
+    <Ctx.Provider
+      value={{
+        data,
+        setData,
+        reset,
+        totalExpenses,
+        savingsAmount,
+        budget,
+        allUsers,
+        isAuthenticated,
+        isLoading,
+        databaseStatus,
+        loginAs,
+        loginWithPassword,
+        registerUser,
+        logoutUser,
+        sessionTimeLeft,
+        refreshUserData,
+        addTransactions,
+        updateTransaction,
+        deleteTransaction,
+        addGoal,
+        updateGoal,
+        deleteGoal,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );
