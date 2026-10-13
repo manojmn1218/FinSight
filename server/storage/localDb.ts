@@ -276,6 +276,14 @@ class LocalDatabase {
     return (this.state.portfolio[key] || []).map(a => ({ ...a }));
   }
 
+  async clearAllUserData(userEmail: string): Promise<void> {
+    const key = userEmail.trim().toLowerCase();
+    delete this.state.transactions[key];
+    delete this.state.goals[key];
+    delete this.state.portfolio[key];
+    await this.save();
+  }
+
   getState(): DatabaseState {
     return this.state;
   }

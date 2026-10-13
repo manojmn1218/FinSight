@@ -28,6 +28,7 @@ interface FinCtx {
   data: FinData;
   setData: (d: Partial<FinData>) => Promise<void>;
   reset: () => Promise<void>;
+  clearAllData: () => Promise<{ success: boolean; error?: string }>;
   totalExpenses: number;
   savingsAmount: number;
   budget: number;
@@ -321,6 +322,24 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [refreshUserData]);
 
+  const clearAllData = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await api.clearAllData();
+      setFinData(prev => ({
+        ...INIT,
+        userName: prev.userName,
+        userEmail: prev.userEmail,
+        isAdmin: prev.isAdmin,
+        currentPlan: prev.currentPlan,
+      }));
+      await refreshUserData();
+      return { success: true };
+    } catch (err: any) {
+      console.error('[FinanceContext] Failed to clear all data:', err);
+      return { success: false, error: err?.message || 'Failed to clear all data.' };
+    }
+  }, [refreshUserData]);
+
   // Transaction CRUD
   const addTransactions = useCallback(async (txns: Transaction[]) => {
     // Optimistic update
@@ -433,6 +452,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         data,
         setData,
         reset,
+        clearAllData,
         totalExpenses,
         savingsAmount,
         budget,

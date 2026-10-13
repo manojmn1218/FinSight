@@ -290,4 +290,17 @@ export const db = {
     }
     return localDb.savePortfolio(cleanEmail, assets);
   },
+
+  // --- Bulk Wipe / Reset ---
+  async clearAllUserData(userEmail: string): Promise<void> {
+    const cleanEmail = userEmail.trim().toLowerCase();
+    if (isMongoConnected) {
+      await Promise.all([
+        TransactionModel.deleteMany({ userEmail: cleanEmail }),
+        GoalModel.deleteMany({ userEmail: cleanEmail }),
+        AssetModel.deleteMany({ userEmail: cleanEmail }),
+      ]);
+    }
+    await localDb.clearAllUserData(cleanEmail);
+  },
 };

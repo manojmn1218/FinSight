@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORY_CONFIG } from '../utils/types';
@@ -33,7 +33,248 @@ function HealthGauge({ score, label }: { score: number; label: string }) {
 }
 
 export default function DashboardPage() {
-  const { data } = useFinance();
+  const { data, clearAllData } = useFinance();
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [clearError, setClearError] = useState<string | null>(null);
+  const [clearSuccess, setClearSuccess] = useState(false);
+
+  const handleClearAllData = async () => {
+    setIsClearing(true);
+    setClearError(null);
+    try {
+      const res = await clearAllData();
+      if (res.success) {
+        setClearSuccess(true);
+        setTimeout(() => {
+          setShowClearModal(false);
+          setClearSuccess(false);
+        }, 1200);
+      } else {
+        setClearError(res.error || 'Failed to clear data');
+      }
+    } catch (err: any) {
+      setClearError(err?.message || 'Failed to clear data');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const renderClearModal = () => (
+    <AnimatePresence>
+      {showClearModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+          }}
+          onClick={e => {
+            if (e.target === e.currentTarget && !isClearing) {
+              setShowClearModal(false);
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className="panel"
+            style={{
+              width: '100%',
+              maxWidth: 480,
+              padding: 28,
+              borderRadius: 18,
+              background: 'var(--bg2)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              boxShadow: '0 20px 40px -15px rgba(0,0,0,0.7), 0 0 30px rgba(239, 68, 68, 0.15)',
+              position: 'relative',
+            }}
+          >
+            {/* Header / Icon */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#f87171',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Trash2 size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+                  Clear All Financial Data?
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--text2)', margin: '6px 0 0', lineHeight: 1.5 }}>
+                  This will permanently wipe all uploaded statements, transactions, goals, and portfolio records from your account.
+                </p>
+              </div>
+            </div>
+
+            {/* Impact list */}
+            <div
+              style={{
+                background: 'var(--bg3)',
+                borderRadius: 12,
+                padding: '14px 16px',
+                marginBottom: 20,
+                border: '1px solid var(--border)',
+                fontSize: 13,
+                color: 'var(--text2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>Uploaded Transactions</span>
+                <span style={{ fontWeight: 600, color: '#f87171' }}>
+                  {txns.length} records will be deleted
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>Financial Goals & Assets</span>
+                <span style={{ fontWeight: 600, color: '#f87171' }}>
+                  {data.financialGoals?.length || 0} goals reset
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>Income & Total Balances</span>
+                <span style={{ fontWeight: 600, color: '#f87171' }}>
+                  Reset to ₹0
+                </span>
+              </div>
+            </div>
+
+            {/* Warning callout */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 14px',
+                borderRadius: 10,
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#fca5a5',
+                fontSize: 12,
+                marginBottom: 20,
+              }}
+            >
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+              <span>This action cannot be undone. You will need to re-upload statements or enter fresh data.</span>
+            </div>
+
+            {clearError && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#f87171',
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                {clearError}
+              </div>
+            )}
+
+            {clearSuccess && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  background: 'rgba(52, 211, 153, 0.15)',
+                  color: '#34d399',
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>All financial data successfully cleared!</span>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button
+                type="button"
+                className="btn-outline"
+                disabled={isClearing}
+                onClick={() => {
+                  if (!isClearing) setShowClearModal(false);
+                }}
+                style={{
+                  padding: '9px 18px',
+                  fontSize: 13,
+                  cursor: isClearing ? 'not-allowed' : 'pointer',
+                  opacity: isClearing ? 0.6 : 1,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="confirm-clear-data-btn"
+                disabled={isClearing}
+                onClick={handleClearAllData}
+                style={{
+                  padding: '9px 20px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: '#fff',
+                  cursor: isClearing ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                  opacity: isClearing ? 0.7 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isClearing ? (
+                  <>
+                    <RefreshCw size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                    Clearing Data...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={15} />
+                    Yes, Clear Everything
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+
   const txns: Transaction[] = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;
 
@@ -216,9 +457,39 @@ export default function DashboardPage() {
               {dateRange} · {txnStats.txnCount} transactions analyzed
             </p>
           </div>
-          <Link to="/transactions" className="btn-outline" style={{ padding: '9px 18px', fontSize: 13 }}>
-            <Upload size={15} /> Upload More
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              id="clear-all-data-btn"
+              onClick={() => setShowClearModal(true)}
+              className="btn-outline"
+              title="Clear all transactions, goals, and balance data"
+              style={{
+                padding: '9px 16px',
+                fontSize: 13,
+                borderColor: 'rgba(239, 68, 68, 0.35)',
+                color: '#f87171',
+                background: 'rgba(239, 68, 68, 0.06)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.8)';
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.14)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.06)';
+              }}
+            >
+              <Trash2 size={15} /> Clear All Data
+            </button>
+            <Link to="/transactions" className="btn-outline" style={{ padding: '9px 18px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Upload size={15} /> Upload More
+            </Link>
+          </div>
         </motion.div>
 
         {/* Stat cards */}
@@ -579,6 +850,7 @@ export default function DashboardPage() {
             </div>
           </motion.div>
         )}
+        {renderClearModal()}
       </div>
     );
   }
@@ -606,9 +878,39 @@ export default function DashboardPage() {
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text2)' }}>Upload a bank statement or connect your account to see your real financial data here.</p>
         </div>
-        <Link to="/profile" className="btn-outline" style={{ padding: '9px 18px', fontSize: 13 }}>
-          <Edit2 size={15} /> Edit Data
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            id="clear-all-data-fallback-btn"
+            onClick={() => setShowClearModal(true)}
+            className="btn-outline"
+            title="Reset financial data to zero"
+            style={{
+              padding: '9px 16px',
+              fontSize: 13,
+              borderColor: 'rgba(239, 68, 68, 0.35)',
+              color: '#f87171',
+              background: 'rgba(239, 68, 68, 0.06)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.8)';
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.14)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.06)';
+            }}
+          >
+            <Trash2 size={15} /> Clear All Data
+          </button>
+          <Link to="/profile" className="btn-outline" style={{ padding: '9px 18px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Edit2 size={15} /> Edit Data
+          </Link>
+        </div>
       </motion.div>
 
       {/* Stat cards */}
@@ -672,6 +974,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       )}
+      {renderClearModal()}
     </div>
   );
 }

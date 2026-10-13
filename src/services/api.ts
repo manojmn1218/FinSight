@@ -171,6 +171,12 @@ class ApiService {
     });
   }
 
+  async clearAllData() {
+    return this.request<{ message: string; user: UserProfile }>('/api/user/clear-all', {
+      method: 'POST',
+    });
+  }
+
   // --- Transactions ---
   async getTransactions() {
     return this.request<{ transactions: Transaction[] }>('/api/transactions', {

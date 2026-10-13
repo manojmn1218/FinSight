@@ -86,4 +86,42 @@ router.post('/reset', authenticateToken, async (req: AuthenticatedRequest, res: 
   }
 });
 
+// POST /api/user/clear-all
+router.post('/clear-all', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userEmail = req.user!.email;
+
+    // 1. Wipe all user transactions, goals, and portfolio assets
+    await db.clearAllUserData(userEmail);
+
+    // 2. Reset financial numbers and statement state on user profile
+    const defaultExpenses = [
+      { name: 'Rent', amount: 0, color: '#a78bfa' },
+      { name: 'Food', amount: 0, color: '#f472b6' },
+      { name: 'Transport', amount: 0, color: '#60a5fa' },
+      { name: 'Utilities', amount: 0, color: '#34d399' },
+      { name: 'Entertainment', amount: 0, color: '#fbbf24' },
+      { name: 'Other', amount: 0, color: '#94a3b8' },
+    ];
+
+    const updated = await db.updateUser(userEmail, {
+      monthlyIncome: 0,
+      totalBalance: 0,
+      savingsPercent: 20,
+      isOnboarded: false,
+      expenses: defaultExpenses,
+      statementUploaded: false,
+      statementUploadsCount: 0,
+    });
+
+    return res.json({
+      message: 'All transactions, goals, and financial data have been permanently cleared.',
+      user: updated,
+    });
+  } catch (error: any) {
+    console.error('[User] Clear all data error:', error);
+    return res.status(500).json({ error: 'Failed to clear all data.' });
+  }
+});
+
 export default router;
