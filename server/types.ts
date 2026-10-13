@@ -8,7 +8,9 @@ export interface UserDocument {
   id: string;
   email: string;
   name: string;
-  passwordHash: string;
+  passwordHash?: string;
+  googleId?: string;
+  avatarUrl?: string;
   monthlyIncome: number;
   totalBalance: number;
   expenses: ExpenseItem[];

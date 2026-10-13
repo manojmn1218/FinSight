@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { db } from '../config/db';
 import { generateToken, authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
 
@@ -193,6 +194,112 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Resp
     },
     databaseStatus: db.getStatus(),
   });
+});
+
+// POST /api/auth/google
+router.post('/google', async (req, res: Response) => {
+  try {
+    const { credential, accessToken } = req.body || {};
+    if (!credential && !accessToken) {
+      return res.status(400).json({ error: 'Google credential or access token is required.' });
+    }
+
+    let payload: any = null;
+
+    if (credential) {
+      const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+      const client = new OAuth2Client(clientId);
+      try {
+        const ticket = await client.verifyIdToken({
+          idToken: credential,
+          audience: clientId || undefined,
+        });
+        payload = ticket.getPayload();
+      } catch (verifyErr: any) {
+        console.error('[Google Auth] Token verification failed:', verifyErr.message);
+        return res.status(401).json({ error: 'Failed to verify Google token: ' + verifyErr.message });
+      }
+    } else if (accessToken) {
+      try {
+        const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!resp.ok) {
+          throw new Error('Google userinfo response status: ' + resp.status);
+        }
+        payload = await resp.json();
+      } catch (fetchErr: any) {
+        console.error('[Google Auth] Access token verification failed:', fetchErr.message);
+        return res.status(401).json({ error: 'Failed to verify Google access token: ' + fetchErr.message });
+      }
+    }
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({ error: 'Google account did not provide a valid email address.' });
+    }
+
+    const cleanEmail = String(payload.email).trim().toLowerCase();
+    const name = payload.name || cleanEmail.split('@')[0];
+    const googleId = payload.sub;
+    const avatarUrl = payload.picture;
+
+    let user = await db.findUserByEmail(cleanEmail);
+
+    if (!user) {
+      // New user signup via Google
+      user = await db.createUser({
+        email: cleanEmail,
+        name,
+        passwordHash: '',
+        googleId,
+        avatarUrl,
+        monthlyIncome: 0,
+        totalBalance: 0,
+        savingsPercent: 20,
+        currentPlan: 'Basic',
+        expenses: DEFAULT_EXPENSES,
+        isOnboarded: false,
+        isAdmin: cleanEmail === 'admin@finsight.com',
+        statementUploaded: false,
+        statementUploadsCount: 0,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      });
+    } else {
+      // Existing user: ensure googleId/avatarUrl is linked
+      if (!user.googleId || !user.avatarUrl) {
+        await db.updateUser(cleanEmail, {
+          googleId: user.googleId || googleId,
+          avatarUrl: user.avatarUrl || avatarUrl,
+        });
+      }
+    }
+
+    const token = generateToken(user);
+
+    return res.json({
+      message: 'Google authentication successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        monthlyIncome: user.monthlyIncome,
+        totalBalance: user.totalBalance,
+        savingsPercent: user.savingsPercent,
+        currentPlan: user.currentPlan,
+        expenses: user.expenses,
+        isOnboarded: user.isOnboarded,
+        isAdmin: user.isAdmin,
+        statementUploaded: user.statementUploaded,
+        statementUploadsCount: user.statementUploadsCount,
+        avatarUrl: user.avatarUrl,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Google Auth] Unexpected error:', error);
+    return res.status(500).json({ error: 'Internal server error during Google authentication.' });
+  }
 });
 
 // POST /api/auth/logout

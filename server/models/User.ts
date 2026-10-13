@@ -18,7 +18,9 @@ const UserSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     name: { type: String, required: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, default: '' },
+    googleId: { type: String, default: null },
+    avatarUrl: { type: String, default: null },
     monthlyIncome: { type: Number, default: 0 },
     totalBalance: { type: Number, default: 0 },
     expenses: {

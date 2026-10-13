@@ -15,6 +15,7 @@ export interface UserProfile {
   isAdmin: boolean;
   statementUploaded: boolean;
   statementUploadsCount: number;
+  avatarUrl?: string;
 }
 
 export interface PortfolioAsset {
@@ -61,7 +62,7 @@ class ApiService {
     return this.token;
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}, retries = 1): Promise<T> {
     const headers = new Headers(options.headers || {});
     headers.set('Content-Type', 'application/json');
 
@@ -70,10 +71,30 @@ class ApiService {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const response = await fetch(endpoint, {
-      ...options,
-      headers,
-    });
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    const url = apiBase ? `${apiBase}${endpoint}` : endpoint;
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
+    } catch (err: any) {
+      // If server is still booting up (takes ~3s to connect to MongoDB), give it one retry
+      if (retries > 0) {
+        await new Promise(res => setTimeout(res, 1200));
+        return this.request<T>(endpoint, options, retries - 1);
+      }
+
+      const isNetworkErr = err.name === 'TypeError' || String(err.message || '').toLowerCase().includes('fetch');
+      if (isNetworkErr) {
+        throw new Error(
+          'Cannot connect to FinSight backend server. Please make sure the server is running on http://127.0.0.1:5000 (run "npm run dev").'
+        );
+      }
+      throw err;
+    }
 
     if (response.status === 401 || response.status === 403) {
       // If unauthorized, clear invalid token
@@ -106,6 +127,15 @@ class ApiService {
     const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    });
+    this.setToken(data.token);
+    return data;
+  }
+
+  async googleLogin(credential?: string, accessToken?: string) {
+    const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential, accessToken }),
     });
     this.setToken(data.token);
     return data;

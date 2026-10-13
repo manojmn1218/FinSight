@@ -1,17 +1,35 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+    </svg>
+  );
+}
+
 export default function SignupPage() {
   const nav = useNavigate();
-  const { registerUser, loginAs } = useFinance();
+  const { registerUser, loginWithGoogle } = useFinance();
   const [show, setShow] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
+
+  const hasGoogleClientId = Boolean(
+    import.meta.env.VITE_GOOGLE_CLIENT_ID &&
+    import.meta.env.VITE_GOOGLE_CLIENT_ID !== 'FINSIGHT_PLACEHOLDER_CLIENT_ID'
+  );
 
   const passwordChecks = useMemo(() => [
     { label: 'At least 8 characters', pass: password.length >= 8 },
@@ -39,6 +57,42 @@ export default function SignupPage() {
     }
   };
 
+  const handleGoogleSuccess = async (response: any) => {
+    if (response.credential) {
+      setError('');
+      setInfoMsg('');
+      const result = await loginWithGoogle(response.credential);
+      if (result.success) {
+        nav('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-up failed.');
+      }
+    }
+  };
+
+  const handleCustomPopupSignup = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setError('');
+      setInfoMsg('');
+      const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
+      if (result.success) {
+        nav('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-up failed.');
+      }
+    },
+    onError: (err) => {
+      console.warn('[Google Sign-Up Popup Error]', err);
+      setError('Google sign-up popup was cancelled or failed.');
+    },
+  });
+
+  const handleCustomGoogleClick = () => {
+    setInfoMsg(
+      'Google OAuth is integrated! To enable live one-click signup, add your Google Cloud Client ID to .env as VITE_GOOGLE_CLIENT_ID.'
+    );
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
       <div className="blob blob-3" style={{ left: '-10%', top: '-10%', width: 500, height: 500 }} />
@@ -56,7 +110,71 @@ export default function SignupPage() {
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Create your account</h2>
         <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 28, textAlign: 'center' }}>Join thousands managing their finances smarter.</p>
 
-        {error && <div style={{ padding: 12, background: 'rgba(248,113,113,0.1)', color: '#f87171', borderRadius: 8, fontSize: 13, fontWeight: 500, marginBottom: 16 }}>{error}</div>}
+        {error && (
+          <div style={{ padding: '12px 14px', background: 'rgba(248,113,113,0.12)', color: '#f87171', borderRadius: 8, fontSize: 13, fontWeight: 500, marginBottom: 16, border: '1px solid rgba(248,113,113,0.25)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <span style={{ flexShrink: 0 }}>⚠️</span>
+              <span>{error}</span>
+            </div>
+            {error.includes('backend server') && (
+              <div style={{ fontSize: 12, color: 'var(--text2)', borderTop: '1px solid rgba(248,113,113,0.2)', paddingTop: 6, lineHeight: 1.4 }}>
+                💡 <strong>Tip:</strong> In your terminal, run <code style={{ color: '#a78bfa', background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>npm run dev</code> to start both frontend &amp; backend.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Google Authentication — Single Button */}
+        <div style={{ marginBottom: 18, display: 'flex', justifyContent: 'center', width: '100%', minHeight: 44 }}>
+          {hasGoogleClientId ? (
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google sign-up was cancelled or failed.')}
+              theme="filled_black"
+              shape="pill"
+              text="signup_with"
+              width="348"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={handleCustomGoogleClick}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                padding: '11px 18px',
+                borderRadius: 24,
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.06)',
+                color: '#ffffff',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+            >
+              <GoogleIcon />
+              <span>Sign up with Google</span>
+            </button>
+          )}
+        </div>
+
+        {infoMsg && (
+          <div style={{ padding: '10px 14px', background: 'rgba(96,165,250,0.12)', color: '#93c5fd', borderRadius: 8, fontSize: 12, marginBottom: 14, border: '1px solid rgba(96,165,250,0.25)', lineHeight: 1.4 }}>
+            {infoMsg}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>or with email</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>

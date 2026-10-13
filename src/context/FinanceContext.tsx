@@ -35,8 +35,10 @@ interface FinCtx {
   isAuthenticated: boolean;
   isLoading: boolean;
   databaseStatus: DatabaseStatus | null;
+  checkDatabaseStatus: () => Promise<void>;
   loginAs: (email: string) => void;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (payload: { credential?: string; accessToken?: string } | string) => Promise<{ success: boolean; error?: string }>;
   registerUser: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logoutUser: () => void;
   sessionTimeLeft: number;
@@ -175,12 +177,21 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     refreshUserData();
   }, [refreshUserData]);
 
+  const checkDatabaseStatus = useCallback(async () => {
+    try {
+      const res = await api.getHealth();
+      setDatabaseStatus(res.database);
+    } catch {
+      setDatabaseStatus(null);
+    }
+  }, []);
+
   // Periodic health & db check
   useEffect(() => {
-    api.getHealth()
-      .then(res => setDatabaseStatus(res.database))
-      .catch(() => {});
-  }, []);
+    checkDatabaseStatus();
+    const interval = setInterval(checkDatabaseStatus, 10000);
+    return () => clearInterval(interval);
+  }, [checkDatabaseStatus]);
 
   const loginWithPassword = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -209,6 +220,37 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'Login failed.' };
+    }
+  }, []);
+
+  const loginWithGoogle = useCallback(async (payload: { credential?: string; accessToken?: string } | string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const cred = typeof payload === 'string' ? payload : payload.credential;
+      const access = typeof payload === 'object' ? payload.accessToken : undefined;
+      const res = await api.googleLogin(cred, access);
+
+      const [txnsRes, goalsRes] = await Promise.all([
+        api.getTransactions().catch(() => ({ transactions: [] })),
+        api.getGoals().catch(() => ({ goals: [] })),
+      ]);
+
+      const finData = profileToFinData(res.user, txnsRes.transactions, goalsRes.goals);
+      setFinData(finData);
+      setCurrentUserEmail(finData.userEmail);
+
+      const now = Date.now();
+      setSessionStart(now);
+      localStorage.setItem('fs_session_start', String(now));
+
+      if (finData.isAdmin) {
+        api.getAdminUsers()
+          .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
+          .catch(() => {});
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Google sign-in failed.' };
     }
   }, []);
 
@@ -398,8 +440,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated,
         isLoading,
         databaseStatus,
+        checkDatabaseStatus,
         loginAs,
         loginWithPassword,
+        loginWithGoogle,
         registerUser,
         logoutUser,
         sessionTimeLeft,
