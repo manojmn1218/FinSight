@@ -66,6 +66,41 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleSuccess = async (response: any) => {
+    if (response.credential) {
+      setError('');
+      setInfoMsg('');
+      setLoading(true);
+      const result = await loginWithGoogle(response.credential);
+      setLoading(false);
+
+      if (result.success) {
+        nav('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-in failed.');
+      }
+    }
+  };
+
+  const handleCustomPopupLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setError('');
+      setInfoMsg('');
+      setLoading(true);
+      const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
+      setLoading(false);
+      if (result.success) {
+        nav('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-in failed.');
+      }
+    },
+    onError: (err) => {
+      console.warn('[Google Sign-In Popup Error]', err);
+      setError('Google sign-in popup was cancelled or failed.');
+    },
+  });
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--purple)', fontWeight: 600, fontSize: 16 }}>
@@ -114,41 +149,6 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  const handleGoogleSuccess = async (response: any) => {
-    if (response.credential) {
-      setError('');
-      setInfoMsg('');
-      setLoading(true);
-      const result = await loginWithGoogle(response.credential);
-      setLoading(false);
-
-      if (result.success) {
-        nav('/dashboard');
-      } else {
-        setError(result.error || 'Google sign-in failed.');
-      }
-    }
-  };
-
-  const handleCustomPopupLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setError('');
-      setInfoMsg('');
-      setLoading(true);
-      const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
-      setLoading(false);
-      if (result.success) {
-        nav('/dashboard');
-      } else {
-        setError(result.error || 'Google sign-in failed.');
-      }
-    },
-    onError: (err) => {
-      console.warn('[Google Sign-In Popup Error]', err);
-      setError('Google sign-in popup was cancelled or failed.');
-    },
-  });
 
   const handleCustomGoogleClick = () => {
     setInfoMsg(
