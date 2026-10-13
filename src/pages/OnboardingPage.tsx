@@ -55,7 +55,14 @@ export default function OnboardingPage() {
   };
 
   const finish = () => {
-    setData({ userName: name.trim(), monthlyIncome: incNum, totalBalance: Number(balance) || 0, expenses, savingsPercent: saveGoal, isOnboarded: true });
+    setData({
+      userName: name.trim() || 'User',
+      monthlyIncome: incNum || 0,
+      totalBalance: Number(balance) || 0,
+      expenses,
+      savingsPercent: saveGoal,
+      isOnboarded: true,
+    });
     nav('/dashboard');
   };
 
@@ -115,14 +122,14 @@ export default function OnboardingPage() {
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text2)', marginBottom: 6 }}>Monthly Income (after tax)</label>
                     <div style={{ position: 'relative' }}>
                       <span style={prefix}>₹</span>
-                      <input type="number" value={income} onChange={e => setIncome(e.target.value)} placeholder="50000" min="0" required style={inpPre} />
+                      <input type="number" value={income} onChange={e => setIncome(e.target.value)} placeholder="0" min="0" required style={inpPre} />
                     </div>
                   </div>
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text2)', marginBottom: 6 }}>Current Savings</label>
                     <div style={{ position: 'relative' }}>
                       <span style={prefix}>₹</span>
-                      <input type="number" value={balance} onChange={e => setBalance(e.target.value)} placeholder="150000" min="0" style={inpPre} />
+                      <input type="number" value={balance} onChange={e => setBalance(e.target.value)} placeholder="0" min="0" style={inpPre} />
                     </div>
                   </div>
                 </div>
@@ -199,7 +206,14 @@ export default function OnboardingPage() {
             </button>
           )}
           <button type="button" onClick={() => {
-            setData({ userName: name.trim() || 'Guest', monthlyIncome: incNum || 80000, totalBalance: Number(balance) || 150000, expenses: expenses.reduce((s, e) => s + e.amount, 0) > 0 ? expenses : DEFAULT_EXP.map(e => ({...e, amount: Math.round(80000 * 0.1)})), savingsPercent: saveGoal, isOnboarded: true });
+            setData({
+              userName: name.trim() || 'User',
+              monthlyIncome: incNum || 0,
+              totalBalance: Number(balance) || 0,
+              expenses: DEFAULT_EXP,
+              savingsPercent: saveGoal || 20,
+              isOnboarded: true,
+            });
             nav('/dashboard');
           }} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 14, fontWeight: 500, cursor: 'pointer', textDecoration: 'underline' }}>
             Skip for now

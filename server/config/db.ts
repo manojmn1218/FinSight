@@ -47,18 +47,40 @@ export async function initDatabase(): Promise<void> {
           email: localAdmin.email,
           name: localAdmin.name,
           passwordHash: localAdmin.passwordHash,
-          monthlyIncome: localAdmin.monthlyIncome,
-          totalBalance: localAdmin.totalBalance,
+          monthlyIncome: 0,
+          totalBalance: 0,
           expenses: localAdmin.expenses,
-          savingsPercent: localAdmin.savingsPercent,
-          isOnboarded: localAdmin.isOnboarded,
+          savingsPercent: 20,
+          isOnboarded: false,
           isAdmin: localAdmin.isAdmin,
           currentPlan: localAdmin.currentPlan,
-          statementUploaded: localAdmin.statementUploaded,
-          statementUploadsCount: localAdmin.statementUploadsCount,
+          statementUploaded: false,
+          statementUploadsCount: 0,
         });
         console.log('👑 [Database] Seeded default administrator into MongoDB Atlas');
       }
+    } else {
+      // Ensure admin does not retain old template balances
+      await UserModel.updateOne(
+        { email: 'admin@finsight.com', totalBalance: 450000 },
+        {
+          $set: {
+            monthlyIncome: 0,
+            totalBalance: 0,
+            isOnboarded: false,
+            statementUploaded: false,
+            statementUploadsCount: 0,
+            expenses: [
+              { name: 'Rent', amount: 0, color: '#a78bfa' },
+              { name: 'Food', amount: 0, color: '#f472b6' },
+              { name: 'Transport', amount: 0, color: '#60a5fa' },
+              { name: 'Utilities', amount: 0, color: '#34d399' },
+              { name: 'Entertainment', amount: 0, color: '#fbbf24' },
+              { name: 'Other', amount: 0, color: '#94a3b8' },
+            ],
+          },
+        }
+      );
     }
   } catch (error: any) {
     isMongoConnected = false;

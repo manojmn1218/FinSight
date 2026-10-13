@@ -7,12 +7,12 @@ const DATA_DIR = path.resolve(process.cwd(), 'server', 'data');
 const DB_FILE = path.join(DATA_DIR, 'finsight_db.json');
 
 const INITIAL_EXPENSES = [
-  { name: 'Rent', amount: 15000, color: '#a78bfa' },
-  { name: 'Food', amount: 8000, color: '#f472b6' },
-  { name: 'Transport', amount: 3500, color: '#60a5fa' },
-  { name: 'Utilities', amount: 2500, color: '#34d399' },
-  { name: 'Entertainment', amount: 4000, color: '#fbbf24' },
-  { name: 'Other', amount: 2000, color: '#94a3b8' },
+  { name: 'Rent', amount: 0, color: '#a78bfa' },
+  { name: 'Food', amount: 0, color: '#f472b6' },
+  { name: 'Transport', amount: 0, color: '#60a5fa' },
+  { name: 'Utilities', amount: 0, color: '#34d399' },
+  { name: 'Entertainment', amount: 0, color: '#fbbf24' },
+  { name: 'Other', amount: 0, color: '#94a3b8' },
 ];
 
 function getInitialState(): DatabaseState {
@@ -26,15 +26,15 @@ function getInitialState(): DatabaseState {
         email: 'admin@finsight.com',
         name: 'System Administrator',
         passwordHash: adminHash,
-        monthlyIncome: 150000,
-        totalBalance: 450000,
+        monthlyIncome: 0,
+        totalBalance: 0,
         expenses: INITIAL_EXPENSES,
-        savingsPercent: 30,
-        isOnboarded: true,
+        savingsPercent: 20,
+        isOnboarded: false,
         isAdmin: true,
         currentPlan: 'Elite',
-        statementUploaded: true,
-        statementUploadsCount: 3,
+        statementUploaded: false,
+        statementUploadsCount: 0,
         failedLoginAttempts: 0,
         lockedUntil: null,
         createdAt: now,
