@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-
+import { twilioService } from './twilioService';
 
 interface SendOtpOptions {
   to: string;
@@ -33,7 +33,7 @@ function getTransporter(): nodemailer.Transporter | null {
     }
   }
 
-  // Also support direct Gmail service if configured
+  // Support direct Gmail service if configured
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
     try {
       transporter = nodemailer.createTransport({
@@ -67,7 +67,7 @@ const PURPOSE_DESCRIPTIONS: Record<string, string> = {
   forgot_password: 'We received a request to reset your FinSight account password.',
 };
 
-export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boolean; channel: 'email' | 'console' }> {
+export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boolean; channel: 'twilio' | 'email' | 'console' }> {
   const { to, code, purpose, name } = options;
   const title = PURPOSE_TITLES[purpose] || 'Verification Code';
   const desc = PURPOSE_DESCRIPTIONS[purpose] || 'Please use this code to verify your action.';
@@ -79,10 +79,27 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
   console.log('═'.repeat(66));
   console.log(`  To:       ${to}`);
   console.log(`  Purpose:  ${title.toUpperCase()}`);
+  console.log(`  Channel:  TWILIO API / SECURE DISPATCH`);
   console.log(`  OTP Code: ═══[ ${code.split('').join(' ')} ]═══`);
   console.log(`  Validity: 10 minutes`);
   console.log('═'.repeat(66) + '\n');
 
+  // 1. Dispatch via Twilio API (Twilio SendGrid or Twilio Verify)
+  if (twilioService.isAvailable()) {
+    const twilioResult = await twilioService.sendOtpEmail({
+      to,
+      code,
+      purposeTitle: title,
+      purposeDescription: desc,
+      name,
+    });
+
+    if (twilioResult.sent) {
+      return { sent: true, channel: 'twilio' };
+    }
+  }
+
+  // 2. Fallback to standard SMTP / nodemailer if configured
   const mailClient = getTransporter();
   if (mailClient) {
     const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_FROM || '"FinSight Security" <security@finsight.com>';
@@ -113,7 +130,7 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
           </div>
           
           <p style="margin: 0; color: #64748b; font-size: 12px; text-align: center;">
-            If you did not request this verification code, please ignore this email or review your account security.
+            Dispatched via FinSight Security Engine
           </p>
         </div>
       </div>
