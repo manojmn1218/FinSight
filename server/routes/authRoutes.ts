@@ -100,15 +100,19 @@ router.post('/login', async (req, res: Response) => {
   try {
     const { email, password } = req.body || {};
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Valid email and password are required.' });
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password.trim()) {
+      return res.status(400).json({ error: 'Email and password cannot be empty.' });
+    }
+
     const user = await db.findUserByEmail(cleanEmail);
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid email or password. Please check your credentials or register.' });
     }
 
     // Check account lockout
@@ -117,6 +121,16 @@ router.post('/login', async (req, res: Response) => {
       return res.status(423).json({
         error: `Account is temporarily locked due to multiple failed attempts. Try again in ${minutesLeft} minute(s).`,
       });
+    }
+
+    // Check if account has no password set (e.g. Google-only sign-in)
+    if (!user.passwordHash || user.passwordHash.trim() === '') {
+      if (user.googleId) {
+        return res.status(400).json({
+          error: 'This account was registered with Google. Please use "Continue with Google" to log in.',
+        });
+      }
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     // Verify password with bcrypt

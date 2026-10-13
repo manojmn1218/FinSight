@@ -148,12 +148,11 @@ class ApiService {
   }
 
   async logout() {
+    this.setToken(null);
     try {
       await this.request<{ message: string }>('/api/auth/logout', { method: 'POST' });
     } catch {
       // ignore
-    } finally {
-      this.setToken(null);
     }
   }
 

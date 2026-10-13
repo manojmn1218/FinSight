@@ -197,6 +197,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const loginWithPassword = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const cleanEmail = email.trim().toLowerCase();
+      // Clear any prior credentials and tokens first
+      api.setToken(null);
+      setCurrentUserEmail(null);
+      setSessionStart(null);
+      localStorage.removeItem('fs_session_start');
+
       const res = await api.login(cleanEmail, password);
 
       const [txnsRes, goalsRes] = await Promise.all([
@@ -220,6 +226,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true };
     } catch (error: any) {
+      api.setToken(null);
+      setCurrentUserEmail(null);
+      setSessionStart(null);
+      localStorage.removeItem('fs_session_start');
       return { success: false, error: error.message || 'Login failed.' };
     }
   }, []);
@@ -275,10 +285,13 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logoutUser = useCallback(() => {
+    api.setToken(null);
     api.logout().catch(() => {});
     setCurrentUserEmail(null);
     setSessionStart(null);
     localStorage.removeItem('fs_session_start');
+    localStorage.removeItem('fs_auth_token');
+    sessionStorage.removeItem('fs_auth_token');
     setFinData(INIT);
     setAdminUsersList([]);
   }, []);

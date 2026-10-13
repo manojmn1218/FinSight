@@ -31,6 +31,8 @@ export default function SignupPage() {
     import.meta.env.VITE_GOOGLE_CLIENT_ID !== 'FINSIGHT_PLACEHOLDER_CLIENT_ID'
   );
 
+  const [loading, setLoading] = useState(false);
+
   const passwordChecks = useMemo(() => [
     { label: 'At least 8 characters', pass: password.length >= 8 },
     { label: 'One uppercase letter', pass: /[A-Z]/.test(password) },
@@ -44,12 +46,28 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
 
-    if (!name.trim()) {
-      setError('Please enter your name.');
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanName || cleanName.length < 2) {
+      setError('Please enter your full name (minimum 2 characters).');
       return;
     }
 
-    const result = await registerUser(email, password, name);
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (!allPass) {
+      setError('Password does not satisfy security requirements (minimum 8 characters with uppercase, number, and special character).');
+      return;
+    }
+
+    setLoading(true);
+    const result = await registerUser(cleanEmail, password, cleanName);
+    setLoading(false);
+
     if (result.success) {
       nav('/onboarding');
     } else {
@@ -204,8 +222,8 @@ export default function SignupPage() {
               </div>
             )}
           </div>
-          <button type="submit" disabled={!allPass} className="btn-primary" style={{ width: '100%', marginTop: 8, opacity: allPass ? 1 : 0.5, cursor: allPass ? 'pointer' : 'not-allowed' }}>
-            Create account
+          <button type="submit" disabled={!allPass || loading} className="btn-primary" style={{ width: '100%', marginTop: 8, opacity: (allPass && !loading) ? 1 : 0.5, cursor: (allPass && !loading) ? 'pointer' : 'not-allowed' }}>
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
           <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', marginTop: 8 }}>
             Already have an account? <Link to="/login" style={{ fontWeight: 600 }}>Log in</Link>

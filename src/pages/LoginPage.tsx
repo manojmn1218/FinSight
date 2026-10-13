@@ -24,7 +24,7 @@ const FEATURES = [
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const { loginWithPassword, loginWithGoogle, isAuthenticated, data, databaseStatus } = useFinance();
+  const { loginWithPassword, loginWithGoogle, isAuthenticated, data, isLoading, logoutUser } = useFinance();
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,19 +37,22 @@ export default function LoginPage() {
     import.meta.env.VITE_GOOGLE_CLIENT_ID !== 'FINSIGHT_PLACEHOLDER_CLIENT_ID'
   );
 
-  // Redirect if already authenticated
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      nav(data.isAdmin ? '/admin' : '/dashboard');
-    }
-  }, [isAuthenticated, data.isAdmin, nav]);
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setInfoMsg('');
 
-    const result = await loginWithPassword(email, password);
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!password) {
+      setError('Please enter your password.');
+      return;
+    }
+
+    setLoading(true);
+    const result = await loginWithPassword(email.trim().toLowerCase(), password);
     setLoading(false);
 
     if (result.success) {
@@ -59,9 +62,58 @@ export default function LoginPage() {
         nav('/dashboard');
       }
     } else {
-      setError(result.error || 'Login failed.');
+      setError(result.error || 'Invalid credentials. Access denied.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--purple)', fontWeight: 600, fontSize: 16 }}>
+        Verifying security session...
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <motion.div
+          className="panel"
+          style={{ width: '100%', maxWidth: 440, padding: '40px 36px', textAlign: 'center', zIndex: 1 }}
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 56, height: 56 }} />
+          </div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Active Session Found</h2>
+          <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 24, lineHeight: 1.5 }}>
+            You are currently signed in as <strong style={{ color: 'var(--text)' }}>{data.userEmail || 'Active User'}</strong>.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ width: '100%', padding: '12px', fontSize: 14 }}
+              onClick={() => nav(data.isAdmin ? '/admin' : '/dashboard')}
+            >
+              Continue to Dashboard
+            </button>
+            <button
+              type="button"
+              className="btn-outline"
+              style={{ width: '100%', padding: '12px', fontSize: 14, borderColor: 'rgba(239, 68, 68, 0.4)', color: '#f87171' }}
+              onClick={() => logoutUser()}
+            >
+              Sign out &amp; Log in as different user
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   const handleGoogleSuccess = async (response: any) => {
     if (response.credential) {
