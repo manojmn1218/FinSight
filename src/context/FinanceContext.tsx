@@ -38,9 +38,37 @@ interface FinCtx {
   databaseStatus: DatabaseStatus | null;
   checkDatabaseStatus: () => Promise<void>;
   loginAs: (email: string) => void;
-  loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: (payload: { credential?: string; accessToken?: string } | string) => Promise<{ success: boolean; error?: string }>;
-  registerUser: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithPassword: (email: string, password: string) => Promise<{
+    success: boolean;
+    requiresOtp?: boolean;
+    email?: string;
+    purpose?: 'login' | 'signup' | 'google_auth';
+    message?: string;
+    otpPreview?: string;
+    error?: string;
+  }>;
+  loginWithGoogle: (payload: { credential?: string; accessToken?: string } | string) => Promise<{
+    success: boolean;
+    requiresOtp?: boolean;
+    email?: string;
+    purpose?: 'login' | 'signup' | 'google_auth';
+    message?: string;
+    otpPreview?: string;
+    error?: string;
+  }>;
+  registerUser: (email: string, password: string, name: string) => Promise<{
+    success: boolean;
+    requiresOtp?: boolean;
+    email?: string;
+    purpose?: 'login' | 'signup' | 'google_auth';
+    message?: string;
+    otpPreview?: string;
+    error?: string;
+  }>;
+  verifyOtpAndLogin: (email: string, otp: string, purpose: 'login' | 'signup' | 'google_auth') => Promise<{ success: boolean; error?: string; isAdmin?: boolean }>;
+  resendOtp: (email: string, purpose: string) => Promise<{ success: boolean; message?: string; otpPreview?: string; error?: string }>;
+  requestForgotPasswordOtp: (email: string) => Promise<{ success: boolean; message?: string; otpPreview?: string; error?: string }>;
+  resetPasswordWithOtp: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   logoutUser: () => void;
   sessionTimeLeft: number;
   refreshUserData: () => Promise<void>;
@@ -194,7 +222,30 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [checkDatabaseStatus]);
 
-  const loginWithPassword = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const establishSession = useCallback(async (user: any) => {
+    const [txnsRes, goalsRes] = await Promise.all([
+      api.getTransactions().catch(() => ({ transactions: [] })),
+      api.getGoals().catch(() => ({ goals: [] })),
+    ]);
+
+    const finData = profileToFinData(user, txnsRes.transactions, goalsRes.goals);
+    setFinData(finData);
+    setCurrentUserEmail(finData.userEmail);
+
+    const now = Date.now();
+    setSessionStart(now);
+    localStorage.setItem('fs_session_start', String(now));
+
+    if (finData.isAdmin) {
+      api.getAdminUsers()
+        .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
+        .catch(() => {});
+    }
+
+    return finData;
+  }, []);
+
+  const loginWithPassword = useCallback(async (email: string, password: string) => {
     try {
       const cleanEmail = email.trim().toLowerCase();
       // Clear any prior credentials and tokens first
@@ -205,23 +256,19 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
       const res = await api.login(cleanEmail, password);
 
-      const [txnsRes, goalsRes] = await Promise.all([
-        api.getTransactions().catch(() => ({ transactions: [] })),
-        api.getGoals().catch(() => ({ goals: [] })),
-      ]);
+      if (res.requiresOtp) {
+        return {
+          success: true,
+          requiresOtp: true,
+          email: res.email || cleanEmail,
+          purpose: res.purpose || 'login',
+          message: res.message,
+          otpPreview: res.otpPreview,
+        };
+      }
 
-      const finData = profileToFinData(res.user, txnsRes.transactions, goalsRes.goals);
-      setFinData(finData);
-      setCurrentUserEmail(finData.userEmail);
-
-      const now = Date.now();
-      setSessionStart(now);
-      localStorage.setItem('fs_session_start', String(now));
-
-      if (finData.isAdmin) {
-        api.getAdminUsers()
-          .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
-          .catch(() => {});
+      if (res.user) {
+        await establishSession(res.user);
       }
 
       return { success: true };
@@ -232,55 +279,104 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('fs_session_start');
       return { success: false, error: error.message || 'Login failed.' };
     }
-  }, []);
+  }, [establishSession]);
 
-  const loginWithGoogle = useCallback(async (payload: { credential?: string; accessToken?: string } | string): Promise<{ success: boolean; error?: string }> => {
+  const loginWithGoogle = useCallback(async (payload: { credential?: string; accessToken?: string } | string) => {
     try {
       const cred = typeof payload === 'string' ? payload : payload.credential;
       const access = typeof payload === 'object' ? payload.accessToken : undefined;
       const res = await api.googleLogin(cred, access);
 
-      const [txnsRes, goalsRes] = await Promise.all([
-        api.getTransactions().catch(() => ({ transactions: [] })),
-        api.getGoals().catch(() => ({ goals: [] })),
-      ]);
+      if (res.requiresOtp) {
+        return {
+          success: true,
+          requiresOtp: true,
+          email: res.email,
+          purpose: res.purpose || 'google_auth',
+          message: res.message,
+          otpPreview: res.otpPreview,
+        };
+      }
 
-      const finData = profileToFinData(res.user, txnsRes.transactions, goalsRes.goals);
-      setFinData(finData);
-      setCurrentUserEmail(finData.userEmail);
-
-      const now = Date.now();
-      setSessionStart(now);
-      localStorage.setItem('fs_session_start', String(now));
-
-      if (finData.isAdmin) {
-        api.getAdminUsers()
-          .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
-          .catch(() => {});
+      if (res.user) {
+        await establishSession(res.user);
       }
 
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'Google sign-in failed.' };
     }
-  }, []);
+  }, [establishSession]);
 
-  const registerUser = useCallback(async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const registerUser = useCallback(async (email: string, password: string, name: string) => {
     try {
       const cleanEmail = email.trim().toLowerCase();
       const res = await api.register(cleanEmail, password, name);
 
-      const finData = profileToFinData(res.user, [], []);
-      setFinData(finData);
-      setCurrentUserEmail(finData.userEmail);
+      if (res.requiresOtp) {
+        return {
+          success: true,
+          requiresOtp: true,
+          email: res.email || cleanEmail,
+          purpose: res.purpose || 'signup',
+          message: res.message,
+          otpPreview: res.otpPreview,
+        };
+      }
 
-      const now = Date.now();
-      setSessionStart(now);
-      localStorage.setItem('fs_session_start', String(now));
+      if (res.user) {
+        await establishSession(res.user);
+      }
 
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'Registration failed.' };
+    }
+  }, [establishSession]);
+
+  const verifyOtpAndLogin = useCallback(async (
+    email: string,
+    otp: string,
+    purpose: 'login' | 'signup' | 'google_auth'
+  ): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await api.verifyOtp(cleanEmail, otp, purpose);
+
+      const finData = await establishSession(res.user);
+      return { success: true, isAdmin: finData.isAdmin };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Verification failed.' };
+    }
+  }, [establishSession]);
+
+  const resendOtp = useCallback(async (email: string, purpose: string) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await api.resendOtp(cleanEmail, purpose);
+      return { success: true, message: res.message, otpPreview: res.otpPreview };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to resend code.' };
+    }
+  }, []);
+
+  const requestForgotPasswordOtp = useCallback(async (email: string) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await api.requestForgotPasswordOtp(cleanEmail);
+      return { success: true, message: res.message, otpPreview: res.otpPreview };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to send reset code.' };
+    }
+  }, []);
+
+  const resetPasswordWithOtp = useCallback(async (email: string, otp: string, newPassword: string) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await api.resetPassword(cleanEmail, otp, newPassword);
+      return { success: true, message: res.message };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to reset password.' };
     }
   }, []);
 
@@ -478,6 +574,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         loginWithPassword,
         loginWithGoogle,
         registerUser,
+        verifyOtpAndLogin,
+        resendOtp,
+        requestForgotPasswordOtp,
+        resetPasswordWithOtp,
         logoutUser,
         sessionTimeLeft,
         refreshUserData,

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import OtpModal from '../components/OtpModal';
 
 function GoogleIcon() {
   return (
@@ -18,13 +19,26 @@ function GoogleIcon() {
 
 export default function SignupPage() {
   const nav = useNavigate();
-  const { registerUser, loginWithGoogle } = useFinance();
+  const { registerUser, loginWithGoogle, verifyOtpAndLogin, resendOtp } = useFinance();
   const [show, setShow] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+
+  // OTP modal state
+  const [otpState, setOtpState] = useState<{
+    isOpen: boolean;
+    email: string;
+    purpose: 'signup' | 'google_auth';
+    otpPreview?: string;
+  }>({
+    isOpen: false,
+    email: '',
+    purpose: 'signup',
+    otpPreview: '',
+  });
 
   const hasGoogleClientId = Boolean(
     import.meta.env.VITE_GOOGLE_CLIENT_ID &&
@@ -69,6 +83,15 @@ export default function SignupPage() {
     setLoading(false);
 
     if (result.success) {
+      if (result.requiresOtp) {
+        setOtpState({
+          isOpen: true,
+          email: result.email || cleanEmail,
+          purpose: 'signup',
+          otpPreview: result.otpPreview,
+        });
+        return;
+      }
       nav('/onboarding');
     } else {
       setError(result.error || 'Registration failed.');
@@ -81,6 +104,15 @@ export default function SignupPage() {
       setInfoMsg('');
       const result = await loginWithGoogle(response.credential);
       if (result.success) {
+        if (result.requiresOtp) {
+          setOtpState({
+            isOpen: true,
+            email: result.email || email || 'Google Account',
+            purpose: 'google_auth',
+            otpPreview: result.otpPreview,
+          });
+          return;
+        }
         nav('/dashboard');
       } else {
         setError(result.error || 'Google sign-up failed.');
@@ -94,6 +126,15 @@ export default function SignupPage() {
       setInfoMsg('');
       const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
       if (result.success) {
+        if (result.requiresOtp) {
+          setOtpState({
+            isOpen: true,
+            email: result.email || email || 'Google Account',
+            purpose: 'google_auth',
+            otpPreview: result.otpPreview,
+          });
+          return;
+        }
         nav('/dashboard');
       } else {
         setError(result.error || 'Google sign-up failed.');
@@ -109,6 +150,20 @@ export default function SignupPage() {
     setInfoMsg(
       'Google OAuth is integrated! To enable live one-click signup, add your Google Cloud Client ID to .env as VITE_GOOGLE_CLIENT_ID.'
     );
+  };
+
+  const handleVerifyOtp = async (code: string) => {
+    const res = await verifyOtpAndLogin(otpState.email, code, otpState.purpose);
+    if (res.success) {
+      setOtpState(prev => ({ ...prev, isOpen: false }));
+      nav('/onboarding');
+      return { success: true };
+    }
+    return { success: false, error: res.error };
+  };
+
+  const handleResendOtp = async () => {
+    return resendOtp(otpState.email, otpState.purpose);
   };
 
   return (
@@ -230,6 +285,16 @@ export default function SignupPage() {
           </p>
         </form>
       </motion.div>
+
+      <OtpModal
+        isOpen={otpState.isOpen}
+        email={otpState.email}
+        purpose={otpState.purpose}
+        otpPreview={otpState.otpPreview}
+        onVerify={handleVerifyOtp}
+        onResend={handleResendOtp}
+        onCancel={() => setOtpState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

@@ -115,30 +115,101 @@ class ApiService {
 
   // --- Auth ---
   async register(email: string, password: string, name: string) {
-    const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/register', {
+    const data = await this.request<{
+      requiresOtp?: boolean;
+      email?: string;
+      purpose?: 'login' | 'signup' | 'google_auth';
+      message: string;
+      otpPreview?: string;
+      expiresAt?: number;
+      token?: string;
+      user?: UserProfile;
+    }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
-    this.setToken(data.token);
+    if (data.token) {
+      this.setToken(data.token);
+    }
     return data;
   }
 
   async login(email: string, password: string) {
-    const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/login', {
+    const data = await this.request<{
+      requiresOtp?: boolean;
+      email?: string;
+      purpose?: 'login' | 'signup' | 'google_auth';
+      message: string;
+      otpPreview?: string;
+      expiresAt?: number;
+      token?: string;
+      user?: UserProfile;
+    }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    this.setToken(data.token);
+    if (data.token) {
+      this.setToken(data.token);
+    }
     return data;
   }
 
   async googleLogin(credential?: string, accessToken?: string) {
-    const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/google', {
+    const data = await this.request<{
+      requiresOtp?: boolean;
+      email?: string;
+      purpose?: 'login' | 'signup' | 'google_auth';
+      message: string;
+      otpPreview?: string;
+      expiresAt?: number;
+      token?: string;
+      user?: UserProfile;
+    }>('/api/auth/google', {
       method: 'POST',
       body: JSON.stringify({ credential, accessToken }),
     });
-    this.setToken(data.token);
+    if (data.token) {
+      this.setToken(data.token);
+    }
     return data;
+  }
+
+  async verifyOtp(email: string, otp: string, purpose: 'login' | 'signup' | 'google_auth') {
+    const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, purpose }),
+    });
+    if (data.token) {
+      this.setToken(data.token);
+    }
+    return data;
+  }
+
+  async resendOtp(email: string, purpose: string) {
+    return this.request<{ message: string; otpPreview?: string; expiresAt?: number }>('/api/auth/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, purpose }),
+    });
+  }
+
+  async requestForgotPasswordOtp(email: string) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      email: string;
+      otpPreview?: string;
+      expiresAt?: number;
+    }>('/api/auth/forgot-password/request-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    return this.request<{ success: boolean; message: string }>('/api/auth/forgot-password/reset', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
   }
 
   async getMe() {

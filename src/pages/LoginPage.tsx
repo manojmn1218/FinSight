@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import { useFinance } from '../context/FinanceContext';
 import { Eye, EyeOff, TrendingUp, Shield, Zap } from 'lucide-react';
+import OtpModal from '../components/OtpModal';
 
 function GoogleIcon() {
   return (
@@ -24,13 +25,26 @@ const FEATURES = [
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const { loginWithPassword, loginWithGoogle, isAuthenticated, data, isLoading, logoutUser } = useFinance();
+  const { loginWithPassword, loginWithGoogle, verifyOtpAndLogin, resendOtp, isAuthenticated, data, isLoading, logoutUser } = useFinance();
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // OTP modal state
+  const [otpState, setOtpState] = useState<{
+    isOpen: boolean;
+    email: string;
+    purpose: 'login' | 'google_auth';
+    otpPreview?: string;
+  }>({
+    isOpen: false,
+    email: '',
+    purpose: 'login',
+    otpPreview: '',
+  });
 
   const hasGoogleClientId = Boolean(
     import.meta.env.VITE_GOOGLE_CLIENT_ID &&
@@ -52,11 +66,22 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const result = await loginWithPassword(email.trim().toLowerCase(), password);
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await loginWithPassword(cleanEmail, password);
     setLoading(false);
 
     if (result.success) {
-      if (email.trim().toLowerCase() === 'admin@finsight.com') {
+      if (result.requiresOtp) {
+        setOtpState({
+          isOpen: true,
+          email: result.email || cleanEmail,
+          purpose: 'login',
+          otpPreview: result.otpPreview,
+        });
+        return;
+      }
+
+      if (cleanEmail === 'admin@finsight.com') {
         nav('/admin');
       } else {
         nav('/dashboard');
@@ -75,6 +100,15 @@ export default function LoginPage() {
       setLoading(false);
 
       if (result.success) {
+        if (result.requiresOtp) {
+          setOtpState({
+            isOpen: true,
+            email: result.email || email || 'Google Account',
+            purpose: 'google_auth',
+            otpPreview: result.otpPreview,
+          });
+          return;
+        }
         nav('/dashboard');
       } else {
         setError(result.error || 'Google sign-in failed.');
@@ -90,6 +124,15 @@ export default function LoginPage() {
       const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
       setLoading(false);
       if (result.success) {
+        if (result.requiresOtp) {
+          setOtpState({
+            isOpen: true,
+            email: result.email || email || 'Google Account',
+            purpose: 'google_auth',
+            otpPreview: result.otpPreview,
+          });
+          return;
+        }
         nav('/dashboard');
       } else {
         setError(result.error || 'Google sign-in failed.');
@@ -100,6 +143,24 @@ export default function LoginPage() {
       setError('Google sign-in popup was cancelled or failed.');
     },
   });
+
+  const handleVerifyOtp = async (code: string) => {
+    const res = await verifyOtpAndLogin(otpState.email, code, otpState.purpose);
+    if (res.success) {
+      setOtpState(prev => ({ ...prev, isOpen: false }));
+      if (res.isAdmin || otpState.email.toLowerCase() === 'admin@finsight.com') {
+        nav('/admin');
+      } else {
+        nav('/dashboard');
+      }
+      return { success: true };
+    }
+    return { success: false, error: res.error };
+  };
+
+  const handleResendOtp = async () => {
+    return resendOtp(otpState.email, otpState.purpose);
+  };
 
   if (isLoading) {
     return (
@@ -308,6 +369,16 @@ export default function LoginPage() {
           </motion.div>
         </div>
       </div>
+
+      <OtpModal
+        isOpen={otpState.isOpen}
+        email={otpState.email}
+        purpose={otpState.purpose}
+        otpPreview={otpState.otpPreview}
+        onVerify={handleVerifyOtp}
+        onResend={handleResendOtp}
+        onCancel={() => setOtpState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

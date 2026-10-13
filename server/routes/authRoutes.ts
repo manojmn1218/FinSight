@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { db } from '../config/db';
 import { generateToken, authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
+import { otpService, type OtpPurpose } from '../services/otpService';
 
 const router = Router();
 
@@ -18,7 +19,26 @@ const DEFAULT_EXPENSES = [
   { name: 'Other', amount: 0, color: '#94a3b8' },
 ];
 
+function sanitizeUser(user: any) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    monthlyIncome: user.monthlyIncome,
+    totalBalance: user.totalBalance,
+    savingsPercent: user.savingsPercent,
+    currentPlan: user.currentPlan,
+    expenses: user.expenses,
+    isOnboarded: user.isOnboarded,
+    isAdmin: user.isAdmin,
+    statementUploaded: user.statementUploaded,
+    statementUploadsCount: user.statementUploadsCount,
+    avatarUrl: user.avatarUrl,
+  };
+}
+
 // POST /api/auth/register
+// Initiates registration: validates details and generates an OTP for email verification
 router.post('/register', async (req, res: Response) => {
   try {
     const { email, password, name } = req.body || {};
@@ -46,56 +66,36 @@ router.post('/register', async (req, res: Response) => {
 
     const existingUser = await db.findUserByEmail(cleanEmail);
     if (existingUser) {
-      return res.status(409).json({ error: 'An account with this email address already exists.' });
+      return res.status(409).json({ error: 'An account with this email address already exists. Please sign in.' });
     }
 
     // Hash password with bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = await db.createUser({
+    // Generate and dispatch OTP
+    const otpData = await otpService.createAndSendOtp(
+      cleanEmail,
+      'signup',
+      { name: cleanName, passwordHash },
+      cleanName
+    );
+
+    return res.status(200).json({
+      requiresOtp: true,
       email: cleanEmail,
-      name: cleanName,
-      passwordHash,
-      monthlyIncome: 0,
-      totalBalance: 0,
-      savingsPercent: 20,
-      currentPlan: 'Basic',
-      expenses: DEFAULT_EXPENSES,
-      isOnboarded: false,
-      isAdmin: cleanEmail === 'admin@finsight.com',
-      statementUploaded: false,
-      statementUploadsCount: 0,
-      failedLoginAttempts: 0,
-      lockedUntil: null,
-    });
-
-    const token = generateToken(newUser);
-
-    return res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        monthlyIncome: newUser.monthlyIncome,
-        totalBalance: newUser.totalBalance,
-        savingsPercent: newUser.savingsPercent,
-        currentPlan: newUser.currentPlan,
-        expenses: newUser.expenses,
-        isOnboarded: newUser.isOnboarded,
-        isAdmin: newUser.isAdmin,
-        statementUploaded: newUser.statementUploaded,
-        statementUploadsCount: newUser.statementUploadsCount,
-      },
+      purpose: 'signup',
+      message: 'Verification code sent to your email. Enter the 6-digit code to complete registration.',
+      otpPreview: otpData.code,
+      expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {
     console.error('[Auth] Registration error:', error);
-    return res.status(500).json({ error: 'Internal server error during registration.' });
+    return res.status(500).json({ error: error.message || 'Internal server error during registration.' });
   }
 });
 
 // POST /api/auth/login
+// Verifies credentials, then generates and sends an OTP for 2FA verification
 router.post('/login', async (req, res: Response) => {
   try {
     const { email, password } = req.body || {};
@@ -156,61 +156,25 @@ router.post('/login', async (req, res: Response) => {
       });
     }
 
-    // Reset attempts on successful login
-    await db.updateUser(cleanEmail, {
-      failedLoginAttempts: 0,
-      lockedUntil: null,
-    });
-
-    const token = generateToken(user);
+    // Password is valid! Generate and send OTP for 2-Factor Authentication
+    const otpData = await otpService.createAndSendOtp(cleanEmail, 'login', null, user.name);
 
     return res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        monthlyIncome: user.monthlyIncome,
-        totalBalance: user.totalBalance,
-        savingsPercent: user.savingsPercent,
-        currentPlan: user.currentPlan,
-        expenses: user.expenses,
-        isOnboarded: user.isOnboarded,
-        isAdmin: user.isAdmin,
-        statementUploaded: user.statementUploaded,
-        statementUploadsCount: user.statementUploadsCount,
-      },
+      requiresOtp: true,
+      email: cleanEmail,
+      purpose: 'login',
+      message: 'Security verification code sent to your email. Enter the 6-digit code to sign in.',
+      otpPreview: otpData.code,
+      expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {
     console.error('[Auth] Login error:', error);
-    return res.status(500).json({ error: 'Internal server error during login.' });
+    return res.status(500).json({ error: error.message || 'Internal server error during login.' });
   }
 });
 
-// GET /api/auth/me
-router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  const user = req.user!;
-  return res.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      monthlyIncome: user.monthlyIncome,
-      totalBalance: user.totalBalance,
-      savingsPercent: user.savingsPercent,
-      currentPlan: user.currentPlan,
-      expenses: user.expenses,
-      isOnboarded: user.isOnboarded,
-      isAdmin: user.isAdmin,
-      statementUploaded: user.statementUploaded,
-      statementUploadsCount: user.statementUploadsCount,
-    },
-    databaseStatus: db.getStatus(),
-  });
-});
-
 // POST /api/auth/google
+// Verifies Google OAuth token, then triggers OTP 2-Factor Authentication
 router.post('/google', async (req, res: Response) => {
   try {
     const { credential, accessToken } = req.body || {};
@@ -257,63 +221,257 @@ router.post('/google', async (req, res: Response) => {
     const googleId = payload.sub;
     const avatarUrl = payload.picture;
 
-    let user = await db.findUserByEmail(cleanEmail);
+    // Trigger OTP for Google authentication as requested
+    const otpData = await otpService.createAndSendOtp(
+      cleanEmail,
+      'google_auth',
+      { name, googleId, avatarUrl },
+      name
+    );
 
-    if (!user) {
-      // New user signup via Google
-      user = await db.createUser({
-        email: cleanEmail,
-        name,
-        passwordHash: '',
-        googleId,
-        avatarUrl,
-        monthlyIncome: 0,
-        totalBalance: 0,
-        savingsPercent: 20,
-        currentPlan: 'Basic',
-        expenses: DEFAULT_EXPENSES,
-        isOnboarded: false,
-        isAdmin: cleanEmail === 'admin@finsight.com',
-        statementUploaded: false,
-        statementUploadsCount: 0,
+    return res.json({
+      requiresOtp: true,
+      email: cleanEmail,
+      purpose: 'google_auth',
+      message: 'Google identity verified! Enter the 6-digit security code sent to your email to authenticate.',
+      otpPreview: otpData.code,
+      expiresAt: otpData.expiresAt,
+    });
+  } catch (error: any) {
+    console.error('[Google Auth] Unexpected error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error during Google authentication.' });
+  }
+});
+
+// POST /api/auth/verify-otp
+// Validates OTP for login, signup, or google_auth and completes authentication
+router.post('/verify-otp', async (req, res: Response) => {
+  try {
+    const { email, otp, purpose } = req.body || {};
+
+    if (!email || !otp || !purpose) {
+      return res.status(400).json({ error: 'Email, OTP, and verification purpose are required.' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const validPurposes: OtpPurpose[] = ['login', 'signup', 'google_auth'];
+
+    if (!validPurposes.includes(purpose as OtpPurpose)) {
+      return res.status(400).json({ error: 'Invalid verification purpose.' });
+    }
+
+    const verification = otpService.verifyOtp(cleanEmail, otp, purpose as OtpPurpose);
+    if (!verification.valid) {
+      return res.status(400).json({ error: verification.error || 'Verification failed.' });
+    }
+
+    // Verification succeeded! Complete authentication based on purpose
+    let user: any = null;
+
+    if (purpose === 'signup') {
+      const { name, passwordHash } = verification.userData || {};
+      if (!name || !passwordHash) {
+        return res.status(400).json({ error: 'Registration session expired. Please register again.' });
+      }
+
+      // Double-check if user was created in the interim
+      let existingUser = await db.findUserByEmail(cleanEmail);
+      if (existingUser) {
+        user = existingUser;
+      } else {
+        user = await db.createUser({
+          email: cleanEmail,
+          name,
+          passwordHash,
+          monthlyIncome: 0,
+          totalBalance: 0,
+          savingsPercent: 20,
+          currentPlan: 'Basic',
+          expenses: DEFAULT_EXPENSES,
+          isOnboarded: false,
+          isAdmin: cleanEmail === 'admin@finsight.com',
+          statementUploaded: false,
+          statementUploadsCount: 0,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        });
+      }
+    } else if (purpose === 'login') {
+      user = await db.findUserByEmail(cleanEmail);
+      if (!user) {
+        return res.status(404).json({ error: 'User account not found.' });
+      }
+
+      // Reset login attempts and lock status
+      await db.updateUser(cleanEmail, {
         failedLoginAttempts: 0,
         lockedUntil: null,
       });
-    } else {
-      // Existing user: ensure googleId/avatarUrl is linked
-      if (!user.googleId || !user.avatarUrl) {
-        await db.updateUser(cleanEmail, {
-          googleId: user.googleId || googleId,
-          avatarUrl: user.avatarUrl || avatarUrl,
+    } else if (purpose === 'google_auth') {
+      const { name, googleId, avatarUrl } = verification.userData || {};
+      user = await db.findUserByEmail(cleanEmail);
+
+      if (!user) {
+        // Create new user via Google
+        user = await db.createUser({
+          email: cleanEmail,
+          name: name || cleanEmail.split('@')[0],
+          passwordHash: '',
+          googleId,
+          avatarUrl,
+          monthlyIncome: 0,
+          totalBalance: 0,
+          savingsPercent: 20,
+          currentPlan: 'Basic',
+          expenses: DEFAULT_EXPENSES,
+          isOnboarded: false,
+          isAdmin: cleanEmail === 'admin@finsight.com',
+          statementUploaded: false,
+          statementUploadsCount: 0,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
         });
+      } else {
+        // Update user google info if missing
+        if (!user.googleId || !user.avatarUrl) {
+          await db.updateUser(cleanEmail, {
+            googleId: user.googleId || googleId,
+            avatarUrl: user.avatarUrl || avatarUrl,
+          });
+          user = await db.findUserByEmail(cleanEmail);
+        }
       }
     }
 
     const token = generateToken(user);
 
     return res.json({
-      message: 'Google authentication successful',
+      message: 'Authentication successful',
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        monthlyIncome: user.monthlyIncome,
-        totalBalance: user.totalBalance,
-        savingsPercent: user.savingsPercent,
-        currentPlan: user.currentPlan,
-        expenses: user.expenses,
-        isOnboarded: user.isOnboarded,
-        isAdmin: user.isAdmin,
-        statementUploaded: user.statementUploaded,
-        statementUploadsCount: user.statementUploadsCount,
-        avatarUrl: user.avatarUrl,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error: any) {
-    console.error('[Google Auth] Unexpected error:', error);
-    return res.status(500).json({ error: 'Internal server error during Google authentication.' });
+    console.error('[Auth] verify-otp error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error during verification.' });
   }
+});
+
+// POST /api/auth/resend-otp
+// Resends OTP code for login, signup, or google_auth
+router.post('/resend-otp', async (req, res: Response) => {
+  try {
+    const { email, purpose } = req.body || {};
+    if (!email || !purpose) {
+      return res.status(400).json({ error: 'Email and purpose are required.' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const otpData = await otpService.createAndSendOtp(cleanEmail, purpose as OtpPurpose);
+
+    return res.json({
+      message: 'A fresh verification code has been dispatched.',
+      otpPreview: otpData.code,
+      expiresAt: otpData.expiresAt,
+    });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message || 'Failed to resend verification code.' });
+  }
+});
+
+// POST /api/auth/forgot-password/request-otp
+// Generates and sends OTP for forgotten password
+router.post('/forgot-password/request-otp', async (req, res: Response) => {
+  try {
+    const { email } = req.body || {};
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'A valid email address is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await db.findUserByEmail(cleanEmail);
+
+    if (!user) {
+      return res.status(404).json({ error: 'No account registered with this email address.' });
+    }
+
+    const otpData = await otpService.createAndSendOtp(cleanEmail, 'forgot_password', null, user.name);
+
+    return res.json({
+      success: true,
+      message: 'Password reset code has been sent to your email.',
+      email: cleanEmail,
+      otpPreview: otpData.code,
+      expiresAt: otpData.expiresAt,
+    });
+  } catch (error: any) {
+    console.error('[Auth] forgot-password/request-otp error:', error);
+    return res.status(400).json({ error: error.message || 'Failed to send password reset code.' });
+  }
+});
+
+// POST /api/auth/forgot-password/reset
+// Verifies OTP and resets user password
+router.post('/forgot-password/reset', async (req, res: Response) => {
+  try {
+    const { email, otp, newPassword } = req.body || {};
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ error: 'Email, verification code, and new password are required.' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+
+    // Validate new password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      return res.status(400).json({ error: 'New password must contain at least one uppercase letter.' });
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: 'New password must contain at least one number.' });
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: 'New password must contain at least one special character.' });
+    }
+
+    const verification = otpService.verifyOtp(cleanEmail, otp, 'forgot_password');
+    if (!verification.valid) {
+      return res.status(400).json({ error: verification.error || 'Verification failed.' });
+    }
+
+    const user = await db.findUserByEmail(cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update user password and clear any previous lockouts
+    await db.updateUser(cleanEmail, {
+      passwordHash: newPasswordHash,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Password reset successfully! You can now log in with your new password.',
+    });
+  } catch (error: any) {
+    console.error('[Auth] forgot-password/reset error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to reset password.' });
+  }
+});
+
+// GET /api/auth/me
+router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  const user = req.user!;
+  return res.json({
+    user: sanitizeUser(user),
+    databaseStatus: db.getStatus(),
+  });
 });
 
 // POST /api/auth/logout
