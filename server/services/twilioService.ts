@@ -55,7 +55,11 @@ export class TwilioService {
   }
 
   public isAvailable(): boolean {
-    return this.isSendGridConfigured || !!this.twilioClient;
+    return Boolean(
+      process.env.TWILIO_SENDGRID_API_KEY ||
+      process.env.SENDGRID_API_KEY ||
+      (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
+    );
   }
 
   /**
@@ -70,7 +74,7 @@ export class TwilioService {
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #0b0f19; border-radius: 16px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.35); color: #f8fafc;">
         <div style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); padding: 32px 28px; text-align: center;">
           <h1 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">FinSight</h1>
-          <p style="margin: 6px 0 0 0; color: #e0e7ff; font-size: 13px; font-weight: 500;">Secured with Twilio API</p>
+          <p style="margin: 6px 0 0 0; color: #e0e7ff; font-size: 13px; font-weight: 500;">Secured with Twilio SendGrid API</p>
         </div>
         <div style="padding: 32px 28px;">
           <h2 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 700; color: #f8fafc;">${purposeTitle}</h2>
@@ -92,15 +96,17 @@ export class TwilioService {
           </div>
           
           <p style="margin: 0; color: #64748b; font-size: 12px; text-align: center;">
-            Dispatched via Twilio API • FinSight Security
+            Dispatched via Twilio SendGrid API • FinSight Security
           </p>
         </div>
       </div>
     `;
 
     // 1. Try Twilio SendGrid Email API first
-    if (this.isSendGridConfigured) {
+    const sendGridKey = process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY;
+    if (sendGridKey) {
       try {
+        sgMail.setApiKey(sendGridKey);
         await sgMail.send({
           to,
           from: fromAddress,
