@@ -352,6 +352,24 @@ CRITICAL UPI & INDIAN BANKING RULE:
    - "isRecurring": boolean (true for subscriptions, rent, insurance, monthly utility bills).
    - "confidence": number between 0.0 and 1.0 representing classification confidence.
 
+FEW-SHOT TRAINING EXAMPLES (Follow these exact classification patterns):
+- "05/10/2026 TO TRANSFER-UPI/DR/627868088499/MOHAN SWEETS/SBIN/0000 90.00 4520.50"
+  -> cleanMerchant: "Mohan Sweets", amount: -90.00, category: "Food & Dining", confidence: 0.98
+- "04/10/2026 TO TRANSFER-UPI/DR/627750058855/ZEPTO/HDFC/Pay 180.00 4430.50"
+  -> cleanMerchant: "Zepto", amount: -180.00, category: "Shopping", confidence: 0.99
+- "03/10/2026 TO TRANSFER-UPI/DR/627629800942/RAPIDO/YESB/Ride 60.00 4250.50"
+  -> cleanMerchant: "Rapido", amount: -60.00, category: "Transport", confidence: 0.98
+- "02/10/2026 TO TRANSFER-UPI/DR/627516888683/HP PETROL PUMP/SBIN 500.00 3750.50"
+  -> cleanMerchant: "HP Petrol Pump", amount: -500.00, category: "Transport", confidence: 0.99
+- "01/10/2026 BY TRANSFER-NEFT*TECH SOLUTIONS*SALARY SEPT 85000.00 88750.50"
+  -> cleanMerchant: "Tech Solutions", amount: 85000.00, category: "Salary", confidence: 1.0, isRecurring: true
+- "01/10/2026 TO TRANSFER-UPI/DR/627404142936/RAHUL SHARMA/SBIN/Rent split 2000.00 86750.50"
+  -> cleanMerchant: "Rahul Sharma", amount: -2000.00, category: "Transfer", confidence: 0.92
+- "28/09/2026 ATM WDL-NFS/123456/BANGALORE AIRPORT 5000.00 81750.50"
+  -> cleanMerchant: "ATM Cash Withdrawal", amount: -5000.00, category: "ATM", confidence: 0.99
+- "25/09/2026 DEBIT-SMS CHRG QTR ENDING SEPT 2026 17.70 81732.80"
+  -> cleanMerchant: "Bank SMS Charges", amount: -17.70, category: "Other", confidence: 0.95
+
 OUTPUT FORMAT: Return strictly valid JSON with this shape:
 {
   "transactions": [

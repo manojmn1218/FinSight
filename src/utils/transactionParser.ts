@@ -302,21 +302,33 @@ export async function parsePdfFile(file: File, password?: string): Promise<strin
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     
-    // Group text items by their y-position to reconstruct lines
+    // Cluster text items into lines within a vertical tolerance (~3.5px) and sort left-to-right (x-axis)
     const items = content.items as Array<{ str: string; transform: number[] }>;
-    const lineMap = new Map<number, string[]>();
+    const lineBuckets: Array<{ y: number; items: Array<{ x: number; text: string }> }> = [];
+    const TOLERANCE = 3.5;
 
     for (const item of items) {
-      // y-position is in transform[5], round to group items on same line
-      const y = Math.round(item.transform[5]);
-      if (!lineMap.has(y)) lineMap.set(y, []);
-      lineMap.get(y)!.push(item.str);
+      const str = (item.str || '').trim();
+      if (!str) continue;
+      const x = item.transform[4];
+      const y = item.transform[5];
+
+      // Find an existing bucket within vertical tolerance
+      const bucket = lineBuckets.find(b => Math.abs(b.y - y) <= TOLERANCE);
+      if (bucket) {
+        bucket.items.push({ x, text: item.str });
+      } else {
+        lineBuckets.push({ y, items: [{ x, text: item.str }] });
+      }
     }
 
-    // Sort by y descending (PDF coordinates: bottom=0, top=max)
-    const sortedYs = [...lineMap.keys()].sort((a, b) => b - a);
-    for (const y of sortedYs) {
-      const lineText = lineMap.get(y)!.join(' ').trim();
+    // Sort lines top to bottom (y descending in PDF coordinate space)
+    lineBuckets.sort((a, b) => b.y - a.y);
+
+    for (const bucket of lineBuckets) {
+      // Sort items within line from left to right (x ascending)
+      bucket.items.sort((a, b) => a.x - b.x);
+      const lineText = bucket.items.map(i => i.text).join(' ').replace(/\s{2,}/g, ' ').trim();
       if (lineText) allLines.push(lineText);
     }
   }
