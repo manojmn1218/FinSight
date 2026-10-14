@@ -85,7 +85,6 @@ router.post('/register', async (req, res: Response) => {
       email: cleanEmail,
       purpose: 'signup',
       message: 'Verification code sent to your email. Enter the 6-digit code to complete registration.',
-      otpPreview: otpData.code,
       expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {
@@ -164,7 +163,6 @@ router.post('/login', async (req, res: Response) => {
       email: cleanEmail,
       purpose: 'login',
       message: 'Security verification code sent to your email. Enter the 6-digit code to sign in.',
-      otpPreview: otpData.code,
       expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {
@@ -234,7 +232,6 @@ router.post('/google', async (req, res: Response) => {
       email: cleanEmail,
       purpose: 'google_auth',
       message: 'Google identity verified! Enter the 6-digit security code sent to your email to authenticate.',
-      otpPreview: otpData.code,
       expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {
@@ -369,8 +366,7 @@ router.post('/resend-otp', async (req, res: Response) => {
     const otpData = await otpService.createAndSendOtp(cleanEmail, purpose as OtpPurpose);
 
     return res.json({
-      message: 'A fresh verification code has been dispatched.',
-      otpPreview: otpData.code,
+      message: 'A fresh verification code has been dispatched to your email.',
       expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {
@@ -400,7 +396,6 @@ router.post('/forgot-password/request-otp', async (req, res: Response) => {
       success: true,
       message: 'Password reset code has been sent to your email.',
       email: cleanEmail,
-      otpPreview: otpData.code,
       expiresAt: otpData.expiresAt,
     });
   } catch (error: any) {

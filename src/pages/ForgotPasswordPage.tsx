@@ -115,10 +115,6 @@ export default function ForgotPasswordPage() {
     inputRefs.current[focusIdx]?.focus();
   };
 
-  const handleQuickFill = (code: string) => {
-    setDigits(code.slice(0, 6).split(''));
-    setError('');
-  };
 
   // Handle step 2: Resend OTP
   const handleResend = async () => {
@@ -316,42 +312,6 @@ export default function ForgotPasswordPage() {
                 </p>
               </div>
 
-              {/* Dev Quick-Fill helper badge */}
-              {otpPreview && (
-                <div
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.1)',
-                    border: '1px dashed rgba(56, 189, 248, 0.4)',
-                    borderRadius: 10,
-                    padding: '8px 12px',
-                    marginBottom: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#38bdf8' }}>
-                    <KeyRound size={14} />
-                    <span>Security Code: <strong>{otpPreview}</strong></span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickFill(otpPreview)}
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.2)',
-                      border: 'none',
-                      color: '#38bdf8',
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Autofill
-                  </button>
-                </div>
-              )}
 
               {error && (
                 <div

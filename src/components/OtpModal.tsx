@@ -105,12 +105,6 @@ export default function OtpModal({
     }
   };
 
-  const handleQuickFill = (code: string) => {
-    const chars = code.slice(0, 6).split('');
-    setDigits(chars);
-    setError('');
-    handleAutoSubmit(code);
-  };
 
   const handleAutoSubmit = async (fullCode: string) => {
     setLoading(true);
@@ -237,42 +231,6 @@ export default function OtpModal({
             </p>
           </div>
 
-          {/* Development Quick-Fill helper badge */}
-          {otpPreview && (
-            <div
-              style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                border: '1px dashed rgba(56, 189, 248, 0.4)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                marginBottom: 20,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#38bdf8' }}>
-                <KeyRound size={15} />
-                <span>Security Code: <strong>{otpPreview}</strong></span>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleQuickFill(otpPreview)}
-                style={{
-                  background: 'rgba(56, 189, 248, 0.2)',
-                  border: 'none',
-                  color: '#38bdf8',
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Autofill
-              </button>
-            </div>
-          )}
 
           {/* Error & Info Alerts */}
           {error && (
