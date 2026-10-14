@@ -299,6 +299,12 @@ class ApiService {
     });
   }
 
+  async clearTransactions() {
+    return this.request<{ message: string; deletedCount: number }>('/api/transactions', {
+      method: 'DELETE',
+    });
+  }
+
   // --- Goals ---
   async getGoals() {
     return this.request<{ goals: FinancialGoal[] }>('/api/goals', {

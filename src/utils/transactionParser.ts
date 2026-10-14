@@ -53,11 +53,12 @@ const CATEGORY_KEYWORDS: Record<Category, string[]> = {
     'training', 'exam', 'fees', 'scholarship', 'edx', 'skillshare',
   ],
   'Transfer': [
-    'neft', 'imps', 'upi', 'rtgs', 'transfer', 'fund transfer',
+    'neft', 'imps', 'rtgs', 'fund transfer',
     'self transfer', 'to savings', 'to current', 'net banking',
     'mobile banking', 'bank transfer', 'tfr', 'trfr', 'trf',
     'acc tfr', 'a/c tfr', 'account transfer', 'ac transfer',
     'dep tfr', 'wdl tfr', 'p2p', 'peer to peer', 'internal transfer',
+    'own account transfer', 'wire transfer',
   ],
   'ATM': [
     'atm', 'cash withdrawal', 'cash deposit', 'cash',

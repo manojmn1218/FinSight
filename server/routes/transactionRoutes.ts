@@ -73,6 +73,18 @@ router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Res
   }
 });
 
+// DELETE /api/transactions — clear all transactions for current user
+router.delete('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userEmail = req.user!.email;
+    const deletedCount = await db.clearTransactions(userEmail);
+    return res.json({ message: `Successfully cleared ${deletedCount} transaction(s)`, deletedCount });
+  } catch (error: any) {
+    console.error('[Transactions] Clear all error:', error);
+    return res.status(500).json({ error: 'Failed to clear transactions.' });
+  }
+});
+
 // DELETE /api/transactions/:id
 router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {

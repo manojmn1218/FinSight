@@ -214,6 +214,14 @@ class LocalDatabase {
     return false;
   }
 
+  async clearTransactions(userEmail: string): Promise<number> {
+    const key = userEmail.trim().toLowerCase();
+    const count = (this.state.transactions[key] || []).length;
+    this.state.transactions[key] = [];
+    await this.save();
+    return count;
+  }
+
   // --- Goals ---
   async getGoals(userEmail: string): Promise<GoalDocument[]> {
     const key = userEmail.trim().toLowerCase();

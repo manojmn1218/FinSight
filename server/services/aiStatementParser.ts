@@ -110,9 +110,8 @@ const FALLBACK_CATEGORY_PATTERNS: Array<{
   {
     category: 'Transfer',
     patterns: [
-      /\b(neft|imps|rtgs|fund transfer|acc tfr|a\/c tfr|account transfer|ac transfer|tfr|trfr|trf|to self|own account transfer|transfer to|transfer from|sent to|received from|p2p|peer to peer|family transfer|friend|bank transfer|internal transfer|direct transfer|wire transfer|ft\b|money sent|money received|inb|mb|dep tfr|wdl tfr)\b/i,
-      /\bupi[\/\-_]/i,
-      /\b(upi|transfer|tfr)\b/i,
+      /\b(neft|imps|rtgs|fund transfer|acc tfr|a\/c tfr|account transfer|ac transfer|tfr|trfr|trf|to self|own account transfer|transfer to|transfer from|sent to|received from|p2p|peer to peer|family transfer|friend|bank transfer|internal transfer|direct transfer|wire transfer|ft\b|money sent|money received|dep tfr|wdl tfr)\b/i,
+      /\b(transfer|fund tfr)\b/i,
     ],
   },
   {
@@ -325,23 +324,29 @@ Your job is to read raw text lines from a bank statement PDF and extract structu
 CRITICAL INSTRUCTIONS:
 1. Extract ALL valid debit and credit financial transactions from the text lines.
 2. For each transaction, classify into EXACTLY ONE of these 12 categories:
-   - "Food & Dining" (restaurants, cafes, Swiggy, Zomato, groceries, Zepto, Blinkit, food, bakeries)
-   - "Shopping" (Amazon, Flipkart, clothes, electronics, retail stores, retail purchases)
-   - "Transport" (Uber, Ola, Rapido, Metro, fuel, petrol, flight, IRCTC, train, toll)
-   - "Utilities" (electricity, water, broadband, gas, mobile recharge, Jio, Airtel, DTH)
-   - "Rent" (house rent, flat rent, society maintenance)
-   - "Subscriptions" (Netflix, Spotify, Prime, YouTube, ChatGPT, Apple, iCloud, SaaS)
-   - "Health" (hospitals, clinics, pharmacy, medicine, Apollo, 1mg, diagnostic tests)
-   - "Education" (school, college, courses, Udemy, Coursera, books, tuition)
-   - "Transfer" (peer-to-peer UPI transfer, UPI digital payments/transfers, NEFT, IMPS, RTGS, bank account transfers, TFR, fund transfer)
-   - "ATM" (cash withdrawal at ATM)
-   - "Salary" (salary credit, wages, payroll, client invoice payment)
-   - "Other" (bank charges, penalties, taxes, cashback, interest, uncategorized)
+   - "Food & Dining": restaurants, cafes, Swiggy, Zomato, groceries, Zepto, Blinkit, bakeries, tea/chai stalls, sweets, dhabas, food outlets.
+   - "Shopping": Amazon, Flipkart, Myntra, clothes, fashion, electronics, retail stores, supermarkets, marts, departmental stores, retail purchases.
+   - "Transport": Uber, Ola, Rapido, Metro, petrol/diesel/fuel pumps (HPCL, BPCL, IOCL, Shell), flights, airlines, IRCTC, train, bus, Fastag, tolls, parking, auto.
+   - "Utilities": mobile recharge (Jio, Airtel, Vi, BSNL), electricity bills, water, broadband, WiFi, piped gas, DTH, bill payments.
+   - "Rent": house rent, flat rent, society maintenance, landlord, PG accommodation.
+   - "Subscriptions": Netflix, Spotify, Amazon Prime, YouTube, ChatGPT, Apple, iCloud, Google One, SaaS, gym memberships.
+   - "Health": hospitals, clinics, pharmacy, medical stores, Apollo, Netmeds, Tata 1mg, diagnostic tests, doctor fees.
+   - "Education": school, college, university, courses, Udemy, Coursera, books, stationery, tuition fees.
+   - "Transfer": ONLY personal money transfers between individuals (e.g. friend/family person by name, personal VPA) or bank account movements (NEFT, IMPS, RTGS, self-account transfer, TFR). DO NOT classify payments to shops, stores, food, restaurants, or merchants as Transfer even if paid via UPI!
+   - "ATM": cash withdrawals at ATMs.
+   - "Salary": salary credit, payroll, stipend, wages, direct deposit from employer/clients.
+   - "Other": bank service charges, SMS fees, penalties, taxes, cashback, interest, uncategorized.
+
+CRITICAL UPI & INDIAN BANKING RULE:
+- In India, almost all payments are made using UPI. UPI is merely a payment method, NOT a category!
+- When you see a UPI transaction like "UPI/DR/.../MERCHANT/BANK", inspect the merchant/recipient name.
+- If it is paid to a merchant/store/food/service, classify it under its real category (Food & Dining, Shopping, Transport, etc.).
+- ONLY classify as "Transfer" if it is a personal peer-to-peer transfer to an individual or a bank account transfer.
 
 3. Format:
    - "date": string in "YYYY-MM-DD" format. If year is missing or two-digits, deduce correctly.
    - "rawDescription": the original raw text line from the statement.
-   - "cleanMerchant": clean, human-readable merchant name (e.g. "Swiggy Food Delivery", "Amazon India", "HDFC Salary Credit", "Uber Ride").
+   - "cleanMerchant": clean, human-readable merchant or recipient name (e.g. "Swiggy", "Mohan Sweets", "Amazon India", "HP Petrol Pump", "Rahul Sharma").
    - "amount": number. MUST BE NEGATIVE for debits/expenses (e.g. -450.00) and POSITIVE for credits/income (e.g. 85000.00).
    - "category": exactly one of the 12 listed category strings.
    - "isRecurring": boolean (true for subscriptions, rent, insurance, monthly utility bills).
@@ -464,7 +469,7 @@ export async function reclassifyTransactionsWithAi(
   if (geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here') {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-      const prompt = `You are FinSight's expert financial transaction classifier and entity extraction AI.
+      const prompt = `You are FinSight's expert Indian financial transaction classifier and entity extraction AI.
 Analyze each transaction below and return JSON with the structure:
 {
   "classifications": [
@@ -478,19 +483,47 @@ Analyze each transaction below and return JSON with the structure:
   ]
 }
 
-CRITICAL RULES:
-- Peer-to-peer UPI payments/transfers to people, bank transfers, TFR, NEFT, IMPS MUST be categorized as "Transfer".
-- Salary credits MUST be "Salary".
-- ATM withdrawals MUST be "ATM".
-- Swiggy, Zomato, cafes, dining, groceries MUST be "Food & Dining".
-- Amazon, Flipkart, clothes, electronics MUST be "Shopping".
-- Uber, Ola, Rapido, petrol/fuel, flights, trains MUST be "Transport".
-- Electricity, water, broadband, mobile bills MUST be "Utilities".
-- Doctor, hospital, pharmacy, medical tests MUST be "Health".
-- Netflix, Spotify, Prime, ChatGPT, recurring SaaS MUST be "Subscriptions".
-- Rent, society maintenance MUST be "Rent".
-- Courses, books, tuition MUST be "Education".
-- Bank charges, fees, taxes MUST be "Other".`;
+CRITICAL CATEGORIZATION RULES:
+1. In India, UPI is merely a payment mechanism, NEVER a category!
+   - DO NOT categorize a transaction as "Transfer" simply because it was paid via UPI, contains "UPI", or has a UPI reference.
+2. "Transfer" is STRICTLY RESERVED for:
+   - Inter-bank fund transfers: NEFT, IMPS, RTGS, TFR, self-account transfers, A/C transfers.
+   - Significant money transfers sent to or received from personal contacts/friends/family (e.g. peer-to-peer transfers > ₹1,000, or credits from family/friends).
+3. "Food & Dining":
+   - Restaurants, cafes, bakeries, tea/coffee stalls, Chai, sweets (Mohan Sweets, Haldirams), dining, canteens, mess.
+   - Food delivery apps (Swiggy, Zomato, EatClub).
+   - Dairy/milk booths (Nandini, Amul, Mother Dairy).
+   - Small daily debit expenditures (< ₹350) paid to local food stalls, eateries, or personal merchants for food/snacks.
+4. "Shopping":
+   - Quick commerce groceries (Blinkit, Zepto, Instamart, BigBasket, DMart).
+   - E-commerce (Amazon, Flipkart, Myntra, Meesho, Ajio, Tata CLiQ).
+   - Retail shops, supermarkets, clothing, footwear, electronics, hardware, department stores.
+5. "Transport":
+   - Cabs, autos, bike taxis (Rapido, Uber, Ola).
+   - Metro, railways (IRCTC), buses, flights.
+   - Fuel/petrol stations (HPCL, IOCL, BPCL, Shell), tolls (FASTag), parking fees.
+6. "Utilities":
+   - Mobile recharges & bills (Jio, Airtel, Vi, BSNL).
+   - Electricity bills, water bills, gas cylinder, piped gas, broadband/WiFi, DTH.
+7. "Rent":
+   - House rent, apartment rent, society maintenance, PG rent, hostel.
+8. "Subscriptions":
+   - Netflix, Spotify, Prime, YouTube, ChatGPT, Apple, iCloud, Google One, gym memberships, recurring SaaS.
+9. "Health":
+   - Pharmacies, medical stores (Apollo, Netmeds, 1mg, MedPlus), hospitals, clinics, doctor fees, diagnostic tests.
+10. "Education":
+    - School/college/university fees, courses, books, Udemy, Coursera, exam registration.
+11. "Salary":
+    - Salary credit, payroll, stipend, wages from employer.
+12. "ATM":
+    - ATM cash withdrawals.
+13. "Other":
+    - Bank charges, SMS fees, penalties, taxes, cashback, interest, uncategorized.
+
+HEURISTIC FOR TRANSACTIONS WITH BARE OR MISSING MERCHANT TEXT (e.g. "UPI", "UPI Transfer"):
+- If debit amount is between ₹10 and ₹350: classify as "Food & Dining" (chai/snacks/daily meals).
+- If debit amount is between ₹350 and ₹1,500: classify as "Shopping" (groceries/general retail).
+- If debit or credit amount is >= ₹2,000 without retail merchant: classify as "Transfer".`;
 
       const BATCH_SIZE = 60;
       const results: ReclassifiedResult['items'] = [];

@@ -228,6 +228,15 @@ export const db = {
     return localDb.deleteTransaction(cleanEmail, txnId);
   },
 
+  async clearTransactions(userEmail: string): Promise<number> {
+    const cleanEmail = userEmail.trim().toLowerCase();
+    if (isMongoConnected) {
+      const res = await TransactionModel.deleteMany({ userEmail: cleanEmail });
+      return res.deletedCount || 0;
+    }
+    return localDb.clearTransactions(cleanEmail);
+  },
+
   // --- Goals ---
   async getGoals(userEmail: string): Promise<GoalDocument[]> {
     const cleanEmail = userEmail.trim().toLowerCase();

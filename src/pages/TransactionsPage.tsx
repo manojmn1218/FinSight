@@ -39,8 +39,8 @@ function formatTransactionDisplay(tx: Transaction) {
   let title = raw;
   let subtitle = '';
 
-  // 1. If it's a bare or collapsed label ("Upi", "UPI", "Bank Upi Transfer", "Imps", "Transfer", "Tfr", etc.)
-  if (!raw || /^(upi|imps|neft|rtgs|transfer|bank upi transfer|bank transaction|tfr|trfr|trf|acc tfr|a\/c tfr|account transfer)$/i.test(raw)) {
+  // 1. If it's a bare or collapsed label ("Upi", "UPI", "UPI Transfer", "Bank Upi Transfer", "Imps", "Transfer", "Tfr", etc.)
+  if (!raw || /^(upi|upi transfer|imps|imps transfer|neft|neft transfer|rtgs|transfer|bank upi transfer|bank transaction|tfr|trfr|trf|acc tfr|a\/c tfr|account transfer)$/i.test(raw)) {
     const typeLabel = /imps/i.test(raw) ? 'IMPS' : /neft/i.test(raw) ? 'NEFT' : /tfr|transfer/i.test(raw) ? 'A/C Transfer' : 'UPI';
     const cat = tx.category || 'Transfer';
 
@@ -175,8 +175,9 @@ function formatTransactionDisplay(tx: Transaction) {
 }
 
 export default function TransactionsPage() {
-  const { data, addTransactions, updateTransaction, deleteTransaction } = useFinance();
+  const { data, addTransactions, updateTransaction, deleteTransaction, clearTransactions } = useFinance();
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
+  const [replaceExisting, setReplaceExisting] = useState(true);
 
   const [dragOver, setDragOver] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -379,7 +380,7 @@ export default function TransactionsPage() {
     setParsing(false);
   };
 
-  const handleApproveAiTransactions = () => {
+  const handleApproveAiTransactions = async () => {
     const selected = stagedTransactions.filter(t => t.selected);
     if (selected.length === 0) {
       setParseError('Please select at least one transaction to import.');
@@ -397,7 +398,11 @@ export default function TransactionsPage() {
       source: 'pdf',
     }));
 
-    addTransactions(txnsToImport);
+    if (replaceExisting && txns.length > 0) {
+      await clearTransactions();
+    }
+
+    await addTransactions(txnsToImport);
 
     const dates = txnsToImport.map(t => t.date).sort();
     const from = new Date(dates[0]).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
@@ -845,7 +850,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Smart Banner if generic or legacy transactions are present */}
-      {txns.some(t => /^(upi|imps|neft|rtgs|transfer|bank upi transfer)$/i.test((t.description || '').trim())) && (
+      {txns.some(t => /^(upi|upi transfer|imps|neft|rtgs|transfer|bank upi transfer)$/i.test((t.description || '').trim())) && (
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1551,8 +1556,21 @@ export default function TransactionsPage() {
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 background: 'var(--surface)', flexWrap: 'wrap', gap: 12,
               }}>
-                <div style={{ fontSize: 13, color: 'var(--text2)' }}>
-                  Selected <strong>{stagedTransactions.filter(t => t.selected).length}</strong> of {stagedTransactions.length} transactions
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text2)' }}>
+                    Selected <strong>{stagedTransactions.filter(t => t.selected).length}</strong> of {stagedTransactions.length} transactions
+                  </div>
+                  {txns.length > 0 && (
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text)', cursor: 'pointer', background: 'rgba(168,85,247,0.1)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(168,85,247,0.2)' }}>
+                      <input
+                        type="checkbox"
+                        checked={replaceExisting}
+                        onChange={e => setReplaceExisting(e.target.checked)}
+                        style={{ cursor: 'pointer', accentColor: '#a855f7' }}
+                      />
+                      <span style={{ fontWeight: 600 }}>Clean-replace old records ({txns.length} previous)</span>
+                    </label>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>

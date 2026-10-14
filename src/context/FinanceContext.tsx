@@ -94,6 +94,7 @@ interface FinCtx {
   addTransactions: (txns: Transaction[]) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  clearTransactions: () => Promise<void>;
   // Goal methods
   addGoal: (goal: FinancialGoal) => Promise<void>;
   updateGoal: (id: string, updates: Partial<FinancialGoal>) => Promise<void>;
@@ -548,6 +549,21 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const clearTransactions = useCallback(async () => {
+    setFinData(prev => ({
+      ...prev,
+      transactions: [],
+    }));
+
+    try {
+      await api.clearTransactions();
+      const res = await api.getTransactions();
+      setFinData(prev => ({ ...prev, transactions: res.transactions || [] }));
+    } catch (err) {
+      console.error('[FinanceContext] Failed to clear transactions on backend:', err);
+    }
+  }, []);
+
   // Goal CRUD
   const addGoal = useCallback(async (goal: FinancialGoal) => {
     setFinData(prev => ({
@@ -632,6 +648,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         addTransactions,
         updateTransaction,
         deleteTransaction,
+        clearTransactions,
         addGoal,
         updateGoal,
         deleteGoal,
