@@ -373,7 +373,7 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
     for (let i = 0; i < filteredLines.length; i += CHUNK_SIZE) {
       const chunk = filteredLines.slice(i, i + CHUNK_SIZE).join('\n');
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: [
           {
             role: 'user',
@@ -420,7 +420,7 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
 
     if (allValidatedTxns.length > 0) {
       console.log(`[AI Statement Parser] Gemini Flash successfully classified ${allValidatedTxns.length} transactions across batches.`);
-      return buildParseResult('gemini', 'gemini-2.5-flash', allValidatedTxns, bankDetected, statementPeriod);
+      return buildParseResult('gemini', 'gemini-3.5-flash-lite', allValidatedTxns, bankDetected, statementPeriod);
     }
 
     console.warn('[AI Statement Parser] Gemini returned 0 transactions, switching to fallback.');
@@ -510,7 +510,7 @@ CRITICAL RULES:
         )}`;
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash-lite',
           contents: [
             {
               role: 'user',
@@ -548,7 +548,7 @@ CRITICAL RULES:
       if (results.length > 0) {
         return {
           provider: 'gemini',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash-lite',
           items: results,
         };
       }

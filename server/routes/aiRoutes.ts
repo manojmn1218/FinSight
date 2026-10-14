@@ -11,7 +11,7 @@ router.get('/status', (_req, res: Response) => {
   return res.json({
     hasGeminiKey: hasKey,
     activeProvider: hasKey ? 'gemini' : 'heuristic_fallback',
-    model: hasKey ? 'gemini-2.5-flash' : 'smart-nlp-engine',
+    model: hasKey ? 'gemini-3.5-flash-lite' : 'smart-nlp-engine',
     version: '2.5',
     features: [
       'Automatic Bank Statement OCR/Text Classification',
@@ -39,7 +39,7 @@ router.post('/configure-key', authenticateToken, async (req: AuthenticatedReques
 
     try {
       await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: 'Ping test',
         config: { maxOutputTokens: 5 },
       });
@@ -73,9 +73,9 @@ router.post('/configure-key', authenticateToken, async (req: AuthenticatedReques
 
     return res.json({
       success: true,
-      message: 'Google Gemini 2.5 Flash connected and verified successfully!',
+      message: 'Google Gemini AI connected and verified successfully!',
       activeProvider: 'gemini',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash-lite',
     });
   } catch (error: any) {
     console.error('[AI Config] Setup error:', error);
