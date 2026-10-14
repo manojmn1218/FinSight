@@ -378,6 +378,53 @@ class ApiService {
       method: 'GET',
     });
   }
+
+  // --- AI Statement Parsing & Classification ---
+  async getAiStatus() {
+    return this.request<AiStatusResponse>('/api/ai/status', {
+      method: 'GET',
+    });
+  }
+
+  async parseStatementWithAi(lines: string[]) {
+    return this.request<AiParseResponse>('/api/ai/parse-statement', {
+      method: 'POST',
+      body: JSON.stringify({ lines }),
+    });
+  }
+}
+
+export interface AiParseResponse {
+  provider: 'gemini' | 'heuristic_fallback';
+  model: string;
+  summary: {
+    totalTransactions: number;
+    totalDebits: number;
+    totalCredits: number;
+    period?: string;
+    bankDetected?: string;
+    categoriesFound: Record<string, number>;
+  };
+  transactions: Array<{
+    id: string;
+    date: string;
+    rawDescription: string;
+    cleanMerchant: string;
+    amount: number;
+    category: import('../utils/types').Category;
+    isRecurring: boolean;
+    confidence: number;
+    balance?: number;
+  }>;
+}
+
+export interface AiStatusResponse {
+  hasGeminiKey: boolean;
+  activeProvider: 'gemini' | 'heuristic_fallback';
+  model: string;
+  version: string;
+  features: string[];
 }
 
 export const api = new ApiService();
+

@@ -1,5 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { db } from '../config/db';
 import type { UserDocument } from '../types';
 
