@@ -22,6 +22,23 @@ export interface UserDocument {
   statementUploadsCount: number;
   failedLoginAttempts: number;
   lockedUntil: string | null;
+  phone?: string;
+  occupation?: string;
+  city?: string;
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+  investmentHorizon?: 'short' | 'medium' | 'long';
+  currency?: string;
+  stealthMode?: boolean;
+  panMasked?: string;
+  emergencyMonths?: number;
+  financialFocus?: string;
+  notifications?: {
+    emailDigest?: boolean;
+    highExpenseAlert?: boolean;
+    budgetWarning?: boolean;
+    goalMilestones?: boolean;
+    securityAlerts?: boolean;
+  };
   createdAt: string;
   updatedAt: string;
 }

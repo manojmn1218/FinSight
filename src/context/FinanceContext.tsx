@@ -22,6 +22,24 @@ export interface FinData {
   financialGoals: FinancialGoal[];
   statementUploaded: boolean;
   statementUploadsCount?: number;
+  avatarUrl?: string;
+  phone?: string;
+  occupation?: string;
+  city?: string;
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+  investmentHorizon?: 'short' | 'medium' | 'long';
+  currency?: string;
+  stealthMode?: boolean;
+  panMasked?: string;
+  emergencyMonths?: number;
+  financialFocus?: string;
+  notifications?: {
+    emailDigest?: boolean;
+    highExpenseAlert?: boolean;
+    budgetWarning?: boolean;
+    goalMilestones?: boolean;
+    securityAlerts?: boolean;
+  };
 }
 
 interface FinCtx {
@@ -124,6 +142,24 @@ function profileToFinData(profile: UserProfile, txns: Transaction[] = [], goals:
     financialGoals: goals || [],
     statementUploaded: !!profile.statementUploaded,
     statementUploadsCount: profile.statementUploadsCount || 0,
+    avatarUrl: profile.avatarUrl,
+    phone: profile.phone || '',
+    occupation: profile.occupation || '',
+    city: profile.city || '',
+    riskTolerance: profile.riskTolerance || 'moderate',
+    investmentHorizon: profile.investmentHorizon || 'medium',
+    currency: profile.currency || 'INR',
+    stealthMode: !!profile.stealthMode,
+    panMasked: profile.panMasked || '',
+    emergencyMonths: profile.emergencyMonths ?? 6,
+    financialFocus: profile.financialFocus || 'Wealth Accumulation',
+    notifications: profile.notifications || {
+      emailDigest: true,
+      highExpenseAlert: true,
+      budgetWarning: true,
+      goalMilestones: true,
+      securityAlerts: true,
+    },
   };
 }
 
@@ -415,6 +451,18 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       if (d.expenses !== undefined) payload.expenses = d.expenses;
       if (d.statementUploaded !== undefined) payload.statementUploaded = d.statementUploaded;
       if (d.statementUploadsCount !== undefined) payload.statementUploadsCount = d.statementUploadsCount;
+      if (d.avatarUrl !== undefined) payload.avatarUrl = d.avatarUrl;
+      if (d.phone !== undefined) payload.phone = d.phone;
+      if (d.occupation !== undefined) payload.occupation = d.occupation;
+      if (d.city !== undefined) payload.city = d.city;
+      if (d.riskTolerance !== undefined) payload.riskTolerance = d.riskTolerance;
+      if (d.investmentHorizon !== undefined) payload.investmentHorizon = d.investmentHorizon;
+      if (d.currency !== undefined) payload.currency = d.currency;
+      if (d.stealthMode !== undefined) payload.stealthMode = d.stealthMode;
+      if (d.panMasked !== undefined) payload.panMasked = d.panMasked;
+      if (d.emergencyMonths !== undefined) payload.emergencyMonths = d.emergencyMonths;
+      if (d.financialFocus !== undefined) payload.financialFocus = d.financialFocus;
+      if (d.notifications !== undefined) payload.notifications = d.notifications;
 
       await api.updateProfile(payload);
     } catch (err) {

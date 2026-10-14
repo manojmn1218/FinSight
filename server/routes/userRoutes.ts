@@ -33,6 +33,18 @@ router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
       expenses,
       statementUploaded,
       statementUploadsCount,
+      avatarUrl,
+      phone,
+      occupation,
+      city,
+      riskTolerance,
+      investmentHorizon,
+      currency,
+      stealthMode,
+      panMasked,
+      emergencyMonths,
+      financialFocus,
+      notifications,
     } = req.body;
 
     const updates: Record<string, any> = {};
@@ -45,6 +57,18 @@ router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
     if (Array.isArray(expenses)) updates.expenses = expenses;
     if (typeof statementUploaded === 'boolean') updates.statementUploaded = statementUploaded;
     if (typeof statementUploadsCount === 'number') updates.statementUploadsCount = statementUploadsCount;
+    if (typeof avatarUrl === 'string') updates.avatarUrl = avatarUrl;
+    if (typeof phone === 'string') updates.phone = phone.trim();
+    if (typeof occupation === 'string') updates.occupation = occupation.trim();
+    if (typeof city === 'string') updates.city = city.trim();
+    if (typeof riskTolerance === 'string') updates.riskTolerance = riskTolerance;
+    if (typeof investmentHorizon === 'string') updates.investmentHorizon = investmentHorizon;
+    if (typeof currency === 'string') updates.currency = currency;
+    if (typeof stealthMode === 'boolean') updates.stealthMode = stealthMode;
+    if (typeof panMasked === 'string') updates.panMasked = panMasked.trim();
+    if (typeof emergencyMonths === 'number') updates.emergencyMonths = emergencyMonths;
+    if (typeof financialFocus === 'string') updates.financialFocus = financialFocus.trim();
+    if (notifications && typeof notifications === 'object') updates.notifications = notifications;
 
     const updatedUser = await db.updateUser(userEmail, updates);
 

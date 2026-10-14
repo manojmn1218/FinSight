@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, Sun, Moon, User, Timer, Upload, BarChart3, Target, Download, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, Sun, Moon, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
@@ -8,6 +8,7 @@ import { detectRecurringGrouped } from '../utils/transactionParser';
 const MAIN_NAV = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/transactions', label: 'Transactions', icon: Upload },
+  { path: '/manual-entry', label: 'Manual Entry', icon: FileSpreadsheet },
   { path: '/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/reports', label: 'Reports', icon: FileText },
   { path: '/insights', label: 'Insights', icon: Lightbulb },

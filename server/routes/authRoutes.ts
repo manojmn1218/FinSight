@@ -34,6 +34,23 @@ function sanitizeUser(user: any) {
     statementUploaded: user.statementUploaded,
     statementUploadsCount: user.statementUploadsCount,
     avatarUrl: user.avatarUrl,
+    phone: user.phone || '',
+    occupation: user.occupation || '',
+    city: user.city || '',
+    riskTolerance: user.riskTolerance || 'moderate',
+    investmentHorizon: user.investmentHorizon || 'medium',
+    currency: user.currency || 'INR',
+    stealthMode: !!user.stealthMode,
+    panMasked: user.panMasked || '',
+    emergencyMonths: user.emergencyMonths ?? 6,
+    financialFocus: user.financialFocus || 'Wealth Accumulation',
+    notifications: user.notifications || {
+      emailDigest: true,
+      highExpenseAlert: true,
+      budgetWarning: true,
+      goalMilestones: true,
+      securityAlerts: true,
+    },
   };
 }
 
@@ -457,6 +474,44 @@ router.post('/forgot-password/reset', async (req, res: Response) => {
   } catch (error: any) {
     console.error('[Auth] forgot-password/reset error:', error);
     return res.status(500).json({ error: error.message || 'Failed to reset password.' });
+  }
+});
+
+// POST /api/auth/change-password
+router.post('/change-password', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userEmail = req.user!.email;
+    const { currentPassword, newPassword } = req.body || {};
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters with 1 uppercase letter and 1 number.' });
+    }
+
+    const user = await db.findUserByEmail(userEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (!user.passwordHash) {
+      return res.status(400).json({ error: 'This account was authenticated with Google OAuth. Direct password change is unavailable.' });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Incorrect current password.' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db.updateUser(userEmail, { passwordHash: newHash });
+
+    return res.json({ success: true, message: 'Password updated successfully.' });
+  } catch (err: any) {
+    console.error('[Auth] Change password error:', err);
+    return res.status(500).json({ error: 'Failed to update password.' });
   }
 });
 

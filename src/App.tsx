@@ -24,6 +24,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import GoalsPage from './pages/GoalsPage';
 import ExportPage from './pages/ExportPage';
 import PortfolioPage from './pages/PortfolioPage';
+import ManualEntryPage from './pages/ManualEntryPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useFinance();
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="goals" element={<GoalsPage />} />
             <Route path="export" element={<ExportPage />} />
             <Route path="portfolio" element={<PortfolioPage />} />
+            <Route path="manual-entry" element={<ManualEntryPage />} />
             <Route path="coming-soon" element={<ComingSoonPage />} />
           </Route>
         </Routes>

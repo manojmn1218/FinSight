@@ -947,7 +947,7 @@ export default function DashboardPage() {
           <Link to="/transactions?connect=true" className="btn-outline" style={{ padding: '12px 28px', borderColor: 'rgba(96,165,250,0.3)', color: '#60a5fa' }}>
             <Landmark size={16} /> Connect Bank Account
           </Link>
-          <Link to="/profile" className="btn-outline" style={{ padding: '12px 28px' }}>
+          <Link to="/manual-entry" className="btn-outline" style={{ padding: '12px 28px' }}>
             <Edit2 size={16} /> Enter Data Manually
           </Link>
         </div>

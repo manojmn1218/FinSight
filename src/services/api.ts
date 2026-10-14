@@ -16,6 +16,23 @@ export interface UserProfile {
   statementUploaded: boolean;
   statementUploadsCount: number;
   avatarUrl?: string;
+  phone?: string;
+  occupation?: string;
+  city?: string;
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+  investmentHorizon?: 'short' | 'medium' | 'long';
+  currency?: string;
+  stealthMode?: boolean;
+  panMasked?: string;
+  emergencyMonths?: number;
+  financialFocus?: string;
+  notifications?: {
+    emailDigest?: boolean;
+    highExpenseAlert?: boolean;
+    budgetWarning?: boolean;
+    goalMilestones?: boolean;
+    securityAlerts?: boolean;
+  };
 }
 
 export interface PortfolioAsset {
@@ -209,6 +226,13 @@ class ApiService {
     return this.request<{ success: boolean; message: string }>('/api/auth/forgot-password/reset', {
       method: 'POST',
       body: JSON.stringify({ email, otp, newPassword }),
+    });
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request<{ success: boolean; message: string }>('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
     });
   }
 
