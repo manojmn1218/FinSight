@@ -129,48 +129,73 @@ const FALLBACK_CATEGORY_PATTERNS: Array<{
 ];
 
 function cleanMerchantName(rawText: string): string {
-  let cleaned = rawText;
+  if (!rawText || typeof rawText !== 'string') return 'Bank Transaction';
+  let cleaned = rawText.trim();
 
-  // 1. Strip dates first (DD/MM/YYYY, YYYY-MM-DD, DD-MM-YY, etc.)
-  cleaned = cleaned.replace(/\b\d{2,4}[-/]\d{1,2}[-/]\d{2,4}\b/g, '');
-  cleaned = cleaned.replace(/\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{2,4}\b/gi, '');
+  // 1. Strip leading dates e.g. '05/10/2026 - - ', '05-10-2026 : '
+  cleaned = cleaned.replace(/^\d{2,4}[-/]\d{1,2}[-/]\d{2,4}\s*[-:–\s]*/g, '').trim();
 
   // 2. Strip currency symbols & amounts
   cleaned = cleaned.replace(/\b(?:INR|RS\.?|USD|EUR)\b/gi, '');
   cleaned = cleaned.replace(/\b[\d,]+\.\d{2}\b/g, '');
-  cleaned = cleaned.replace(/\b[\d,]{4,}\b/g, ''); // long numbers, balances
 
-  // 3. Strip DR / CR tags
-  cleaned = cleaned.replace(/\b(DR|CR|DEBIT|CREDIT)\b/gi, '');
+  // 3. Strip trailing / inline DR / CR
+  cleaned = cleaned.replace(/\b(?:DR|CR|DEBIT|CREDIT)\b/gi, '');
 
-  // 4. Handle UPI format: UPI/DR/12345/MERCHANT_NAME/BANK
-  if (cleaned.includes('/')) {
-    const parts = cleaned.split('/').map(p => p.trim()).filter(Boolean);
-    const validPart = parts.find(p =>
-      p.length >= 3 &&
-      /[a-z]/i.test(p) &&
-      !/^\d+$/.test(p) &&
-      !/^(DR|CR|UPI|REV|OK|YES|HDFC|ICICI|SBI|AXIS|KOTAK|PNB)$/i.test(p)
-    );
-    if (validPart) cleaned = validPart;
+  // 4. Match Indian UPI format: UPI/DR/123456789012/MERCHANT/BANK/...
+  const upiMatch = cleaned.match(/UPI[\/\-_](?:DR|CR)?[\/\-_]?(\d+)(?:[\/\-_]([^\/\-_]+))?(?:[\/\-_]([^\/\-_]+))?/i);
+  if (upiMatch) {
+    const ref = upiMatch[1];
+    const partA = (upiMatch[2] || '').trim();
+    const partB = (upiMatch[3] || '').trim();
+
+    const gatewayIgnore = /^(PYTM|PAYTM|OKAXIS|OKHDFCBANK|OKSBI|OKICICI|YESB|HDFCBANK|SBI|ICICI|AXIS|AIRP|YES|PUNB|BARB|CNRB|DR|CR)$/i;
+
+    let merchant = '';
+    if (partA && !gatewayIgnore.test(partA) && !/^\d+$/.test(partA)) {
+      merchant = partA;
+    } else if (partB && !gatewayIgnore.test(partB) && !/^\d+$/.test(partB)) {
+      merchant = partB;
+    }
+
+    if (merchant) {
+      return merchant.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    } else {
+      return 'UPI Transfer #' + ref.slice(-6);
+    }
   }
 
-  // 5. Remove common banking prefixes
-  cleaned = cleaned.replace(/^(UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
+  // 5. Handle general slash-separated: e.g. CMS/1234/AMAZON/
+  if (cleaned.includes('/')) {
+    const parts = cleaned.split('/').map(p => p.trim()).filter(Boolean);
+    const ignoreList = /^(UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|DR|CR|PYTM|PAYTM|OKAXIS|OKHDFCBANK|OKSBI|OKICICI|HDFC|ICICI|SBI|AXIS)$/i;
+    const candidate = parts.find(p => {
+      const stripped = p.replace(/^[-_\s]+|[-_\s]+$/g, '');
+      return stripped.length >= 3 && !/^\d+$/.test(stripped) && !ignoreList.test(stripped);
+    });
 
-  // 6. Remove UPI handles (@okaxis, @okhdfcbank, @paytm, etc.)
-  cleaned = cleaned.replace(/@[a-zA-Z0-9._-]+/g, '');
+    if (candidate) {
+      cleaned = candidate;
+    }
+  }
 
-  // 7. Remove leftover special characters & trim
+  // 6. Remove common banking prefixes
+  cleaned = cleaned.replace(/^(?:[-_\s]*)(?:UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
+  cleaned = cleaned.replace(/@[a-zA-Z0-9._-]+/g, ''); // remove handles
   cleaned = cleaned.replace(/[-_/:.*#|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
-  // 8. Capitalize neatly
+  // 7. Capitalize neatly
   if (cleaned.length >= 2) {
     cleaned = cleaned
       .split(' ')
       .filter(w => w.length > 0 && !/^\d+$/.test(w))
       .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
       .join(' ');
+  }
+
+  // 8. Prevent bare collapses
+  if (/^(Upi|Imps|Neft|Rtgs|Transfer|Transaction)$/i.test(cleaned)) {
+    return 'Bank ' + cleaned + ' Transfer';
   }
 
   return cleaned.length >= 2 ? cleaned.slice(0, 45) : 'Bank Transaction';

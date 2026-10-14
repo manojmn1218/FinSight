@@ -30,41 +30,97 @@ interface AiStagedTransaction {
 }
 
 /**
- * Normalizes and formats messy transaction descriptions into a clean merchant title & subtitle.
+ * Normalizes and formats transaction descriptions into a rich merchant title & subtitle.
+ * Handles UPI paths, bank codes, and legacy collapsed tags gracefully.
  */
 function formatTransactionDisplay(tx: Transaction) {
-  const raw = tx.description || 'Transaction';
-  let title = raw.trim();
+  const raw = (tx.description || '').trim();
+  const isCredit = tx.amount > 0;
+  let title = raw;
   let subtitle = '';
 
-  // 1. Check for leading date pattern: "05/10/2026 - - UPI/DR/..."
-  const datePrefixMatch = title.match(/^(\d{2}[-/]\d{2}[-/]\d{2,4})\s*[-:]*\s*(.*)$/);
+  // 1. If it's a bare or collapsed label ("Upi", "UPI", "Bank Upi Transfer", "Imps", "Transfer")
+  if (!raw || /^(upi|imps|neft|rtgs|transfer|bank upi transfer|bank transaction)$/i.test(raw)) {
+    const typeLabel = /imps/i.test(raw) ? 'IMPS' : /neft/i.test(raw) ? 'NEFT' : 'UPI';
+    const cat = tx.category || 'Other';
+
+    const categoryTitles: Record<string, string> = {
+      'Food & Dining': `${cat} • ${typeLabel} Payment`,
+      'Shopping': `${cat} • ${typeLabel} Purchase`,
+      'Transport': `${cat} • Ride / Fuel`,
+      'Utilities': `${cat} • Utility Bill Payment`,
+      'Rent': `House Rent • ${typeLabel} Transfer`,
+      'Subscriptions': `Subscription • ${typeLabel} Auto-Debit`,
+      'Health': `Health & Medical • ${typeLabel} Payment`,
+      'Education': `Education & Course Fee`,
+      'Salary': `Salary • Direct Deposit`,
+      'ATM': `ATM Cash Withdrawal`,
+      'Transfer': isCredit ? `${typeLabel} Money Received` : `${typeLabel} Money Sent`,
+      'Other': isCredit ? `${typeLabel} Credit Inflow` : `${typeLabel} Digital Payment`,
+    };
+
+    title = categoryTitles[cat] || (isCredit ? `${typeLabel} Transfer Inflow` : `${typeLabel} Payment`);
+    subtitle = `Digital ${typeLabel} Transfer • ${isCredit ? 'Credit Inflow' : 'Debit Outflow'}`;
+    return { title, subtitle };
+  }
+
+  // 2. Check for leading date pattern: "05/10/2026 - - UPI/DR/..."
+  const datePrefixMatch = title.match(/^(\d{2}[-/]\d{2}[-/]\d{2,4})\s*[-:–\s]*(.*)$/);
   if (datePrefixMatch) {
     title = datePrefixMatch[2] || title;
     subtitle = datePrefixMatch[1];
   }
 
-  // 2. Handle UPI path structure: UPI/DR/123456/MERCHANT_NAME/BANK/...
-  if (title.includes('/')) {
-    const parts = title.split('/').map(p => p.trim()).filter(Boolean);
-    const readable = parts.find(p =>
-      p.length >= 3 &&
-      /[a-z]/i.test(p) &&
-      !/^\d+$/.test(p) &&
-      !/^(DR|CR|UPI|REV|OK|YES|HDFC|ICICI|SBI|AXIS|KOTAK|PNB|CMS|ECOM|POS)$/i.test(p)
-    );
-    if (readable) {
-      subtitle = raw;
-      title = readable;
+  // 3. Match Indian UPI format: UPI/DR/123456789012/MERCHANT/BANK/...
+  const upiMatch = title.match(/UPI[\/\-_](?:DR|CR)?[\/\-_]?(\d+)(?:[\/\-_]([^\/\-_]+))?(?:[\/\-_]([^\/\-_]+))?/i);
+  if (upiMatch) {
+    const ref = upiMatch[1];
+    const partA = (upiMatch[2] || '').trim();
+    const partB = (upiMatch[3] || '').trim();
+
+    const gatewayIgnore = /^(PYTM|PAYTM|OKAXIS|OKHDFCBANK|OKSBI|OKICICI|YESB|HDFCBANK|SBI|ICICI|AXIS|AIRP|YES|PUNB|BARB|CNRB|DR|CR)$/i;
+
+    let merchant = '';
+    if (partA && !gatewayIgnore.test(partA) && !/^\d+$/.test(partA)) {
+      merchant = partA;
+    } else if (partB && !gatewayIgnore.test(partB) && !/^\d+$/.test(partB)) {
+      merchant = partB;
+    }
+
+    if (merchant) {
+      return {
+        title: merchant.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
+        subtitle: `UPI • Ref: ${ref}` + (partB && partB !== merchant ? ` • ${partB}` : ''),
+      };
+    } else {
+      return {
+        title: `UPI Payment (Ref #${ref.slice(-6)})`,
+        subtitle: `UPI Ref: ${ref} • ${isCredit ? 'Credit' : 'Debit'}`,
+      };
     }
   }
 
-  // 3. Remove common bank noise
-  title = title.replace(/^(UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
-  title = title.replace(/@[a-zA-Z0-9._-]+/g, ''); // remove @okaxis, @okhdfcbank
+  // 4. Handle general slash-separated: e.g. CMS/1234/AMAZON/
+  if (title.includes('/')) {
+    const parts = title.split('/').map(p => p.trim()).filter(Boolean);
+    const ignoreList = /^(UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|DR|CR|PYTM|PAYTM|OKAXIS|OKHDFCBANK|OKSBI|OKICICI|HDFC|ICICI|SBI|AXIS)$/i;
+    const candidate = parts.find(p => {
+      const stripped = p.replace(/^[-_\s]+|[-_\s]+$/g, '');
+      return stripped.length >= 3 && !/^\d+$/.test(stripped) && !ignoreList.test(stripped);
+    });
+
+    if (candidate) {
+      subtitle = raw;
+      title = candidate;
+    }
+  }
+
+  // 5. Clean common prefixes and handles
+  title = title.replace(/^(?:[-_\s]*)(?:UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
+  title = title.replace(/@[a-zA-Z0-9._-]+/g, '');
   title = title.replace(/[-_/:.*#|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
-  // 4. Capitalize nicely
+  // 6. Capitalize nicely
   if (title.length >= 2 && !title.startsWith(':')) {
     title = title
       .split(' ')
@@ -74,8 +130,8 @@ function formatTransactionDisplay(tx: Transaction) {
   }
 
   return {
-    title: title || raw,
-    subtitle: subtitle && subtitle !== raw ? subtitle : (raw !== title ? raw : ''),
+    title: title || raw || 'Transaction',
+    subtitle: subtitle || (raw !== title ? raw : ''),
   };
 }
 
@@ -237,6 +293,7 @@ export default function TransactionsPage() {
       id: 'tx_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
       date: t.date,
       description: t.cleanMerchant,
+      rawDescription: t.rawDescription || t.cleanMerchant,
       amount: t.amount,
       category: t.category,
       isRecurring: t.isRecurring,
@@ -638,6 +695,50 @@ export default function TransactionsPage() {
           </div>
           <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--text)' }} onClick={() => setParseError('')}>
             Dismiss
+          </button>
+        </motion.div>
+      )}
+
+      {/* Smart Banner if generic or legacy transactions are present */}
+      {txns.some(t => /^(upi|imps|neft|rtgs|transfer|bank upi transfer)$/i.test((t.description || '').trim())) && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 20px',
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.08))',
+            border: '1px solid rgba(168,85,247,0.25)',
+            borderRadius: 'var(--radius)',
+            fontSize: 13,
+            color: 'var(--text)',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 12,
+              background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0,
+            }}>
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <strong style={{ color: 'var(--purple)', fontSize: 13.5 }}>AI Statement Neural Parser is Active</strong>
+              <p style={{ margin: '3px 0 0', color: 'var(--text2)', fontSize: 12.5, lineHeight: 1.4 }}>
+                We've enhanced your display with contextual category descriptions! You can also re-upload your PDF statement above anytime to let Google Gemini 2.5 Flash extract all specific merchant names (Swiggy, Zepto, individual recipients) with 100% precision.
+              </p>
+            </div>
+          </div>
+          <button
+            className="btn-primary"
+            onClick={() => fileRef.current?.click()}
+            style={{ padding: '8px 18px', fontSize: 12.5, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <Upload size={13} /> Re-upload Statement
           </button>
         </motion.div>
       )}

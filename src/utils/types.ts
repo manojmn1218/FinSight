@@ -38,6 +38,7 @@ export interface Transaction {
   id: string;
   date: string;           // ISO date string YYYY-MM-DD
   description: string;
+  rawDescription?: string;
   amount: number;          // positive = credit, negative = debit
   category: Category;
   isRecurring: boolean;

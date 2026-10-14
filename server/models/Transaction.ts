@@ -10,6 +10,7 @@ const TransactionSchema = new Schema<ITransaction>(
     userEmail: { type: String, required: true, lowercase: true, index: true },
     date: { type: String, required: true, index: true },
     description: { type: String, required: true, trim: true },
+    rawDescription: { type: String, trim: true },
     amount: { type: Number, required: true },
     category: { type: String, required: true, index: true },
     isRecurring: { type: Boolean, default: false },

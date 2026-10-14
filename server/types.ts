@@ -48,6 +48,7 @@ export interface TransactionDocument {
   userEmail: string;
   date: string;
   description: string;
+  rawDescription?: string;
   amount: number;
   category: string;
   isRecurring: boolean;
