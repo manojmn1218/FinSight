@@ -4,7 +4,7 @@ import {
   Upload, FileText, Search, Filter, Trash2, ChevronDown, ArrowUpDown,
   CheckCircle2, AlertCircle, Loader2, Lock, Eye, EyeOff, Landmark,
   Sparkles, Check, X, SlidersHorizontal, ArrowUpRight, ArrowDownLeft,
-  ShieldCheck, RefreshCw, Layers
+  ShieldCheck, RefreshCw, Layers, PieChart, Calendar, Tag, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { parsePdfFile, extractTransactions, PasswordRequiredError } from '../utils/transactionParser';
@@ -29,6 +29,56 @@ interface AiStagedTransaction {
   confidence: number;
 }
 
+/**
+ * Normalizes and formats messy transaction descriptions into a clean merchant title & subtitle.
+ */
+function formatTransactionDisplay(tx: Transaction) {
+  const raw = tx.description || 'Transaction';
+  let title = raw.trim();
+  let subtitle = '';
+
+  // 1. Check for leading date pattern: "05/10/2026 - - UPI/DR/..."
+  const datePrefixMatch = title.match(/^(\d{2}[-/]\d{2}[-/]\d{2,4})\s*[-:]*\s*(.*)$/);
+  if (datePrefixMatch) {
+    title = datePrefixMatch[2] || title;
+    subtitle = datePrefixMatch[1];
+  }
+
+  // 2. Handle UPI path structure: UPI/DR/123456/MERCHANT_NAME/BANK/...
+  if (title.includes('/')) {
+    const parts = title.split('/').map(p => p.trim()).filter(Boolean);
+    const readable = parts.find(p =>
+      p.length >= 3 &&
+      /[a-z]/i.test(p) &&
+      !/^\d+$/.test(p) &&
+      !/^(DR|CR|UPI|REV|OK|YES|HDFC|ICICI|SBI|AXIS|KOTAK|PNB|CMS|ECOM|POS)$/i.test(p)
+    );
+    if (readable) {
+      subtitle = raw;
+      title = readable;
+    }
+  }
+
+  // 3. Remove common bank noise
+  title = title.replace(/^(UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
+  title = title.replace(/@[a-zA-Z0-9._-]+/g, ''); // remove @okaxis, @okhdfcbank
+  title = title.replace(/[-_/:.*#|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
+  // 4. Capitalize nicely
+  if (title.length >= 2 && !title.startsWith(':')) {
+    title = title
+      .split(' ')
+      .filter(w => w.length > 0 && !/^\d+$/.test(w))
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  return {
+    title: title || raw,
+    subtitle: subtitle && subtitle !== raw ? subtitle : (raw !== title ? raw : ''),
+  };
+}
+
 export default function TransactionsPage() {
   const { data, addTransactions, updateTransaction, deleteTransaction } = useFinance();
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
@@ -49,7 +99,7 @@ export default function TransactionsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-  const PER_PAGE = 25;
+  const [perPage, setPerPage] = useState<number>(25);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // --- AI Engine Info ---
@@ -59,7 +109,6 @@ export default function TransactionsPage() {
     api.getAiStatus()
       .then(res => setAiStatus(res))
       .catch(() => {
-        // Fallback info if offline
         setAiStatus({
           hasGeminiKey: false,
           activeProvider: 'heuristic_fallback',
@@ -87,7 +136,7 @@ export default function TransactionsPage() {
   const [aiReviewMeta, setAiReviewMeta] = useState<AiParseResponse | null>(null);
   const [editingStagedCat, setEditingStagedCat] = useState<string | null>(null);
 
-  // --- Core parse logic (with AI extraction & staging) ---
+  // --- Core parse logic ---
   const doParse = async (file: File, password?: string) => {
     setParsing(true);
     setParsingStage('Extracting text from PDF pages…');
@@ -95,7 +144,6 @@ export default function TransactionsPage() {
     setParseResult(null);
 
     try {
-      // 1. Extract text lines from PDF in browser
       const lines = await parsePdfFile(file, password);
       if (!lines || lines.length === 0) {
         setParseError('No text could be extracted from this PDF. It may be a scanned image or empty statement.');
@@ -103,7 +151,6 @@ export default function TransactionsPage() {
         return;
       }
 
-      // 2. Send extracted lines to backend AI Classification service
       setParsingStage(
         aiStatus?.activeProvider === 'gemini'
           ? '⚡ Google Gemini 2.5 Flash analyzing merchants & categories…'
@@ -115,7 +162,6 @@ export default function TransactionsPage() {
         aiResult = await api.parseStatementWithAi(lines);
       } catch (apiErr: any) {
         console.warn('[TransactionsPage] Backend AI request failed, utilizing client fallback:', apiErr);
-        // Resilient client-side fallback
         const localTxns = extractTransactions(lines);
         aiResult = {
           provider: 'heuristic_fallback',
@@ -146,7 +192,6 @@ export default function TransactionsPage() {
         return;
       }
 
-      // 3. Stage transactions for user confirmation & category fine-tuning
       const staged: AiStagedTransaction[] = aiResult.transactions.map(t => ({
         id: t.id,
         selected: true,
@@ -163,7 +208,6 @@ export default function TransactionsPage() {
       setAiReviewMeta(aiResult);
       setShowAiReview(true);
 
-      // Clear password state on success
       setNeedsPassword(false);
       setPdfPassword('');
       setPendingFile(null);
@@ -182,7 +226,6 @@ export default function TransactionsPage() {
     setParsing(false);
   };
 
-  // --- Confirm and import approved AI transactions ---
   const handleApproveAiTransactions = () => {
     const selected = stagedTransactions.filter(t => t.selected);
     if (selected.length === 0) {
@@ -218,7 +261,6 @@ export default function TransactionsPage() {
     setAiReviewMeta(null);
   };
 
-  // --- Upload handler ---
   const handleFile = async (file: File) => {
     if (data.currentPlan === 'Basic' && (data.statementUploadsCount || 0) >= 3) {
       setParseError('Statement upload limit reached: Basic accounts are limited to 3 PDF uploads. Upgrade to Pro for unlimited statements.');
@@ -231,7 +273,6 @@ export default function TransactionsPage() {
     await doParse(file);
   };
 
-  // --- Password submit handler ---
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pendingFile || !pdfPassword.trim()) return;
@@ -246,7 +287,6 @@ export default function TransactionsPage() {
     if (file) handleFile(file);
   };
 
-  // --- Bank Connect success handler ---
   const handleBankSuccess = (result: BankDataResult) => {
     addTransactions(result.transactions);
     setBankResult({
@@ -257,11 +297,11 @@ export default function TransactionsPage() {
     setParseError('');
   };
 
-  // --- Filtering, sorting, pagination ---
+  // --- Filtering & Sorting ---
   const filtered = useMemo(() => {
     let list = [...txns];
-    if (search) {
-      const s = search.toLowerCase();
+    if (search.trim()) {
+      const s = search.toLowerCase().trim();
       list = list.filter(t => t.description.toLowerCase().includes(s) || t.category.toLowerCase().includes(s));
     }
     if (catFilter !== 'all') {
@@ -275,8 +315,8 @@ export default function TransactionsPage() {
     return list;
   }, [txns, search, catFilter, sortBy, sortDir]);
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paged = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paged = filtered.slice(page * perPage, (page + 1) * perPage);
 
   const totalIncome = txns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const totalExpense = txns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
@@ -291,17 +331,21 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1160, margin: '0 auto', width: '100%' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+      {/* ═══════════════════════════════════════════════ */}
+      {/* PAGE HEADER                                    */}
+      {/* ═══════════════════════════════════════════════ */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-            Transactions
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 750, margin: 0, letterSpacing: '-0.5px' }}>
+              Transactions
+            </h1>
             <span
               style={{
                 fontSize: 12,
                 fontWeight: 650,
-                padding: '4px 10px',
+                padding: '4px 12px',
                 borderRadius: 20,
                 background: aiStatus?.activeProvider === 'gemini'
                   ? 'linear-gradient(135deg, rgba(168,85,247,0.18), rgba(59,130,246,0.18))'
@@ -312,38 +356,155 @@ export default function TransactionsPage() {
                 color: aiStatus?.activeProvider === 'gemini' ? '#c084fc' : '#34d399',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 6,
               }}
             >
-              <Sparkles size={12} />
+              <Sparkles size={13} />
               {aiStatus?.activeProvider === 'gemini' ? 'Google Gemini 2.5 Flash' : 'AI Neural Engine'}
             </span>
-          </h1>
-          <p style={{ color: 'var(--text2)', fontSize: 14 }}>
-            Upload statement PDFs or connect your bank. FinSight AI extracts text and maps to 12 exact categories.
+          </div>
+          <p style={{ color: 'var(--text2)', fontSize: 14, margin: 0 }}>
+            Unified ledger with automated bank statement OCR & exact 12-category matching.
           </p>
+        </div>
+
+        {/* Quick action buttons */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className="btn-primary"
+            onClick={() => fileRef.current?.click()}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', fontSize: 13 }}
+          >
+            <Upload size={15} /> Upload Statement (PDF)
+          </button>
         </div>
       </div>
 
       {/* Upload limit warning for Basic users */}
       {data.currentPlan === 'Basic' && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', background: 'rgba(129,140,248,0.06)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '14px 20px', background: 'rgba(129,140,248,0.06)',
+            border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13,
+          }}
         >
           <span style={{ color: 'var(--text2)' }}>
             📁 Statement Uploads: <strong>{data.statementUploadsCount || 0}/3</strong> processed on free plan.
           </span>
           {(data.statementUploadsCount || 0) >= 3 ? (
-            <Link to="/premium" style={{ color: 'var(--purple)', fontWeight: 650, textDecoration: 'none' }}>Upgrade to Pro for Unlimited Uploads →</Link>
+            <Link to="/premium" style={{ color: 'var(--purple)', fontWeight: 650, textDecoration: 'none' }}>
+              Upgrade to Pro for Unlimited Uploads →
+            </Link>
           ) : (
             <span style={{ color: 'var(--text3)' }}>Basic plan limit</span>
           )}
         </motion.div>
       )}
 
-      {/* Upload & Connect options */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {/* PDF Upload zone with AI Indicator */}
+      {/* ═══════════════════════════════════════════════ */}
+      {/* 4-COLUMN STATS METRIC GRID                     */}
+      {/* ═══════════════════════════════════════════════ */}
+      {txns.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          {/* Card 1: Total Transactions */}
+          <div className="panel panel-glow" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: 'rgba(129,140,248,0.12)', border: '1px solid rgba(129,140,248,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8', flexShrink: 0,
+            }}>
+              <Layers size={22} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', margin: 0 }}>
+                Total Records
+              </p>
+              <p style={{ fontSize: 24, fontWeight: 750, margin: '2px 0 0', letterSpacing: '-0.3px' }}>
+                {txns.length}
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text2)', margin: '2px 0 0' }}>
+                {filtered.length !== txns.length ? `${filtered.length} filtered` : 'All statement & manual entries'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Total Credits */}
+          <div className="panel panel-glow" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4ade80', flexShrink: 0,
+            }}>
+              <ArrowDownLeft size={22} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', margin: 0 }}>
+                Total Inflow (Credits)
+              </p>
+              <p style={{ fontSize: 24, fontWeight: 750, color: 'var(--green)', margin: '2px 0 0', letterSpacing: '-0.3px' }}>
+                +{fmt(totalIncome)}
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text2)', margin: '2px 0 0' }}>
+                {txns.filter(t => t.amount > 0).length} credit transactions
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Total Debits */}
+          <div className="panel panel-glow" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: 'rgba(251,113,133,0.12)', border: '1px solid rgba(251,113,133,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb7185', flexShrink: 0,
+            }}>
+              <ArrowUpRight size={22} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', margin: 0 }}>
+                Total Outflow (Debits)
+              </p>
+              <p style={{ fontSize: 24, fontWeight: 750, color: 'var(--text)', margin: '2px 0 0', letterSpacing: '-0.3px' }}>
+                -{fmt(totalExpense)}
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text2)', margin: '2px 0 0' }}>
+                {txns.filter(t => t.amount < 0).length} debit expenses
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: Active Categories */}
+          <div className="panel panel-glow" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(168,85,247,0.15), rgba(59,130,246,0.15))',
+              border: '1px solid rgba(168,85,247,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc', flexShrink: 0,
+            }}>
+              <Sparkles size={22} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', margin: 0 }}>
+                Active Categories
+              </p>
+              <p style={{ fontSize: 24, fontWeight: 750, color: 'var(--purple)', margin: '2px 0 0', letterSpacing: '-0.3px' }}>
+                {new Set(txns.map(t => t.category)).size} / 12
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text2)', margin: '2px 0 0' }}>
+                Exact FinSight classification
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/* UPLOAD & CONNECT 2-COLUMN GRID                 */}
+      {/* ═══════════════════════════════════════════════ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        {/* PDF Upload zone */}
         <div
           className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
@@ -359,25 +520,13 @@ export default function TransactionsPage() {
         >
           <input ref={fileRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
-          {/* AI Banner in Card */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 10,
-              fontWeight: 700,
-              color: 'var(--purple)',
-              background: 'rgba(129,140,248,0.1)',
-              padding: '2px 8px',
-              borderRadius: 12,
-              border: '1px solid rgba(129,140,248,0.2)',
-            }}
-          >
-            <Sparkles size={11} /> AI Auto-Categorize
+          <div style={{
+            position: 'absolute', top: 12, right: 14, display: 'flex', alignItems: 'center',
+            gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--purple)',
+            background: 'rgba(129,140,248,0.12)', padding: '3px 9px', borderRadius: 12,
+            border: '1px solid rgba(129,140,248,0.25)',
+          }}>
+            <Sparkles size={11} /> AI Auto-Categorizer
           </div>
 
           {parsing ? (
@@ -386,30 +535,30 @@ export default function TransactionsPage() {
                 <Loader2 size={38} color="var(--purple)" style={{ animation: 'spin 1s linear infinite' }} />
                 <Sparkles size={16} color="#c084fc" style={{ position: 'absolute', top: -4, right: -4 }} />
               </div>
-              <p style={{ fontSize: 15, fontWeight: 600 }}>Analyzing Statement with AI…</p>
-              <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', maxWidth: 360 }}>{parsingStage}</p>
+              <p style={{ fontSize: 15, fontWeight: 650, margin: 0 }}>Analyzing Bank Statement…</p>
+              <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', maxWidth: 360, margin: 0 }}>{parsingStage}</p>
             </motion.div>
           ) : (
             <>
               <div style={{
                 width: 48, height: 48, borderRadius: 14, marginBottom: 10,
-                background: 'linear-gradient(135deg, rgba(168,85,247,0.12), rgba(59,130,246,0.12))',
+                background: 'linear-gradient(135deg, rgba(168,85,247,0.14), rgba(59,130,246,0.14))',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Upload size={24} color="var(--purple)" />
+                <Upload size={22} color="var(--purple)" />
               </div>
-              <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                {dragOver ? 'Drop your PDF here' : 'Upload Bank Statement (PDF)'}
+              <p style={{ fontSize: 15, fontWeight: 650, marginBottom: 4 }}>
+                {dragOver ? 'Drop PDF statement here' : 'Upload Bank Statement (PDF)'}
               </p>
-              <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 10, textAlign: 'center' }}>
-                Drag & drop bank statement PDF. AI normalizes merchant names & matches 12 categories.
+              <p style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 12, textAlign: 'center', maxWidth: 380 }}>
+                Drop e-statement. Gemini AI normalizes cryptic merchant codes and auto-matches to 12 categories.
               </p>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>
-                  <FileText size={11} /> PDF e-Statements
+                  <FileText size={11} /> PDF Statements
                 </span>
                 <span className="badge" style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399' }}>
-                  <ShieldCheck size={11} /> Password Supported
+                  <ShieldCheck size={11} /> Password Encrypted OK
                 </span>
               </div>
             </>
@@ -423,23 +572,27 @@ export default function TransactionsPage() {
           style={{
             margin: 0, cursor: 'pointer',
             background: 'linear-gradient(135deg, rgba(96,165,250,0.04), rgba(129,140,248,0.06))',
-            borderColor: 'rgba(129,140,248,0.15)',
+            borderColor: 'rgba(129,140,248,0.18)',
           }}
         >
           <div style={{
             width: 48, height: 48, borderRadius: 14, marginBottom: 10,
-            background: 'linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.12))',
+            background: 'linear-gradient(135deg, rgba(96,165,250,0.14), rgba(129,140,248,0.14))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Landmark size={24} color="#818cf8" />
+            <Landmark size={22} color="#818cf8" />
           </div>
-          <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Connect Bank Account</p>
-          <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 10 }}>
-            Securely fetch transactions via RBI Account Aggregator.
+          <p style={{ fontSize: 15, fontWeight: 650, marginBottom: 4 }}>Connect Bank Account</p>
+          <p style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 12, textAlign: 'center', maxWidth: 380 }}>
+            Securely sync live transactions via RBI-regulated Account Aggregator network.
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <span className="badge" style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399', fontSize: 10 }}>🔒 RBI Regulated</span>
-            <span className="badge" style={{ background: 'rgba(96,165,250,0.08)', color: '#60a5fa', fontSize: 10 }}>⚡ Instant</span>
+            <span className="badge" style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399' }}>
+              🔒 RBI Regulated
+            </span>
+            <span className="badge" style={{ background: 'rgba(96,165,250,0.08)', color: '#60a5fa' }}>
+              ⚡ Instant Sync
+            </span>
           </div>
         </div>
       </div>
@@ -449,22 +602,22 @@ export default function TransactionsPage() {
         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)',
-            borderRadius: 'var(--radius)', padding: '12px 18px', fontSize: 13,
+            background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)',
+            borderRadius: 'var(--radius)', padding: '14px 20px', fontSize: 13,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <CheckCircle2 size={18} color="var(--green)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <CheckCircle2 size={20} color="var(--green)" />
             <span>
               <strong>Successfully imported {parseResult.count} transactions</strong> ({parseResult.range})
               {parseResult.provider && (
-                <span style={{ marginLeft: 8, color: 'var(--text2)', fontSize: 12 }}>
+                <span style={{ marginLeft: 8, color: 'var(--text2)' }}>
                   • Classified via <strong>{parseResult.provider}</strong>
                 </span>
               )}
             </span>
           </div>
-          <button className="btn-ghost" style={{ padding: '2px 8px', fontSize: 12 }} onClick={() => setParseResult(null)}>
+          <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setParseResult(null)}>
             Dismiss
           </button>
         </motion.div>
@@ -475,167 +628,424 @@ export default function TransactionsPage() {
         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-            borderRadius: 'var(--radius)', padding: '12px 18px', fontSize: 13, color: 'var(--red)',
+            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+            borderRadius: 'var(--radius)', padding: '14px 20px', fontSize: 13, color: 'var(--red)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertCircle size={18} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <AlertCircle size={20} />
             <span>{parseError}</span>
           </div>
-          <button className="btn-ghost" style={{ padding: '2px 8px', fontSize: 12, color: 'var(--text)' }} onClick={() => setParseError('')}>
+          <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--text)' }} onClick={() => setParseError('')}>
             Dismiss
           </button>
         </motion.div>
       )}
 
-      {/* Stats summary strip */}
+      {/* ═══════════════════════════════════════════════ */}
+      {/* MAIN TRANSACTIONS CARD — MODERN CSS GRID       */}
+      {/* ═══════════════════════════════════════════════ */}
       {txns.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-          <div className="panel" style={{ padding: '16px 20px' }}>
-            <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>Total Transactions</p>
-            <p style={{ fontSize: 22, fontWeight: 700 }}>{txns.length}</p>
-          </div>
-          <div className="panel" style={{ padding: '16px 20px' }}>
-            <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>Total Income (Credits)</p>
-            <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>+{fmt(totalIncome)}</p>
-          </div>
-          <div className="panel" style={{ padding: '16px 20px' }}>
-            <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>Total Spending (Debits)</p>
-            <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>-{fmt(totalExpense)}</p>
-          </div>
-          <div className="panel" style={{ padding: '16px 20px' }}>
-            <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>Active Categories</p>
-            <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--purple)' }}>
-              {new Set(txns.map(t => t.category)).size} / 12
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Main Table Panel */}
-      {txns.length > 0 && (
-        <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-          {/* Controls Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 12 }}>
-            {/* Search */}
-            <div style={{ position: 'relative', width: 280, maxWidth: '100%' }}>
-              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)' }} />
+        <div className="tx-grid-card">
+          {/* Controls Bar Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(280px, 1fr) auto',
+            gap: 16,
+            padding: '16px 24px',
+            borderBottom: '1px solid var(--border)',
+            alignItems: 'center',
+            background: 'rgba(255, 255, 255, 0.015)',
+          }}>
+            {/* Search Input with count */}
+            <div style={{ position: 'relative', width: '100%', maxWidth: 400 }}>
+              <Search
+                size={16}
+                style={{
+                  position: 'absolute',
+                  left: 14,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text3)',
+                }}
+              />
               <input
                 type="text"
                 className="input"
                 placeholder="Search merchant, notes, category…"
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(0); }}
-                style={{ paddingLeft: 34, fontSize: 13 }}
+                style={{ paddingLeft: 40, paddingRight: search ? 36 : 14, fontSize: 13.5 }}
               />
+              {search && (
+                <button
+                  onClick={() => { setSearch(''); setPage(0); }}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text3)',
+                    cursor: 'pointer',
+                    padding: 2,
+                    display: 'flex',
+                  }}
+                  title="Clear search"
+                >
+                  <X size={15} />
+                </button>
+              )}
             </div>
 
-            {/* Category Filter Chips */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <button
-                className={`btn-ghost ${catFilter === 'all' ? 'active' : ''}`}
-                onClick={() => { setCatFilter('all'); setPage(0); }}
-                style={{
-                  padding: '5px 12px', fontSize: 12, borderRadius: 20,
-                  background: catFilter === 'all' ? 'var(--purple)' : 'transparent',
-                  color: catFilter === 'all' ? '#fff' : 'var(--text2)',
-                }}
-              >
-                All ({txns.length})
-              </button>
-              {CATEGORIES.map(cat => {
-                const count = txns.filter(t => t.category === cat).length;
-                if (count === 0) return null;
-                const isSelected = catFilter === cat;
-                const cfg = CATEGORY_CONFIG[cat];
-                return (
+            {/* Right Controls: Sort & Items per page */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {/* Sort Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text2)' }}>
+                <span style={{ color: 'var(--text3)' }}>Sort:</span>
+                <button
+                  className="btn-ghost"
+                  onClick={() => toggleSort('date')}
+                  style={{
+                    padding: '5px 10px', fontSize: 12, borderRadius: 8,
+                    background: sortBy === 'date' ? 'rgba(129,140,248,0.12)' : 'transparent',
+                    color: sortBy === 'date' ? 'var(--purple)' : 'var(--text2)',
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                  }}
+                >
+                  Date {sortBy === 'date' && (sortDir === 'desc' ? '↓' : '↑')}
+                </button>
+                <button
+                  className="btn-ghost"
+                  onClick={() => toggleSort('amount')}
+                  style={{
+                    padding: '5px 10px', fontSize: 12, borderRadius: 8,
+                    background: sortBy === 'amount' ? 'rgba(129,140,248,0.12)' : 'transparent',
+                    color: sortBy === 'amount' ? 'var(--purple)' : 'var(--text2)',
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                  }}
+                >
+                  Amount {sortBy === 'amount' && (sortDir === 'desc' ? '↓' : '↑')}
+                </button>
+              </div>
+
+              {/* Rows Per Page */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text3)', borderLeft: '1px solid var(--border)', paddingLeft: 12 }}>
+                <span>Show:</span>
+                {[25, 50, 100].map(cnt => (
                   <button
-                    key={cat}
-                    onClick={() => { setCatFilter(isSelected ? 'all' : cat); setPage(0); }}
+                    key={cnt}
+                    onClick={() => { setPerPage(cnt); setPage(0); }}
                     style={{
-                      padding: '4px 10px', fontSize: 11, borderRadius: 20, border: '1px solid',
-                      borderColor: isSelected ? cfg.color : 'var(--border)',
-                      background: isSelected ? cfg.bg : 'transparent',
-                      color: isSelected ? cfg.color : 'var(--text2)',
-                      cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '4px 8px', fontSize: 11.5, borderRadius: 6, border: 'none',
+                      background: perPage === cnt ? 'var(--purple)' : 'transparent',
+                      color: perPage === cnt ? '#fff' : 'var(--text3)',
+                      cursor: 'pointer', fontWeight: 600,
                     }}
                   >
-                    <span>{cfg.icon}</span> {cat} ({count})
+                    {cnt}
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Table */}
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th style={{ cursor: 'pointer', width: 130 }} onClick={() => toggleSort('date')}>
-                    Date <ArrowUpDown size={11} style={{ verticalAlign: 'middle', opacity: 0.5 }} />
-                  </th>
-                  <th>Merchant / Description</th>
-                  <th style={{ cursor: 'pointer', width: 140 }} onClick={() => toggleSort('amount')}>
-                    Amount <ArrowUpDown size={11} style={{ verticalAlign: 'middle', opacity: 0.5 }} />
-                  </th>
-                  <th style={{ width: 180 }}>FinSight Category</th>
-                  <th style={{ textAlign: 'right', width: 80 }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paged.map(tx => {
-                  const cfg = CATEGORY_CONFIG[tx.category];
-                  return (
-                    <tr key={tx.id}>
-                      <td style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: 'var(--text2)' }}>
-                        {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </td>
-                      <td style={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                        {tx.description}
-                        {tx.isRecurring && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--amber)', fontWeight: 600 }}>🔁 Recurring</span>}
-                      </td>
-                      <td style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: tx.amount >= 0 ? 'var(--green)' : 'var(--text)' }}>
-                        {tx.amount >= 0 ? '+' : ''}{fmt(tx.amount)}
-                      </td>
-                      <td style={{ position: 'relative' }}>
-                        <span
-                          className="cat-badge"
-                          style={{ background: cfg.bg, color: cfg.color, cursor: 'pointer' }}
-                          onClick={() => setEditingCat(editingCat === tx.id ? null : tx.id)}
-                        >
-                          {cfg.icon} {tx.category} <ChevronDown size={10} />
-                        </span>
-                        {editingCat === tx.id && (
-                          <div className="cat-dropdown" style={{ zIndex: 10 }}>
-                            {CATEGORIES.map(cat => (
-                              <button key={cat} onClick={() => { updateTransaction(tx.id, { category: cat }); setEditingCat(null); }}>
-                                <span>{CATEGORY_CONFIG[cat].icon}</span> {cat}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button className="btn-ghost" style={{ padding: 6, color: 'var(--red)' }} onClick={() => deleteTransaction(tx.id)}>
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Category Filter Chips Grid */}
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            padding: '12px 24px',
+            borderBottom: '1px solid var(--border)',
+            overflowX: 'auto',
+            alignItems: 'center',
+            background: 'var(--surface2)',
+            scrollbarWidth: 'thin',
+          }}>
+            <button
+              onClick={() => { setCatFilter('all'); setPage(0); }}
+              style={{
+                padding: '6px 14px', fontSize: 12, borderRadius: 20, border: '1px solid',
+                borderColor: catFilter === 'all' ? 'var(--purple)' : 'var(--border)',
+                background: catFilter === 'all' ? 'linear-gradient(135deg, #a855f7, #6366f1)' : 'transparent',
+                color: catFilter === 'all' ? '#fff' : 'var(--text2)',
+                cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 650,
+                boxShadow: catFilter === 'all' ? '0 2px 10px rgba(168,85,247,0.3)' : 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              All ({txns.length})
+            </button>
+
+            {CATEGORIES.map(cat => {
+              const count = txns.filter(t => t.category === cat).length;
+              if (count === 0) return null;
+              const isSelected = catFilter === cat;
+              const cfg = CATEGORY_CONFIG[cat];
+              return (
+                <button
+                  key={cat}
+                  onClick={() => { setCatFilter(isSelected ? 'all' : cat); setPage(0); }}
+                  style={{
+                    padding: '5px 12px', fontSize: 12, borderRadius: 20, border: '1px solid',
+                    borderColor: isSelected ? cfg.color : 'var(--border)',
+                    background: isSelected ? cfg.bg : 'transparent',
+                    color: isSelected ? cfg.color : 'var(--text2)',
+                    cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontWeight: isSelected ? 700 : 500,
+                    boxShadow: isSelected ? `0 2px 12px ${cfg.color}35` : 'none',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span>{cfg.icon}</span> {cat}
+                  <span style={{
+                    fontSize: 10.5,
+                    padding: '1px 6px',
+                    borderRadius: 10,
+                    background: isSelected ? cfg.color : 'rgba(255,255,255,0.06)',
+                    color: isSelected ? '#fff' : 'var(--text3)',
+                  }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Pagination */}
+          {/* CSS Grid Header */}
+          <div className="tx-grid-header">
+            <div
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              onClick={() => toggleSort('date')}
+              title="Sort by date"
+            >
+              Date
+              <ArrowUpDown size={12} style={{ opacity: sortBy === 'date' ? 1 : 0.4 }} />
+            </div>
+
+            <div>Merchant / Description</div>
+
+            <div
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 6,
+                paddingRight: 18,
+              }}
+              onClick={() => toggleSort('amount')}
+              title="Sort by amount"
+            >
+              Amount
+              <ArrowUpDown size={12} style={{ opacity: sortBy === 'amount' ? 1 : 0.4 }} />
+            </div>
+
+            <div>FinSight Category</div>
+
+            <div style={{ textAlign: 'right' }}>Actions</div>
+          </div>
+
+          {/* CSS Grid Data Rows */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {paged.length === 0 ? (
+              <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text3)' }}>
+                <Search size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
+                <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>No matching transactions found</p>
+                <p style={{ fontSize: 13 }}>Try adjusting your search query or selecting a different category filter.</p>
+                <button
+                  className="btn-ghost"
+                  onClick={() => { setSearch(''); setCatFilter('all'); }}
+                  style={{ marginTop: 12, fontSize: 12 }}
+                >
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              paged.map(tx => {
+                const cfg = CATEGORY_CONFIG[tx.category] || CATEGORY_CONFIG['Other'];
+                const { title, subtitle } = formatTransactionDisplay(tx);
+                const isCredit = tx.amount > 0;
+
+                return (
+                  <div key={tx.id} className="tx-grid-row">
+                    {/* Column 1: Date */}
+                    <div className="tx-grid-col-date">
+                      <span style={{ fontWeight: 650, fontSize: 13, color: 'var(--text)' }}>
+                        {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                        {new Date(tx.date).toLocaleDateString('en-IN', { year: 'numeric' })}
+                      </span>
+                    </div>
+
+                    {/* Column 2: Merchant & Description */}
+                    <div className="tx-grid-col-merchant">
+                      <div
+                        className="tx-grid-merchant-icon"
+                        style={{
+                          background: cfg.bg,
+                          color: cfg.color,
+                          borderColor: cfg.color + '30',
+                        }}
+                      >
+                        {cfg.icon}
+                      </div>
+
+                      <div className="tx-grid-merchant-details">
+                        <div className="tx-grid-merchant-title">
+                          <span title={tx.description}>{title}</span>
+                          {tx.isRecurring && (
+                            <span style={{
+                              fontSize: 10,
+                              fontWeight: 650,
+                              color: 'var(--amber)',
+                              background: 'rgba(240,180,41,0.1)',
+                              padding: '1px 6px',
+                              borderRadius: 6,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 3,
+                            }}>
+                              🔁 Recurring
+                            </span>
+                          )}
+                        </div>
+                        {subtitle && (
+                          <div className="tx-grid-merchant-sub" title={subtitle}>
+                            {subtitle}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Amount */}
+                    <div className="tx-grid-col-amount">
+                      <span
+                        className="tx-grid-amount-val"
+                        style={{ color: isCredit ? 'var(--green)' : 'var(--text)' }}
+                      >
+                        {isCredit ? '+' : ''}{fmt(tx.amount)}
+                      </span>
+                      <span
+                        className="tx-grid-amount-badge"
+                        style={{ color: isCredit ? 'var(--green)' : 'var(--text3)' }}
+                      >
+                        {isCredit ? 'Credit' : 'Debit'}
+                      </span>
+                    </div>
+
+                    {/* Column 4: Category */}
+                    <div className="tx-grid-col-category">
+                      <span
+                        className="cat-badge"
+                        style={{
+                          background: cfg.bg,
+                          color: cfg.color,
+                          border: `1px solid ${cfg.color}35`,
+                          padding: '5px 12px',
+                          fontSize: 12,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          borderRadius: 20,
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setEditingCat(editingCat === tx.id ? null : tx.id)}
+                      >
+                        <span>{cfg.icon}</span> {tx.category} <ChevronDown size={12} />
+                      </span>
+
+                      {editingCat === tx.id && (
+                        <div className="cat-dropdown" style={{ zIndex: 30 }}>
+                          {CATEGORIES.map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => {
+                                updateTransaction(tx.id, { category: cat });
+                                setEditingCat(null);
+                              }}
+                              style={{
+                                fontWeight: tx.category === cat ? 700 : 500,
+                                color: tx.category === cat ? 'var(--purple)' : 'var(--text)',
+                              }}
+                            >
+                              <span>{CATEGORY_CONFIG[cat].icon}</span> {cat}
+                              {tx.category === cat && <Check size={14} style={{ marginLeft: 'auto' }} />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Column 5: Action */}
+                    <div className="tx-grid-col-actions">
+                      <button
+                        className="tx-grid-del-btn"
+                        title="Delete transaction"
+                        onClick={() => deleteTransaction(tx.id)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Pagination Grid Bar */}
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderTop: '1px solid var(--border)', fontSize: 13 }}>
-              <span style={{ color: 'var(--text2)' }}>Showing {page * PER_PAGE + 1}–{Math.min((page + 1) * PER_PAGE, filtered.length)} of {filtered.length}</span>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button className="btn-ghost" disabled={page === 0} onClick={() => setPage(p => p - 1)} style={{ padding: '4px 12px', fontSize: 12 }}>Prev</button>
-                <button className="btn-ghost" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} style={{ padding: '4px 12px', fontSize: 12 }}>Next</button>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '14px 24px',
+              borderTop: '1px solid var(--border)',
+              fontSize: 13,
+              background: 'rgba(255, 255, 255, 0.01)',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}>
+              <span style={{ color: 'var(--text2)' }}>
+                Showing <strong>{page * perPage + 1}–{Math.min((page + 1) * perPage, filtered.length)}</strong> of <strong>{filtered.length}</strong> transactions
+              </span>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="btn-ghost"
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: 12.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <ChevronLeft size={14} /> Prev
+                </button>
+
+                <span style={{ fontSize: 12.5, color: 'var(--text3)', padding: '0 6px' }}>
+                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
+                </span>
+
+                <button
+                  className="btn-ghost"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: 12.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  Next <ChevronRight size={14} />
+                </button>
               </div>
             </div>
           )}
@@ -644,14 +1054,20 @@ export default function TransactionsPage() {
 
       {/* Empty state */}
       {txns.length === 0 && !parsing && !parseResult && (
-        <div className="panel" style={{ padding: '48px 32px', textAlign: 'center' }}>
-          <FileText size={40} color="var(--text3)" style={{ marginBottom: 16 }} />
-          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>No transactions recorded yet</p>
-          <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 460, margin: '0 auto 20px' }}>
+        <div className="panel" style={{ padding: '60px 32px', textAlign: 'center' }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 20,
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.12), rgba(59,130,246,0.12))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+          }}>
+            <FileText size={32} color="var(--purple)" />
+          </div>
+          <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No transactions recorded yet</p>
+          <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 480, margin: '0 auto 24px', lineHeight: 1.6 }}>
             Upload your bank statement PDF above. Google Gemini AI will extract transactions and classify them into your 12 exact categories.
           </p>
           <button className="btn-primary" onClick={() => fileRef.current?.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Upload size={15} /> Upload First Statement
+            <Upload size={16} /> Upload First Statement
           </button>
         </div>
       )}
@@ -810,7 +1226,7 @@ export default function TransactionsPage() {
                   </thead>
                   <tbody>
                     {stagedTransactions.map(t => {
-                      const cfg = CATEGORY_CONFIG[t.category];
+                      const cfg = CATEGORY_CONFIG[t.category] || CATEGORY_CONFIG['Other'];
                       return (
                         <tr key={t.id} style={{ opacity: t.selected ? 1 : 0.45 }}>
                           <td style={{ textAlign: 'center' }}>
