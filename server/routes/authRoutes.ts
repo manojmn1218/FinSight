@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { db } from '../config/db';
-import { generateToken, authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
+import { generateToken, authenticateToken, setAuthCookie, clearAuthCookie, type AuthenticatedRequest } from '../middleware/auth';
 import { otpService, type OtpPurpose } from '../services/otpService';
 
 const router = Router();
@@ -358,6 +358,7 @@ router.post('/verify-otp', async (req, res: Response) => {
     }
 
     const token = generateToken(user);
+    setAuthCookie(res, token);
 
     return res.json({
       message: 'Authentication successful',
@@ -526,6 +527,7 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Resp
 
 // POST /api/auth/logout
 router.post('/logout', (_req, res: Response) => {
+  clearAuthCookie(res);
   return res.json({ message: 'Logged out successfully' });
 });
 

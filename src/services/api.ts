@@ -96,6 +96,7 @@ class ApiService {
       response = await fetch(url, {
         ...options,
         headers,
+        credentials: 'include',
       });
     } catch (err: any) {
       // If server is still booting up (takes ~3s to connect to MongoDB), give it one retry

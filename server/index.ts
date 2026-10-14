@@ -9,6 +9,9 @@ import https from 'https';
 import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { initDatabase, db } from './config/db';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
@@ -25,7 +28,18 @@ const PORT = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 // ═══════════════════════════════════════════════
-// HTTPS ENFORCEMENT & SECURITY HEADERS (SSL/TLS)
+// HELMET & SECURITY HEADERS
+// ═══════════════════════════════════════════════
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Handled via meta tag in index.html to allow dynamic integrations
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
+// ═══════════════════════════════════════════════
+// HTTPS ENFORCEMENT & HSTS (SSL/TLS)
 // ═══════════════════════════════════════════════
 
 // Enforce HTTPS redirection in production or when ENFORCE_HTTPS=true
@@ -45,7 +59,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Standard HTTP Security Headers
+// Additional HTTP Security Headers
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -54,13 +68,76 @@ app.use((_req, res, next) => {
   next();
 });
 
-// Middleware
+// ═══════════════════════════════════════════════
+// RESTRICTED CORS CONFIGURATION
+// ═══════════════════════════════════════════════
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, '')] : []),
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim().replace(/\/$/, '')) : []),
+];
+
 app.use(cors({
-  origin: true,
-  credentials: true,
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. mobile apps, curl, internal checks)
+    if (!origin) return callback(null, true);
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS policy blocked access from origin ${origin}`));
+    }
+
+    // In local development, permit localhost/127.0.0.1 on any port or listed origins
+    if (allowedOrigins.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true, // Required for HttpOnly auth cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+// Cookie Parser Middleware for HttpOnly JWT Tokens
+app.use(cookieParser());
+
+// Body Parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ═══════════════════════════════════════════════
+// GLOBAL API & AUTH RATE LIMITING
+// ═══════════════════════════════════════════════
+
+// Global API Limiter: 400 requests per 15 min per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 400,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many requests from this IP address, please try again after 15 minutes.',
+  },
+});
+app.use('/api', globalLimiter);
+
+// Strict Auth Limiter: 25 requests per 15 min per IP (protects OTP and brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many authentication attempts from this IP. Please wait 15 minutes before trying again.',
+  },
+});
+app.use('/api/auth', authLimiter);
 
 // Health and Diagnostics check
 app.get('/api/health', (_req, res) => {
