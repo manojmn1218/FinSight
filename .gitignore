@@ -11,12 +11,32 @@ node_modules
 dist
 dist-ssr
 *.local
-server/data/
 
-# Environment variables
+# Local database, user records and persistent storage
+server/data/
+*.db
+*.sqlite
+*.sqlite3
+finsight_db.json
+
+# Environment variables, credentials, and secrets
 .env
 .env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 !.env.example
+*.pem
+*.key
+*.cert
+credentials.json
+client_secret*.json
+
+# Scratch and test files
+scratch/
+test-*.mjs
+test-*.js
 
 # Editor directories and files
 .vscode/*
