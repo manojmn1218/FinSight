@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import sgMail from '@sendgrid/mail';
 
 interface TwilioEmailOptions {
