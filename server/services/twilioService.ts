@@ -1,5 +1,4 @@
 import sgMail from '@sendgrid/mail';
-import twilio from 'twilio';
 
 interface TwilioEmailOptions {
   to: string;
@@ -11,61 +10,34 @@ interface TwilioEmailOptions {
 
 export class TwilioService {
   private isSendGridConfigured = false;
-  private twilioClient: twilio.Twilio | null = null;
-  private verifyServiceSid: string | null = null;
 
   constructor() {
     this.init();
   }
 
   private init() {
-    // 1. Twilio SendGrid Email API Configuration
     const sendGridKey = process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY;
     if (sendGridKey) {
       try {
         sgMail.setApiKey(sendGridKey);
         this.isSendGridConfigured = true;
-        console.log('📡 [Twilio API] Twilio SendGrid Email Service initialized.');
+        console.log('📡 [Twilio SendGrid] Email Service initialized.');
       } catch (err: any) {
-        console.warn('⚠️ [Twilio API] Failed to initialize SendGrid:', err.message);
+        console.warn('⚠️ [Twilio SendGrid] Failed to initialize SendGrid:', err.message);
       }
-    }
-
-    // 2. Twilio Client (Verify / REST API) Configuration
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    this.verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID || null;
-
-    if (accountSid && authToken) {
-      try {
-        this.twilioClient = twilio(accountSid, authToken);
-        console.log(`📡 [Twilio API] Twilio Client initialized for Account: ${accountSid.slice(0, 6)}...`);
-      } catch (err: any) {
-        console.warn('⚠️ [Twilio API] Failed to initialize Twilio client:', err.message);
-      }
-    }
-
-    if (!this.isSendGridConfigured && !this.twilioClient) {
-      console.log('ℹ️  [Twilio API] No Twilio API keys found in .env yet.');
-      console.log('💡 [Twilio API] To send live OTP emails via Twilio, add to your .env:');
-      console.log('   TWILIO_SENDGRID_API_KEY=SG.your_api_key_here');
-      console.log('   TWILIO_EMAIL_FROM=verified_sender@yourdomain.com');
-      console.log('   (or TWILIO_ACCOUNT_SID=AC... and TWILIO_AUTH_TOKEN=...)');
+    } else {
+      console.log('ℹ️  [Twilio SendGrid] No TWILIO_SENDGRID_API_KEY found in .env.');
     }
   }
 
   public isAvailable(): boolean {
-    return Boolean(
-      process.env.TWILIO_SENDGRID_API_KEY ||
-      process.env.SENDGRID_API_KEY ||
-      (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
-    );
+    return Boolean(process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY);
   }
 
   /**
-   * Dispatches an OTP email to an email account holder using Twilio SendGrid or Twilio Verify API
+   * Dispatches an OTP email directly to an account holder using Twilio SendGrid Email API
    */
-  public async sendOtpEmail(options: TwilioEmailOptions): Promise<{ sent: boolean; channel: 'twilio_sendgrid' | 'twilio_verify' | 'failed'; error?: string }> {
+  public async sendOtpEmail(options: TwilioEmailOptions): Promise<{ sent: boolean; channel: 'twilio_sendgrid' | 'failed'; error?: string }> {
     const { to, code, purposeTitle, purposeDescription, name } = options;
     const greeting = name ? `Hello ${name},` : 'Hello,';
     const fromAddress = process.env.TWILIO_EMAIL_FROM || process.env.SENDGRID_FROM_EMAIL || 'security@finsight.com';
@@ -102,7 +74,6 @@ export class TwilioService {
       </div>
     `;
 
-    // 1. Try Twilio SendGrid Email API first
     const sendGridKey = process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY;
     if (sendGridKey) {
       try {
@@ -119,39 +90,11 @@ export class TwilioService {
         return { sent: true, channel: 'twilio_sendgrid' };
       } catch (err: any) {
         console.error(`⚠️ [Twilio SendGrid] Delivery error to ${to}:`, err.response?.body || err.message);
+        return { sent: false, channel: 'failed', error: err.message };
       }
     }
 
-    // 2. Try Twilio Verify API if configured
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID || this.verifyServiceSid;
-
-    if (accountSid && authToken && verifySid) {
-      try {
-        const client = this.twilioClient || twilio(accountSid, authToken);
-        await client.verify.v2.services(verifySid).verifications.create({
-          to,
-          channel: 'email',
-          channelConfiguration: {
-            substitutions: {
-              code,
-            },
-          },
-        });
-
-        console.log(`✅ [Twilio Verify] Dispatched email verification to ${to} via service ${verifySid}`);
-        return { sent: true, channel: 'twilio_verify' };
-      } catch (err: any) {
-        if (err.code === 60223) {
-          console.warn(`ℹ️  [Twilio Verify] Notice for ${to}: Twilio Verify Email Channel requires connecting an email integration (SendGrid) in your Twilio Verify Console.`);
-        } else {
-          console.warn(`⚠️ [Twilio Verify] Verification error for ${to}:`, err.message);
-        }
-      }
-    }
-
-    return { sent: false, channel: 'failed', error: 'Twilio dispatch unconfigured or failed' };
+    return { sent: false, channel: 'failed', error: 'Twilio SendGrid unconfigured' };
   }
 }
 

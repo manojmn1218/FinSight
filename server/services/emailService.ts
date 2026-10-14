@@ -79,12 +79,12 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
   console.log('═'.repeat(66));
   console.log(`  To:       ${to}`);
   console.log(`  Purpose:  ${title.toUpperCase()}`);
-  console.log(`  Channel:  TWILIO API / SECURE DISPATCH`);
+  console.log(`  Channel:  TWILIO SENDGRID EMAIL DISPATCH`);
   console.log(`  OTP Code: ═══[ ${code.split('').join(' ')} ]═══`);
   console.log(`  Validity: 10 minutes`);
   console.log('═'.repeat(66) + '\n');
 
-  // 1. Dispatch via Twilio API (Twilio SendGrid or Twilio Verify)
+  // 1. Dispatch via Twilio SendGrid Email API
   if (twilioService.isAvailable()) {
     const twilioResult = await twilioService.sendOtpEmail({
       to,
