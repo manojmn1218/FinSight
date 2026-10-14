@@ -117,9 +117,14 @@ export class TwilioService {
     }
 
     // 2. Try Twilio Verify API if configured
-    if (this.twilioClient && this.verifyServiceSid) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID || this.verifyServiceSid;
+
+    if (accountSid && authToken && verifySid) {
       try {
-        await this.twilioClient.verify.v2.services(this.verifyServiceSid).verifications.create({
+        const client = this.twilioClient || twilio(accountSid, authToken);
+        await client.verify.v2.services(verifySid).verifications.create({
           to,
           channel: 'email',
           channelConfiguration: {
@@ -129,10 +134,14 @@ export class TwilioService {
           },
         });
 
-        console.log(`✅ [Twilio Verify] Dispatched email verification to ${to}`);
+        console.log(`✅ [Twilio Verify] Dispatched email verification to ${to} via service ${verifySid}`);
         return { sent: true, channel: 'twilio_verify' };
       } catch (err: any) {
-        console.warn(`⚠️ [Twilio Verify] Verification error for ${to}:`, err.message);
+        if (err.code === 60223) {
+          console.warn(`ℹ️  [Twilio Verify] Notice for ${to}: Twilio Verify Email Channel requires connecting an email integration (SendGrid) in your Twilio Verify Console.`);
+        } else {
+          console.warn(`⚠️ [Twilio Verify] Verification error for ${to}:`, err.message);
+        }
       }
     }
 
