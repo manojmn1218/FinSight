@@ -110,8 +110,9 @@ const FALLBACK_CATEGORY_PATTERNS: Array<{
   {
     category: 'Transfer',
     patterns: [
-      /\b(neft|imps|rtgs|fund transfer|to self|own account transfer|transfer to|sent to|p2p|family transfer|friend)\b/i,
-      /\b(upi\/(?:dr|cr)\/.*?(?:to|sent|transfer))\b/i,
+      /\b(neft|imps|rtgs|fund transfer|acc tfr|a\/c tfr|account transfer|ac transfer|tfr|trfr|trf|to self|own account transfer|transfer to|transfer from|sent to|received from|p2p|peer to peer|family transfer|friend|bank transfer|internal transfer|direct transfer|wire transfer|ft\b|money sent|money received|inb|mb|dep tfr|wdl tfr)\b/i,
+      /\bupi[\/\-_]/i,
+      /\b(upi|transfer|tfr)\b/i,
     ],
   },
   {
@@ -335,7 +336,7 @@ CRITICAL INSTRUCTIONS:
    - "Subscriptions" (Netflix, Spotify, Prime, YouTube, ChatGPT, Apple, iCloud, SaaS)
    - "Health" (hospitals, clinics, pharmacy, medicine, Apollo, 1mg, diagnostic tests)
    - "Education" (school, college, courses, Udemy, Coursera, books, tuition)
-   - "Transfer" (peer-to-peer UPI transfer, NEFT, IMPS to person)
+   - "Transfer" (peer-to-peer UPI transfer, UPI digital payments/transfers, NEFT, IMPS, RTGS, bank account transfers, TFR, fund transfer)
    - "ATM" (cash withdrawal at ATM)
    - "Salary" (salary credit, wages, payroll, client invoice payment)
    - "Other" (bank charges, penalties, taxes, cashback, interest, uncategorized)

@@ -39,10 +39,10 @@ function formatTransactionDisplay(tx: Transaction) {
   let title = raw;
   let subtitle = '';
 
-  // 1. If it's a bare or collapsed label ("Upi", "UPI", "Bank Upi Transfer", "Imps", "Transfer")
-  if (!raw || /^(upi|imps|neft|rtgs|transfer|bank upi transfer|bank transaction)$/i.test(raw)) {
-    const typeLabel = /imps/i.test(raw) ? 'IMPS' : /neft/i.test(raw) ? 'NEFT' : 'UPI';
-    const cat = tx.category || 'Other';
+  // 1. If it's a bare or collapsed label ("Upi", "UPI", "Bank Upi Transfer", "Imps", "Transfer", "Tfr", etc.)
+  if (!raw || /^(upi|imps|neft|rtgs|transfer|bank upi transfer|bank transaction|tfr|trfr|trf|acc tfr|a\/c tfr|account transfer)$/i.test(raw)) {
+    const typeLabel = /imps/i.test(raw) ? 'IMPS' : /neft/i.test(raw) ? 'NEFT' : /tfr|transfer/i.test(raw) ? 'A/C Transfer' : 'UPI';
+    const cat = tx.category || 'Transfer';
 
     const categoryTitles: Record<string, string> = {
       'Food & Dining': `${cat} • ${typeLabel} Payment`,
@@ -60,8 +60,47 @@ function formatTransactionDisplay(tx: Transaction) {
     };
 
     title = categoryTitles[cat] || (isCredit ? `${typeLabel} Transfer Inflow` : `${typeLabel} Payment`);
-    subtitle = `Digital ${typeLabel} Transfer • ${isCredit ? 'Credit Inflow' : 'Debit Outflow'}`;
+    subtitle = `${typeLabel} • ${isCredit ? 'Credit Inflow' : 'Debit Outflow'}`;
     return { title, subtitle };
+  }
+
+  // 1b. Handle Account Transfers / TFR descriptions (e.g. "Interest Dep Tfr", "Cdm... Wdl Tfr", "Acc Tfr")
+  if (/\b(tfr|trfr|trf|acc tfr|a\/c tfr)\b/i.test(raw)) {
+    if (/interest\s*dep/i.test(raw)) {
+      return {
+        title: 'Interest Deposit Transfer',
+        subtitle: `Bank A/C Interest • ${isCredit ? 'Credit Inflow' : 'Debit'}`,
+      };
+    }
+    if (/interest\s*wdl/i.test(raw)) {
+      return {
+        title: 'Interest Withdrawal Transfer',
+        subtitle: `Bank A/C Interest Adjustment • ${isCredit ? 'Credit' : 'Debit Outflow'}`,
+      };
+    }
+    if (/cdm/i.test(raw)) {
+      const isDep = /dep/i.test(raw);
+      return {
+        title: isDep ? 'CDM Cash Deposit Transfer' : 'CDM Cash Withdrawal Transfer',
+        subtitle: `Cash Deposit Machine • ${isDep ? 'Credit Inflow' : 'Debit Outflow'}`,
+      };
+    }
+    if (/\b(?:dep|deposit)\s*tfr\b/i.test(raw)) {
+      return {
+        title: 'Account Deposit Transfer',
+        subtitle: `Direct Bank Deposit • ${isCredit ? 'Credit Inflow' : 'Debit'}`,
+      };
+    }
+    if (/\b(?:wdl|withdrawal)\s*tfr\b/i.test(raw)) {
+      return {
+        title: 'Account Withdrawal Transfer',
+        subtitle: `Direct Bank Withdrawal • ${isCredit ? 'Credit' : 'Debit Outflow'}`,
+      };
+    }
+    return {
+      title: raw.replace(/\b(tfr|trf|trfr)\b/gi, 'Transfer').trim(),
+      subtitle: `Account Transfer • ${isCredit ? 'Credit Inflow' : 'Debit Outflow'}`,
+    };
   }
 
   // 2. Check for leading date pattern: "05/10/2026 - - UPI/DR/..."

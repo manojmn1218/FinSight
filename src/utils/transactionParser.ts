@@ -55,7 +55,9 @@ const CATEGORY_KEYWORDS: Record<Category, string[]> = {
   'Transfer': [
     'neft', 'imps', 'upi', 'rtgs', 'transfer', 'fund transfer',
     'self transfer', 'to savings', 'to current', 'net banking',
-    'mobile banking', 'bank transfer',
+    'mobile banking', 'bank transfer', 'tfr', 'trfr', 'trf',
+    'acc tfr', 'a/c tfr', 'account transfer', 'ac transfer',
+    'dep tfr', 'wdl tfr', 'p2p', 'peer to peer', 'internal transfer',
   ],
   'ATM': [
     'atm', 'cash withdrawal', 'cash deposit', 'cash',
