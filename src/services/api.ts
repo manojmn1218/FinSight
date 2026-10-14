@@ -386,10 +386,33 @@ class ApiService {
     });
   }
 
+  async configureGeminiKey(apiKey: string) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      activeProvider: 'gemini';
+      model: string;
+    }>('/api/ai/configure-key', {
+      method: 'POST',
+      body: JSON.stringify({ apiKey }),
+    });
+  }
+
   async parseStatementWithAi(lines: string[]) {
     return this.request<AiParseResponse>('/api/ai/parse-statement', {
       method: 'POST',
       body: JSON.stringify({ lines }),
+    });
+  }
+
+  async reclassifyWithAi() {
+    return this.request<{
+      message: string;
+      provider: string;
+      model: string;
+      transactions: import('../utils/types').Transaction[];
+    }>('/api/ai/reclassify', {
+      method: 'POST',
     });
   }
 }

@@ -231,6 +231,64 @@ export default function TransactionsPage() {
   const [aiReviewMeta, setAiReviewMeta] = useState<AiParseResponse | null>(null);
   const [editingStagedCat, setEditingStagedCat] = useState<string | null>(null);
 
+  // --- Gemini API Key Modal & Reclassification State ---
+  const [showAiKeyModal, setShowAiKeyModal] = useState(false);
+  const [inputApiKey, setInputApiKey] = useState('');
+  const [testingKey, setTestingKey] = useState(false);
+  const [keyModalError, setKeyModalError] = useState('');
+  const [keyModalSuccess, setKeyModalSuccess] = useState('');
+  const [reclassifying, setReclassifying] = useState(false);
+  const [reclassifyMsg, setReclassifyMsg] = useState('');
+
+  const handleSaveGeminiKey = async () => {
+    if (!inputApiKey.trim()) {
+      setKeyModalError('Please paste your Google Gemini API key.');
+      return;
+    }
+    setTestingKey(true);
+    setKeyModalError('');
+    setKeyModalSuccess('');
+    try {
+      const res = await api.configureGeminiKey(inputApiKey.trim());
+      setKeyModalSuccess(res.message || 'Gemini 2.5 Flash connected!');
+      setAiStatus({
+        hasGeminiKey: true,
+        activeProvider: 'gemini',
+        model: res.model || 'gemini-2.5-flash',
+        version: '2.5',
+        features: [
+          'Automatic Bank Statement OCR/Text Classification',
+          'Merchant Entity Normalization',
+          'Strict 12-Category Financial Mapping',
+          'Debit/Credit Sign Detection',
+          'Recurring Subscription Flagging',
+        ],
+      });
+      setInputApiKey('');
+      setTimeout(() => {
+        setShowAiKeyModal(false);
+        setKeyModalSuccess('');
+      }, 1500);
+    } catch (err: any) {
+      setKeyModalError(err.message || 'Failed to verify API key. Please check and try again.');
+    } finally {
+      setTestingKey(false);
+    }
+  };
+
+  const handleReclassifyAll = async () => {
+    setReclassifying(true);
+    setReclassifyMsg('Google Gemini 2.5 Flash is analyzing and re-classifying transactions…');
+    try {
+      await api.reclassifyWithAi();
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message || 'Failed to reclassify transactions.');
+      setReclassifying(false);
+      setReclassifyMsg('');
+    }
+  };
+
   // --- Core parse logic ---
   const doParse = async (file: File, password?: string) => {
     setParsing(true);
@@ -465,7 +523,36 @@ export default function TransactionsPage() {
         </div>
 
         {/* Quick action buttons */}
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Gemini AI Connect / Status Button */}
+          <button
+            onClick={() => setShowAiKeyModal(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '9px 15px', fontSize: 12.5, fontWeight: 650,
+              borderRadius: 10, cursor: 'pointer',
+              background: aiStatus?.hasGeminiKey ? 'rgba(168,85,247,0.12)' : 'linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.15))',
+              border: aiStatus?.hasGeminiKey ? '1px solid rgba(168,85,247,0.35)' : '1px solid rgba(234,179,8,0.35)',
+              color: aiStatus?.hasGeminiKey ? '#c084fc' : '#fbbf24',
+            }}
+          >
+            <Sparkles size={14} color={aiStatus?.hasGeminiKey ? '#a855f7' : '#fbbf24'} />
+            {aiStatus?.hasGeminiKey ? '⚡ Gemini 2.5 Flash Active' : '⚡ Connect Gemini AI'}
+          </button>
+
+          {/* Re-classify with AI Button */}
+          {txns.length > 0 && (
+            <button
+              className="btn-ghost"
+              disabled={reclassifying}
+              onClick={handleReclassifyAll}
+              title="Have Gemini AI re-evaluate and accurately classify all ledger transactions"
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 14px', fontSize: 12.5, borderRadius: 10 }}
+            >
+              {reclassifying ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={14} />}
+              {reclassifying ? 'AI Classifying…' : 'Re-classify with AI'}
+            </button>
+          )}
+
           <button
             className="btn-primary"
             onClick={() => fileRef.current?.click()}
@@ -475,6 +562,25 @@ export default function TransactionsPage() {
           </button>
         </div>
       </div>
+
+      {/* AI Reclassifying live notification */}
+      {reclassifying && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px',
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.15), rgba(99,102,241,0.15))',
+            border: '1px solid rgba(168,85,247,0.35)', borderRadius: 12, fontSize: 13, color: '#e0e7ff',
+          }}
+        >
+          <Loader2 size={20} color="#c084fc" style={{ animation: 'spin 1s linear infinite' }} />
+          <div>
+            <div style={{ fontWeight: 650, color: '#fff' }}>Google Gemini AI Processing</div>
+            <div style={{ fontSize: 12, color: 'var(--text2)' }}>{reclassifyMsg}</div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Upload limit warning for Basic users */}
       {data.currentPlan === 'Basic' && (
@@ -1549,6 +1655,144 @@ export default function TransactionsPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/* GOOGLE GEMINI AI KEY MODAL                     */}
+      {/* ═══════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {showAiKeyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', zIndex: 210, padding: 16,
+            }}
+            onClick={() => !testingKey && setShowAiKeyModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="panel"
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: 520, maxWidth: '95vw', padding: 28,
+                background: 'var(--surface)', border: '1px solid rgba(168,85,247,0.3)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12,
+                    background: 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(99,102,241,0.2))',
+                    border: '1px solid rgba(168,85,247,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc',
+                  }}>
+                    <Sparkles size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Google Gemini 2.5 Flash AI</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text3)' }}>
+                      Deep neural bank statement reader & 12-category classifier
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => !testingKey && setShowAiKeyModal(false)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: 4 }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.55, margin: '0 0 16px' }}>
+                FinSight uses Google’s multimodal <strong>Gemini 2.5 Flash</strong> to read complex bank statement text lines, identify true merchants and UPI beneficiaries, and automatically classify expenditures into 12 precise categories.
+              </p>
+
+              <div style={{
+                background: 'rgba(129,140,248,0.08)', border: '1px solid rgba(129,140,248,0.2)',
+                borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 12.5, color: 'var(--text2)',
+              }}>
+                <div style={{ fontWeight: 650, color: 'var(--purple)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <ShieldCheck size={14} /> Free Google AI Studio Key
+                </div>
+                You can generate a free Gemini API key in 10 seconds with your Google account at{' '}
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: 'var(--purple)', fontWeight: 650, textDecoration: 'underline' }}
+                >
+                  Google AI Studio →
+                </a>
+              </div>
+
+              {keyModalError && (
+                <div style={{
+                  padding: '10px 14px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: 8, color: '#fca5a5', fontSize: 12, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                  <span>{keyModalError}</span>
+                </div>
+              )}
+
+              {keyModalSuccess && (
+                <div style={{
+                  padding: '10px 14px', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)',
+                  borderRadius: 8, color: '#86efac', fontSize: 12, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+                  <span>{keyModalSuccess}</span>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }}>
+                  Paste Google Gemini API Key:
+                </label>
+                <input
+                  type="password"
+                  placeholder="AIzaSy..."
+                  value={inputApiKey}
+                  onChange={e => setInputApiKey(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 8,
+                    background: 'var(--surface2)', border: '1px solid var(--border)',
+                    color: 'var(--text)', outline: 'none', fontFamily: 'monospace',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setShowAiKeyModal(false)}
+                  disabled={testingKey}
+                  style={{ padding: '9px 16px', fontSize: 13 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSaveGeminiKey}
+                  disabled={testingKey || !inputApiKey.trim()}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', fontSize: 13 }}
+                >
+                  {testingKey ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={15} />}
+                  {testingKey ? 'Verifying with Google…' : 'Verify & Connect AI'}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

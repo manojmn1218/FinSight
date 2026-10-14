@@ -136,6 +136,9 @@ function cleanMerchantName(rawText: string): string {
   // 1. Strip leading dates e.g. '05/10/2026 - - ', '05-10-2026 : '
   cleaned = cleaned.replace(/^\d{2,4}[-/]\d{1,2}[-/]\d{2,4}\s*[-:–\s]*/g, '').trim();
 
+  // 1b. Strip banking transfer prefixes before checking UPI slashes
+  cleaned = cleaned.replace(/^(?:BY|TO)?\s*TRANSFER[-_\s]*(?:INB|MB)?[\s\/:_-]*/gi, '').trim();
+
   // 2. Strip currency symbols & amounts
   cleaned = cleaned.replace(/\b(?:INR|RS\.?|USD|EUR)\b/gi, '');
   cleaned = cleaned.replace(/\b[\d,]+\.\d{2}\b/g, '');
@@ -316,12 +319,6 @@ export async function parseStatementWithAi(lines: string[]): Promise<AiParseResu
     console.log('[AI Statement Parser] Initializing Google Gemini 2.5 Flash analysis...');
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-    // Prepare text sample (cap at ~250 lines to keep context crisp and fast)
-    const textSnippet = lines
-      .filter(l => l.trim().length > 3)
-      .slice(0, 250)
-      .join('\n');
-
     const systemPrompt = `You are an expert AI financial statement extractor and transaction classifier for FinSight.
 Your job is to read raw text lines from a bank statement PDF and extract structured financial transactions.
 
@@ -367,52 +364,63 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
   "period": "March 2026"
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: systemPrompt },
-            { text: `\n--- STATEMENT TEXT LINES ---\n${textSnippet}\n--- END STATEMENT TEXT ---` },
-          ],
+    const filteredLines = lines.filter(l => l.trim().length > 3);
+    const CHUNK_SIZE = 400;
+    const allValidatedTxns: ParsedAiTransaction[] = [];
+    let bankDetected: string | undefined;
+    let statementPeriod: string | undefined;
+
+    for (let i = 0; i < filteredLines.length; i += CHUNK_SIZE) {
+      const chunk = filteredLines.slice(i, i + CHUNK_SIZE).join('\n');
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: systemPrompt },
+              { text: `\n--- STATEMENT TEXT LINES (Batch ${Math.floor(i / CHUNK_SIZE) + 1}) ---\n${chunk}\n--- END STATEMENT TEXT ---` },
+            ],
+          },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
         },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
+      });
 
-    const responseText = response.text?.trim() || '{}';
-    const parsedData = JSON.parse(responseText);
+      const responseText = response.text?.trim() || '{}';
+      const parsedData = JSON.parse(responseText);
 
-    const rawList = Array.isArray(parsedData.transactions) ? parsedData.transactions : [];
+      if (parsedData.bankDetected) bankDetected = parsedData.bankDetected;
+      if (parsedData.period) statementPeriod = parsedData.period;
 
-    const validatedTransactions: ParsedAiTransaction[] = rawList.map((item: any) => {
-      // Validate category
-      let cat: FinCategory = 'Other';
-      if (FIN_CATEGORIES.includes(item.category)) {
-        cat = item.category as FinCategory;
-      } else {
-        cat = matchHeuristicCategory(item.cleanMerchant || item.rawDescription || '').category;
+      const rawList = Array.isArray(parsedData.transactions) ? parsedData.transactions : [];
+
+      for (const item of rawList) {
+        let cat: FinCategory = 'Other';
+        if (FIN_CATEGORIES.includes(item.category)) {
+          cat = item.category as FinCategory;
+        } else {
+          cat = matchHeuristicCategory(item.cleanMerchant || item.rawDescription || '').category;
+        }
+
+        allValidatedTxns.push({
+          id: 'tx_ai_' + Math.random().toString(36).substring(2, 9),
+          date: item.date || new Date().toISOString().slice(0, 10),
+          rawDescription: String(item.rawDescription || item.cleanMerchant || 'Transaction').slice(0, 150),
+          cleanMerchant: String(item.cleanMerchant || cleanMerchantName(item.rawDescription || 'Transaction')).slice(0, 45),
+          amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount) || -10,
+          category: cat,
+          isRecurring: Boolean(item.isRecurring),
+          confidence: typeof item.confidence === 'number' ? Math.min(Math.max(item.confidence, 0.5), 1.0) : 0.95,
+        });
       }
+    }
 
-      return {
-        id: 'tx_ai_' + Math.random().toString(36).substring(2, 9),
-        date: item.date || new Date().toISOString().slice(0, 10),
-        rawDescription: String(item.rawDescription || item.cleanMerchant || 'Transaction').slice(0, 150),
-        cleanMerchant: String(item.cleanMerchant || cleanMerchantName(item.rawDescription || 'Transaction')).slice(0, 40),
-        amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount) || -10,
-        category: cat,
-        isRecurring: Boolean(item.isRecurring),
-        confidence: typeof item.confidence === 'number' ? Math.min(Math.max(item.confidence, 0.5), 1.0) : 0.95,
-      };
-    });
-
-    if (validatedTransactions.length > 0) {
-      console.log(`[AI Statement Parser] Gemini Flash successfully classified ${validatedTransactions.length} transactions.`);
-      return buildParseResult('gemini', 'gemini-2.5-flash', validatedTransactions, parsedData.bankDetected, parsedData.period);
+    if (allValidatedTxns.length > 0) {
+      console.log(`[AI Statement Parser] Gemini Flash successfully classified ${allValidatedTxns.length} transactions across batches.`);
+      return buildParseResult('gemini', 'gemini-2.5-flash', allValidatedTxns, bankDetected, statementPeriod);
     }
 
     console.warn('[AI Statement Parser] Gemini returned 0 transactions, switching to fallback.');
@@ -424,6 +432,152 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
     const fallbackTxns = parseFallbackTransactions(lines);
     return buildParseResult('heuristic_fallback', 'smart-nlp-engine', fallbackTxns);
   }
+}
+
+export interface ReclassifyItem {
+  id: string;
+  date: string;
+  amount: number;
+  description: string;
+  rawDescription?: string;
+  currentCategory?: string;
+}
+
+export interface ReclassifiedResult {
+  provider: 'gemini' | 'smart-nlp-engine';
+  model: string;
+  items: Array<{
+    id: string;
+    category: FinCategory;
+    cleanMerchant: string;
+    confidence: number;
+    isRecurring: boolean;
+  }>;
+}
+
+export async function reclassifyTransactionsWithAi(
+  items: ReclassifyItem[]
+): Promise<ReclassifiedResult> {
+  const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
+
+  // If Gemini key is available, use Gemini Flash 2.5
+  if (geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here') {
+    try {
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+      const prompt = `You are FinSight's expert financial transaction classifier and entity extraction AI.
+Analyze each transaction below and return JSON with the structure:
+{
+  "classifications": [
+    {
+      "id": "item_id",
+      "category": "one of: Food & Dining, Shopping, Transport, Utilities, Rent, Subscriptions, Health, Education, Transfer, ATM, Salary, Other",
+      "cleanMerchant": "cleaned, human-readable merchant/recipient name",
+      "confidence": 0.95,
+      "isRecurring": false
+    }
+  ]
+}
+
+CRITICAL RULES:
+- Peer-to-peer UPI payments/transfers to people, bank transfers, TFR, NEFT, IMPS MUST be categorized as "Transfer".
+- Salary credits MUST be "Salary".
+- ATM withdrawals MUST be "ATM".
+- Swiggy, Zomato, cafes, dining, groceries MUST be "Food & Dining".
+- Amazon, Flipkart, clothes, electronics MUST be "Shopping".
+- Uber, Ola, Rapido, petrol/fuel, flights, trains MUST be "Transport".
+- Electricity, water, broadband, mobile bills MUST be "Utilities".
+- Doctor, hospital, pharmacy, medical tests MUST be "Health".
+- Netflix, Spotify, Prime, ChatGPT, recurring SaaS MUST be "Subscriptions".
+- Rent, society maintenance MUST be "Rent".
+- Courses, books, tuition MUST be "Education".
+- Bank charges, fees, taxes MUST be "Other".`;
+
+      const BATCH_SIZE = 60;
+      const results: ReclassifiedResult['items'] = [];
+
+      for (let i = 0; i < items.length; i += BATCH_SIZE) {
+        const batch = items.slice(i, i + BATCH_SIZE);
+        const userPrompt = `Classify this batch of financial transactions:\n${JSON.stringify(
+          batch.map(b => ({
+            id: b.id,
+            date: b.date,
+            amount: b.amount,
+            description: b.description,
+            rawText: b.rawDescription || b.description,
+          })),
+          null,
+          2
+        )}`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }, { text: userPrompt }],
+            },
+          ],
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+          },
+        });
+
+        const respText = response.text?.trim() || '{}';
+        const parsed = JSON.parse(respText);
+        const list = Array.isArray(parsed.classifications) ? parsed.classifications : [];
+
+        for (const item of list) {
+          let cat: FinCategory = 'Other';
+          if (FIN_CATEGORIES.includes(item.category)) {
+            cat = item.category as FinCategory;
+          } else {
+            cat = matchHeuristicCategory(item.cleanMerchant || '').category;
+          }
+
+          results.push({
+            id: String(item.id),
+            category: cat,
+            cleanMerchant: String(item.cleanMerchant || '').slice(0, 45),
+            confidence: typeof item.confidence === 'number' ? Math.min(Math.max(item.confidence, 0.5), 1.0) : 0.95,
+            isRecurring: Boolean(item.isRecurring),
+          });
+        }
+      }
+
+      if (results.length > 0) {
+        return {
+          provider: 'gemini',
+          model: 'gemini-2.5-flash',
+          items: results,
+        };
+      }
+    } catch (err: any) {
+      console.error('[AI Reclassify] Gemini call error:', err?.message || err);
+    }
+  }
+
+  // Fallback if no Gemini key or error
+  const fallbackResults: ReclassifiedResult['items'] = items.map(item => {
+    const text = (item.rawDescription || item.description || '').trim();
+    const { category, confidence } = matchHeuristicCategory(text);
+    const clean = cleanMerchantName(text);
+    const isRecurring = /\b(netflix|spotify|subscription|rent|prime|membership|sip|emi|bill)\b/i.test(text);
+
+    return {
+      id: item.id,
+      category,
+      cleanMerchant: clean,
+      confidence,
+      isRecurring,
+    };
+  });
+
+  return {
+    provider: 'smart-nlp-engine',
+    model: 'smart-nlp-engine',
+    items: fallbackResults,
+  };
 }
 
 function buildParseResult(
