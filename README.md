@@ -73,9 +73,12 @@ FinSight is a comprehensive personal finance management platform that transforms
 - **Tax Optimization Hints** — Category-level spending analysis for tax planning
 
 ### 💬 FinSight AI Chatbot *(Python-Powered)*
-- **Dedicated In-App Financial Assistant** — An interactive assistant built with Python (Flask) and Google Gemini AI to guide users through FinSight and answer questions about their account.
+- **Dedicated In-App Financial Intelligence Co-pilot** — An interactive assistant built with Python (Flask) and Google Gemini AI (`gemini-3.5-flash-lite`) to guide users through FinSight and answer questions about their account requirements, balances, and finances.
+- **Deep Account Requirements & Affordability Engine** — Trained to evaluate purchase feasibility in real time (*"Can I afford to buy [item] for ₹[amount] right now?"*). Checks current liquid balance, monthly surplus (income minus expenses), and active savings goals, providing clear affordability verdicts and exact cash deficit/surplus figures.
+- **Comprehensive Expense & Category Intelligence** — Accurately analyzes category spending breakdowns (Education, Shopping, Utilities, Food, Transport, etc.), pinpoints the largest single expense on record with date and merchant, and tracks recurring subscriptions.
+- **Goals & Milestone Requirements** — Tracks active targets, percentage completion, remaining capital needed, and deadlines. For users with no active goals, it guides them on setting targets or calculates required monthly savings.
+- **Budget Health Scoring & Tailored Guidance** — Provides personalized 0–100 Budget Health Scores with concrete, actionable advice based on real account numbers and cash-flow patterns.
 - **Strict Domain Scope Guardrail** — Strictly restricted to only answer questions about the FinSight platform and the authenticated user's account details. Any out-of-scope question (general knowledge, coding, politics, weather, trivia) returns a polite refusal: *"Cannot say. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details."*
-- **Real-Time Account Context** — Accurately reports verified statement balances, monthly income, expenses, recent transactions, and goal progress directly from the user's database records.
 - **Always-Available Drawer** — Accessible across every dashboard page with quick-prompt chips, sleek typing indicators, and markdown formatting.
 
 ### 📈 Portfolio & Investments *(Enterprise)*

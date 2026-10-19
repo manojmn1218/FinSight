@@ -20,30 +20,111 @@ router.post('/message', authenticateToken, async (req: AuthenticatedRequest, res
     }
 
     // Fetch up-to-date user context from database
-    const [txns, goals] = await Promise.all([
+    const [txns, goals, portfolio] = await Promise.all([
       db.getTransactions(user.email).catch(() => []),
       db.getGoals(user.email).catch(() => []),
+      db.getPortfolio(user.email).catch(() => []),
     ]);
+
+    // Financial calculations & aggregations for deep accounting intelligence
+    const categoryTotals: Record<string, { total: number; count: number }> = {};
+    let totalDebits = 0;
+    let totalCredits = 0;
+    let largestExpense = { description: 'None', amount: 0, date: '' };
+    const recurringTxns: Array<{ description: string; amount: number; category: string }> = [];
+
+    for (const t of txns) {
+      if (t.amount < 0) {
+        const absAmt = Math.abs(t.amount);
+        totalDebits += absAmt;
+        const cat = t.category || 'Other';
+        if (!categoryTotals[cat]) {
+          categoryTotals[cat] = { total: 0, count: 0 };
+        }
+        categoryTotals[cat].total += absAmt;
+        categoryTotals[cat].count += 1;
+
+        if (absAmt > largestExpense.amount) {
+          largestExpense = { description: t.description || 'Expense', amount: absAmt, date: t.date };
+        }
+        if (t.isRecurring) {
+          recurringTxns.push({ description: t.description, amount: absAmt, category: cat });
+        }
+      } else if (t.amount > 0) {
+        totalCredits += t.amount;
+      }
+    }
+
+    const topCategories = Object.entries(categoryTotals)
+      .map(([category, { total, count }]) => ({ category, total: Math.round(total * 100) / 100, count }))
+      .sort((a, b) => b.total - a.total);
+
+    const income = user.monthlyIncome ?? 0;
+    const expenses = user.monthlyExpenses ?? Math.round(totalDebits);
+    const surplus = Math.max(0, income - expenses);
+    const savingsRate = income > 0 ? Math.round((surplus / income) * 100) : (user.savingsPercent ?? 0);
+
+    // Budget Health Score calculation (0 - 100)
+    let healthScore = 50;
+    if (income > 0) {
+      if (savingsRate >= 30) healthScore += 30;
+      else if (savingsRate >= 20) healthScore += 20;
+      else if (savingsRate >= 10) healthScore += 10;
+      else healthScore -= 10;
+
+      if ((user.totalBalance ?? 0) > expenses * 3) healthScore += 20;
+      else if ((user.totalBalance ?? 0) > expenses) healthScore += 10;
+    }
+    healthScore = Math.min(100, Math.max(10, healthScore));
+
+    const uploadCount = user.statementUploadsCount || 0;
+    const currentPlan = (user.currentPlan || user.plan || 'Basic').toLowerCase();
+    const uploadsRemaining = currentPlan === 'basic' ? Math.max(0, 3 - uploadCount) : 'Unlimited';
+
+    const goalsAnalysis = goals.map(g => {
+      const pct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
+      const remaining = Math.max(0, g.targetAmount - g.currentAmount);
+      return {
+        name: g.name,
+        targetAmount: g.targetAmount,
+        currentAmount: g.currentAmount,
+        remaining,
+        percentComplete: pct,
+        deadline: g.deadline || 'No deadline set',
+      };
+    });
+
+    const portfolioAssetsTotal = portfolio.reduce((sum, a) => sum + (a.shares * a.avgBuyPrice), 0);
 
     const userContext = {
       name: user.name || 'User',
       email: user.email,
       totalBalance: user.totalBalance ?? 0,
-      monthlyIncome: user.monthlyIncome ?? 0,
-      monthlyExpenses: user.monthlyExpenses ?? 0,
-      savingsPercent: user.savingsPercent ?? 0,
-      plan: user.plan || 'basic',
-      recentTransactions: txns.slice(0, 15).map(t => ({
+      monthlyIncome: income,
+      monthlyExpenses: expenses,
+      monthlySurplus: surplus,
+      savingsPercent: savingsRate,
+      budgetHealthScore: healthScore,
+      plan: currentPlan,
+      statementUploadsCount: uploadCount,
+      uploadsRemaining,
+      phoneVerified: !!user.phone,
+      totalDebits: Math.round(totalDebits * 100) / 100,
+      totalCredits: Math.round(totalCredits * 100) / 100,
+      netCashFlow: Math.round((totalCredits - totalDebits) * 100) / 100,
+      largestExpense,
+      categorySpending: categoryTotals,
+      topCategories,
+      recurringSubscriptions: recurringTxns,
+      goals: goalsAnalysis,
+      portfolioAssetsCount: portfolio.length,
+      portfolioAssetsTotal: Math.round(portfolioAssetsTotal * 100) / 100,
+      recentTransactions: txns.slice(0, 20).map(t => ({
         date: t.date,
         amount: t.amount,
         category: t.category,
         description: t.description || 'Transaction',
-      })),
-      goals: goals.map(g => ({
-        name: g.name,
-        currentAmount: g.currentAmount,
-        targetAmount: g.targetAmount,
-        deadline: g.deadline,
+        balance: t.balance,
       })),
     };
 

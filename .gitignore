@@ -33,6 +33,12 @@ finsight_db.json
 credentials.json
 client_secret*.json
 
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+chatbot_service/__pycache__/
+
 # Scratch and test files
 scratch/
 test-*.mjs
