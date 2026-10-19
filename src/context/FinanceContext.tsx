@@ -91,7 +91,7 @@ interface FinCtx {
   sessionTimeLeft: number;
   refreshUserData: () => Promise<void>;
   // Transaction methods
-  addTransactions: (txns: Transaction[]) => Promise<void>;
+  addTransactions: (txns: Transaction[], closingBalance?: number) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   clearTransactions: () => Promise<void>;
@@ -499,7 +499,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUserData]);
 
   // Transaction CRUD
-  const addTransactions = useCallback(async (txns: Transaction[]) => {
+  const addTransactions = useCallback(async (txns: Transaction[], closingBalance?: number) => {
     // Optimistic update
     setFinData(prev => {
       const existing = prev.transactions || [];
@@ -507,6 +507,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const toAdd = txns.filter(t => !sigs.has(`${t.date}_${t.amount}_${t.description.slice(0, 20)}`));
       return {
         ...prev,
+        totalBalance: (closingBalance !== undefined && !isNaN(closingBalance)) ? closingBalance : prev.totalBalance,
         transactions: [...existing, ...toAdd],
         statementUploaded: true,
         statementUploadsCount: (prev.statementUploadsCount || 0) + 1,
@@ -514,14 +515,13 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     });
 
     try {
-      await api.addTransactions(txns);
-      // Reload fresh transactions from server
-      const res = await api.getTransactions();
-      setFinData(prev => ({ ...prev, transactions: res.transactions }));
+      await api.addTransactions(txns, closingBalance);
+      // Reload fresh transactions & user data (including updated totalBalance) from server
+      await refreshUserData();
     } catch (err) {
       console.error('[FinanceContext] Failed to save transactions to database:', err);
     }
-  }, []);
+  }, [refreshUserData]);
 
   const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
     setFinData(prev => ({

@@ -20,7 +20,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
 router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
-    const { transactions, transaction } = req.body;
+    const { transactions, transaction, closingBalance } = req.body;
 
     const listToInsert = Array.isArray(transactions)
       ? transactions
@@ -34,19 +34,35 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
 
     const inserted = await db.addTransactions(userEmail, listToInsert);
 
-    // If transactions were imported, update statementUploaded flag
+    // If transactions were imported, update statementUploaded flag and totalBalance if closing balance provided
     const currentUser = await db.findUserByEmail(userEmail);
+    let updatedTotalBalance: number | undefined = undefined;
     if (currentUser) {
       const newCount = (currentUser.statementUploadsCount || 0) + (Array.isArray(transactions) ? 1 : 0);
-      await db.updateUser(userEmail, {
+      const userUpdates: Record<string, any> = {
         statementUploaded: true,
         statementUploadsCount: newCount,
-      });
+      };
+
+      const numericClosingBal =
+        typeof closingBalance === 'number'
+          ? closingBalance
+          : typeof closingBalance === 'string' && closingBalance.trim() !== ''
+          ? parseFloat(closingBalance)
+          : undefined;
+
+      if (numericClosingBal !== undefined && !isNaN(numericClosingBal)) {
+        userUpdates.totalBalance = Math.round(numericClosingBal * 100) / 100;
+        updatedTotalBalance = userUpdates.totalBalance;
+      }
+
+      await db.updateUser(userEmail, userUpdates);
     }
 
     return res.status(201).json({
       message: `Successfully processed ${inserted.length} transaction(s)`,
       transactions: inserted,
+      totalBalance: updatedTotalBalance,
     });
   } catch (error: any) {
     console.error('[Transactions] Add error:', error);

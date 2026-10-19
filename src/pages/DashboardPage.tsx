@@ -286,10 +286,12 @@ export default function DashboardPage() {
     const totalExpenses = txns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
     const netCashFlow = totalIncome - totalExpenses;
 
-    // Current balance
+    // Current balance (prioritizes statement closing balance synced to data.totalBalance, then latest transaction running balance)
     const sortedTxns = [...txns].sort((a, b) => a.date.localeCompare(b.date));
     const lastTxnWithBal = [...sortedTxns].reverse().find(t => t.balance != null);
-    const currentBalance = lastTxnWithBal?.balance ?? netCashFlow;
+    const currentBalance = (typeof data.totalBalance === 'number' && data.totalBalance > 0)
+      ? data.totalBalance
+      : (lastTxnWithBal?.balance ?? netCashFlow);
 
     // Category breakdown
     const catMap: Record<string, number> = {};

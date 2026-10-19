@@ -279,10 +279,10 @@ class ApiService {
     });
   }
 
-  async addTransactions(transactions: Transaction[]) {
-    return this.request<{ message: string; transactions: Transaction[] }>('/api/transactions', {
+  async addTransactions(transactions: Transaction[], closingBalance?: number) {
+    return this.request<{ message: string; transactions: Transaction[]; totalBalance?: number }>('/api/transactions', {
       method: 'POST',
-      body: JSON.stringify({ transactions }),
+      body: JSON.stringify({ transactions, closingBalance }),
     });
   }
 
@@ -430,6 +430,7 @@ export interface AiParseResponse {
     totalTransactions: number;
     totalDebits: number;
     totalCredits: number;
+    closingBalance?: number;
     period?: string;
     bankDetected?: string;
     categoriesFound: Record<string, number>;

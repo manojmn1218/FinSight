@@ -492,3 +492,59 @@ export function detectRecurringGrouped(transactions: Transaction[]): RecurringGr
   return results.sort((a, b) => b.estimatedAnnualCost - a.estimatedAnnualCost);
 }
 
+/**
+ * Detects and extracts closing/available balance from bank statement lines and transactions.
+ * Looks for explicit closing balance keywords first, then falls back to the running balance of the latest transaction.
+ */
+export function extractClosingBalance(
+  lines: string[],
+  transactions?: Array<{ date: string; balance?: number }>
+): number | undefined {
+  // 1. Look for explicit closing balance keywords in statement text
+  const balancePatterns = [
+    /(?:closing|ending|ledger|clear|effective\s*available|available|book)\s*bal(?:ance)?\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+    /bal(?:ance)?\s*as\s*on\s*[\d\/\.\-A-Za-z\s]{0,25}[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+    /(?:total\s*available\s*balance|avail\s*bal|net\s*balance)\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+  ];
+
+  for (const line of lines) {
+    for (const pat of balancePatterns) {
+      const match = line.match(pat);
+      if (match && match[1]) {
+        const val = parseFloat(match[1].replace(/,/g, ''));
+        if (!isNaN(val) && val >= 0) {
+          return Math.round(val * 100) / 100;
+        }
+      }
+    }
+  }
+
+  // 2. Fall back to latest chronological transaction's balance
+  if (transactions && transactions.length > 0) {
+    const txnsWithBal = transactions.filter(t => typeof t.balance === 'number' && !isNaN(t.balance));
+    if (txnsWithBal.length > 0) {
+      const sortedByDate = [...txnsWithBal].sort((a, b) => b.date.localeCompare(a.date));
+      const latestDate = sortedByDate[0].date;
+      const latestDateTxns = txnsWithBal.filter(t => t.date === latestDate);
+
+      const firstTxn = txnsWithBal[0];
+      const lastTxn = txnsWithBal[txnsWithBal.length - 1];
+
+      let pickedBalance: number | undefined;
+      if (firstTxn.date === latestDate && lastTxn.date !== latestDate) {
+        pickedBalance = firstTxn.balance;
+      } else if (lastTxn.date === latestDate && firstTxn.date !== latestDate) {
+        pickedBalance = lastTxn.balance;
+      } else {
+        pickedBalance = latestDateTxns[latestDateTxns.length - 1].balance ?? sortedByDate[0].balance;
+      }
+
+      if (typeof pickedBalance === 'number' && !isNaN(pickedBalance)) {
+        return Math.round(pickedBalance * 100) / 100;
+      }
+    }
+  }
+
+  return undefined;
+}
+

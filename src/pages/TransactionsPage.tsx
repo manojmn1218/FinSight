@@ -7,7 +7,7 @@ import {
   ShieldCheck, RefreshCw, Layers, PieChart, Calendar, Tag, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
-import { parsePdfFile, extractTransactions, PasswordRequiredError } from '../utils/transactionParser';
+import { parsePdfFile, extractTransactions, extractClosingBalance, PasswordRequiredError } from '../utils/transactionParser';
 import { CATEGORIES, CATEGORY_CONFIG } from '../utils/types';
 import type { Category, Transaction } from '../utils/types';
 import { Link } from 'react-router-dom';
@@ -27,6 +27,7 @@ interface AiStagedTransaction {
   category: Category;
   isRecurring: boolean;
   confidence: number;
+  balance?: number;
 }
 
 /**
@@ -187,8 +188,11 @@ export default function TransactionsPage() {
     range: string;
     provider?: string;
     model?: string;
+    closingBalanceApplied?: number;
   } | null>(null);
   const [parseError, setParseError] = useState('');
+  const [detectedClosingBalance, setDetectedClosingBalance] = useState<number | undefined>(undefined);
+  const [syncClosingBalance, setSyncClosingBalance] = useState<boolean>(true);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState<Category | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
@@ -317,6 +321,7 @@ export default function TransactionsPage() {
       } catch (apiErr: any) {
         console.warn('[TransactionsPage] Backend AI request failed, utilizing client fallback:', apiErr);
         const localTxns = extractTransactions(lines);
+        const fallbackBal = extractClosingBalance(lines, localTxns);
         aiResult = {
           provider: 'heuristic_fallback',
           model: 'client-nlp-fallback',
@@ -324,6 +329,7 @@ export default function TransactionsPage() {
             totalTransactions: localTxns.length,
             totalDebits: localTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
             totalCredits: localTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+            closingBalance: fallbackBal,
             categoriesFound: {},
           },
           transactions: localTxns.map(t => ({
@@ -346,6 +352,14 @@ export default function TransactionsPage() {
         return;
       }
 
+      // Check if statement has a closing balance or latest transaction running balance
+      let detectedBal = aiResult.summary?.closingBalance;
+      if (detectedBal === undefined || isNaN(detectedBal)) {
+        detectedBal = extractClosingBalance(lines, aiResult.transactions);
+      }
+      setDetectedClosingBalance(detectedBal);
+      setSyncClosingBalance(detectedBal !== undefined);
+
       const staged: AiStagedTransaction[] = aiResult.transactions.map(t => ({
         id: t.id,
         selected: true,
@@ -356,6 +370,7 @@ export default function TransactionsPage() {
         category: t.category,
         isRecurring: t.isRecurring,
         confidence: t.confidence,
+        balance: t.balance,
       }));
 
       setStagedTransactions(staged);
@@ -395,14 +410,17 @@ export default function TransactionsPage() {
       amount: t.amount,
       category: t.category,
       isRecurring: t.isRecurring,
+      balance: t.balance,
       source: 'pdf',
     }));
+
+    const balToApply = syncClosingBalance ? detectedClosingBalance : undefined;
 
     if (replaceExisting && txns.length > 0) {
       await clearTransactions();
     }
 
-    await addTransactions(txnsToImport);
+    await addTransactions(txnsToImport, balToApply);
 
     const dates = txnsToImport.map(t => t.date).sort();
     const from = new Date(dates[0]).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
@@ -413,6 +431,7 @@ export default function TransactionsPage() {
       range: from === to ? from : `${from} – ${to}`,
       provider: aiReviewMeta?.provider === 'gemini' ? 'Google Gemini 2.5 Flash' : 'Smart Neural Engine',
       model: aiReviewMeta?.model,
+      closingBalanceApplied: balToApply,
     });
 
     setShowAiReview(false);
@@ -817,6 +836,11 @@ export default function TransactionsPage() {
             <CheckCircle2 size={20} color="var(--green)" />
             <span>
               <strong>Successfully imported {parseResult.count} transactions</strong> ({parseResult.range})
+              {parseResult.closingBalanceApplied !== undefined && (
+                <span style={{ marginLeft: 8, color: 'var(--green)', fontWeight: 650 }}>
+                  • Dashboard Balance synced to <strong>{fmt(parseResult.closingBalanceApplied)}</strong>
+                </span>
+              )}
               {parseResult.provider && (
                 <span style={{ marginLeft: 8, color: 'var(--text2)' }}>
                   • Classified via <strong>{parseResult.provider}</strong>
@@ -1397,7 +1421,9 @@ export default function TransactionsPage() {
 
               {/* Summary Metrics Bar */}
               <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12,
+                display: 'grid',
+                gridTemplateColumns: detectedClosingBalance !== undefined ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(4, 1fr)',
+                gap: 12,
                 padding: '16px 24px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--border)',
               }}>
                 <div>
@@ -1424,7 +1450,87 @@ export default function TransactionsPage() {
                     {new Set(stagedTransactions.filter(t => t.selected).map(t => t.category)).size} Categories
                   </p>
                 </div>
+                {detectedClosingBalance !== undefined && (
+                  <div style={{
+                    background: 'rgba(52,211,153,0.08)',
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    border: '1px solid rgba(52,211,153,0.25)',
+                  }}>
+                    <p style={{ fontSize: 11, color: 'var(--green)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em', margin: 0 }}>
+                      🏦 Closing Balance
+                    </p>
+                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', margin: '2px 0 0' }}>
+                      {fmt(detectedClosingBalance)}
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {/* Closing Balance Sync Prompt Banner */}
+              {detectedClosingBalance !== undefined && (
+                <div style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(90deg, rgba(34,197,94,0.12), rgba(59,130,246,0.12))',
+                  borderBottom: '1px solid rgba(34,197,94,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 16,
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10,
+                      background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                    }}>
+                      🏦
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Statement Closing Balance Detected
+                        </span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 10,
+                          background: 'rgba(34,197,94,0.2)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.4)',
+                        }}>
+                          Ending Balance
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--green)', letterSpacing: '-0.02em', margin: '2px 0 0' }}>
+                        {fmt(detectedClosingBalance)}
+                      </div>
+                      <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text2)' }}>
+                        Extracted from your bank statement's closing balance / latest transaction. Can be automatically set as your current Dashboard Total Balance.
+                      </p>
+                    </div>
+                  </div>
+
+                  <label style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 14px',
+                    borderRadius: 10,
+                    background: syncClosingBalance ? 'rgba(34,197,94,0.18)' : 'var(--surface2)',
+                    border: syncClosingBalance ? '1px solid rgba(34,197,94,0.45)' : '1px solid var(--border)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={syncClosingBalance}
+                      onChange={e => setSyncClosingBalance(e.target.checked)}
+                      style={{ cursor: 'pointer', accentColor: '#22c55e', width: 16, height: 16 }}
+                    />
+                    <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--text)' }}>
+                      Set Dashboard Balance to {fmt(detectedClosingBalance)}
+                    </span>
+                  </label>
+                </div>
+              )}
 
               {/* Category distribution pill row */}
               <div style={{
@@ -1508,7 +1614,12 @@ export default function TransactionsPage() {
                             </div>
                           </td>
                           <td style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 650, fontSize: 13.5, color: t.amount >= 0 ? 'var(--green)' : 'var(--text)' }}>
-                            {t.amount >= 0 ? '+' : ''}{fmt(t.amount)}
+                            <div>{t.amount >= 0 ? '+' : ''}{fmt(t.amount)}</div>
+                            {t.balance !== undefined && (
+                              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text3)', marginTop: 1 }}>
+                                Bal: {fmt(t.balance)}
+                              </div>
+                            )}
                           </td>
                           <td style={{ position: 'relative' }}>
                             <span

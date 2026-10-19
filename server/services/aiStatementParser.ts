@@ -38,6 +38,7 @@ export interface AiParseResult {
     totalCredits: number;
     period?: string;
     bankDetected?: string;
+    closingBalance?: number;
     categoriesFound: Record<string, number>;
   };
   transactions: ParsedAiTransaction[];
@@ -215,6 +216,62 @@ function matchHeuristicCategory(text: string): { category: FinCategory; confiden
   return { category: 'Other', confidence: 0.5 };
 }
 
+/**
+ * Detects and extracts closing/available balance from bank statement lines and transactions.
+ * Looks for explicit closing balance keywords first, then falls back to the running balance of the latest transaction.
+ */
+export function extractClosingBalance(
+  lines: string[],
+  transactions?: Array<{ date: string; balance?: number }>
+): number | undefined {
+  // 1. Look for explicit closing balance keywords in statement text
+  const balancePatterns = [
+    /(?:closing|ending|ledger|clear|effective\s*available|available|book)\s*bal(?:ance)?\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+    /bal(?:ance)?\s*as\s*on\s*[\d\/\.\-A-Za-z\s]{0,25}[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+    /(?:total\s*available\s*balance|avail\s*bal|net\s*balance)\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+  ];
+
+  for (const line of lines) {
+    for (const pat of balancePatterns) {
+      const match = line.match(pat);
+      if (match && match[1]) {
+        const val = parseFloat(match[1].replace(/,/g, ''));
+        if (!isNaN(val) && val >= 0) {
+          return Math.round(val * 100) / 100;
+        }
+      }
+    }
+  }
+
+  // 2. Fall back to latest chronological transaction's balance
+  if (transactions && transactions.length > 0) {
+    const txnsWithBal = transactions.filter(t => typeof t.balance === 'number' && !isNaN(t.balance));
+    if (txnsWithBal.length > 0) {
+      const sortedByDate = [...txnsWithBal].sort((a, b) => b.date.localeCompare(a.date));
+      const latestDate = sortedByDate[0].date;
+      const latestDateTxns = txnsWithBal.filter(t => t.date === latestDate);
+
+      const firstTxn = txnsWithBal[0];
+      const lastTxn = txnsWithBal[txnsWithBal.length - 1];
+
+      let pickedBalance: number | undefined;
+      if (firstTxn.date === latestDate && lastTxn.date !== latestDate) {
+        pickedBalance = firstTxn.balance;
+      } else if (lastTxn.date === latestDate && firstTxn.date !== latestDate) {
+        pickedBalance = lastTxn.balance;
+      } else {
+        pickedBalance = latestDateTxns[latestDateTxns.length - 1].balance ?? sortedByDate[0].balance;
+      }
+
+      if (typeof pickedBalance === 'number' && !isNaN(pickedBalance)) {
+        return Math.round(pickedBalance * 100) / 100;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function parseFallbackTransactions(lines: string[]): ParsedAiTransaction[] {
   const transactions: ParsedAiTransaction[] = [];
 
@@ -349,26 +406,27 @@ CRITICAL UPI & INDIAN BANKING RULE:
    - "cleanMerchant": clean, human-readable merchant or recipient name (e.g. "Swiggy", "Mohan Sweets", "Amazon India", "HP Petrol Pump", "Rahul Sharma").
    - "amount": number. MUST BE NEGATIVE for debits/expenses (e.g. -450.00) and POSITIVE for credits/income (e.g. 85000.00).
    - "category": exactly one of the 12 listed category strings.
+   - "balance": number representing running account balance after this transaction if present in the statement column (e.g. 4520.50).
    - "isRecurring": boolean (true for subscriptions, rent, insurance, monthly utility bills).
    - "confidence": number between 0.0 and 1.0 representing classification confidence.
 
 FEW-SHOT TRAINING EXAMPLES (Follow these exact classification patterns):
 - "05/10/2026 TO TRANSFER-UPI/DR/627868088499/MOHAN SWEETS/SBIN/0000 90.00 4520.50"
-  -> cleanMerchant: "Mohan Sweets", amount: -90.00, category: "Food & Dining", confidence: 0.98
+  -> cleanMerchant: "Mohan Sweets", amount: -90.00, category: "Food & Dining", balance: 4520.50, confidence: 0.98
 - "04/10/2026 TO TRANSFER-UPI/DR/627750058855/ZEPTO/HDFC/Pay 180.00 4430.50"
-  -> cleanMerchant: "Zepto", amount: -180.00, category: "Shopping", confidence: 0.99
+  -> cleanMerchant: "Zepto", amount: -180.00, category: "Shopping", balance: 4430.50, confidence: 0.99
 - "03/10/2026 TO TRANSFER-UPI/DR/627629800942/RAPIDO/YESB/Ride 60.00 4250.50"
-  -> cleanMerchant: "Rapido", amount: -60.00, category: "Transport", confidence: 0.98
+  -> cleanMerchant: "Rapido", amount: -60.00, category: "Transport", balance: 4250.50, confidence: 0.98
 - "02/10/2026 TO TRANSFER-UPI/DR/627516888683/HP PETROL PUMP/SBIN 500.00 3750.50"
-  -> cleanMerchant: "HP Petrol Pump", amount: -500.00, category: "Transport", confidence: 0.99
+  -> cleanMerchant: "HP Petrol Pump", amount: -500.00, category: "Transport", balance: 3750.50, confidence: 0.99
 - "01/10/2026 BY TRANSFER-NEFT*TECH SOLUTIONS*SALARY SEPT 85000.00 88750.50"
-  -> cleanMerchant: "Tech Solutions", amount: 85000.00, category: "Salary", confidence: 1.0, isRecurring: true
+  -> cleanMerchant: "Tech Solutions", amount: 85000.00, category: "Salary", balance: 88750.50, confidence: 1.0, isRecurring: true
 - "01/10/2026 TO TRANSFER-UPI/DR/627404142936/RAHUL SHARMA/SBIN/Rent split 2000.00 86750.50"
-  -> cleanMerchant: "Rahul Sharma", amount: -2000.00, category: "Transfer", confidence: 0.92
+  -> cleanMerchant: "Rahul Sharma", amount: -2000.00, category: "Transfer", balance: 86750.50, confidence: 0.92
 - "28/09/2026 ATM WDL-NFS/123456/BANGALORE AIRPORT 5000.00 81750.50"
-  -> cleanMerchant: "ATM Cash Withdrawal", amount: -5000.00, category: "ATM", confidence: 0.99
+  -> cleanMerchant: "ATM Cash Withdrawal", amount: -5000.00, category: "ATM", balance: 81750.50, confidence: 0.99
 - "25/09/2026 DEBIT-SMS CHRG QTR ENDING SEPT 2026 17.70 81732.80"
-  -> cleanMerchant: "Bank SMS Charges", amount: -17.70, category: "Other", confidence: 0.95
+  -> cleanMerchant: "Bank SMS Charges", amount: -17.70, category: "Other", balance: 81732.80, confidence: 0.95
 
 OUTPUT FORMAT: Return strictly valid JSON with this shape:
 {
@@ -380,9 +438,11 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
       "amount": -120.50,
       "category": "Food & Dining",
       "isRecurring": false,
-      "confidence": 0.95
+      "confidence": 0.95,
+      "balance": 4520.50
     }
   ],
+  "closingBalance": 4520.50,
   "bankDetected": "HDFC Bank / SBI / ICICI / etc",
   "period": "March 2026"
 }`;
@@ -392,6 +452,7 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
     const allValidatedTxns: ParsedAiTransaction[] = [];
     let bankDetected: string | undefined;
     let statementPeriod: string | undefined;
+    let detectedClosingBal: number | undefined = extractClosingBalance(lines);
 
     for (let i = 0; i < filteredLines.length; i += CHUNK_SIZE) {
       const chunk = filteredLines.slice(i, i + CHUNK_SIZE).join('\n');
@@ -417,6 +478,9 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
 
       if (parsedData.bankDetected) bankDetected = parsedData.bankDetected;
       if (parsedData.period) statementPeriod = parsedData.period;
+      if (typeof parsedData.closingBalance === 'number' && !isNaN(parsedData.closingBalance)) {
+        detectedClosingBal = parsedData.closingBalance;
+      }
 
       const rawList = Array.isArray(parsedData.transactions) ? parsedData.transactions : [];
 
@@ -428,6 +492,12 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
           cat = matchHeuristicCategory(item.cleanMerchant || item.rawDescription || '').category;
         }
 
+        const rawBal = typeof item.balance === 'number'
+          ? item.balance
+          : typeof item.balance === 'string'
+          ? parseFloat(item.balance.replace(/,/g, ''))
+          : undefined;
+
         allValidatedTxns.push({
           id: 'tx_ai_' + Math.random().toString(36).substring(2, 9),
           date: item.date || new Date().toISOString().slice(0, 10),
@@ -437,23 +507,30 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
           category: cat,
           isRecurring: Boolean(item.isRecurring),
           confidence: typeof item.confidence === 'number' ? Math.min(Math.max(item.confidence, 0.5), 1.0) : 0.95,
+          balance: typeof rawBal === 'number' && !isNaN(rawBal) ? rawBal : undefined,
         });
       }
     }
 
+    if (detectedClosingBal === undefined) {
+      detectedClosingBal = extractClosingBalance(lines, allValidatedTxns);
+    }
+
     if (allValidatedTxns.length > 0) {
-      console.log(`[AI Statement Parser] Gemini Flash successfully classified ${allValidatedTxns.length} transactions across batches.`);
-      return buildParseResult('gemini', 'gemini-3.5-flash-lite', allValidatedTxns, bankDetected, statementPeriod);
+      console.log(`[AI Statement Parser] Gemini Flash successfully classified ${allValidatedTxns.length} transactions across batches. Detected Closing Balance: ${detectedClosingBal}`);
+      return buildParseResult('gemini', 'gemini-3.5-flash-lite', allValidatedTxns, bankDetected, statementPeriod, detectedClosingBal);
     }
 
     console.warn('[AI Statement Parser] Gemini returned 0 transactions, switching to fallback.');
     const fallbackTxns = parseFallbackTransactions(lines);
-    return buildParseResult('heuristic_fallback', 'smart-nlp-engine', fallbackTxns);
+    const fallbackClosingBal = extractClosingBalance(lines, fallbackTxns);
+    return buildParseResult('heuristic_fallback', 'smart-nlp-engine', fallbackTxns, undefined, undefined, fallbackClosingBal);
   } catch (geminiError: any) {
     console.error('[AI Statement Parser] Gemini API call error:', geminiError?.message || geminiError);
     console.log('[AI Statement Parser] Engaging resilient Smart Fallback Engine...');
     const fallbackTxns = parseFallbackTransactions(lines);
-    return buildParseResult('heuristic_fallback', 'smart-nlp-engine', fallbackTxns);
+    const fallbackClosingBal = extractClosingBalance(lines, fallbackTxns);
+    return buildParseResult('heuristic_fallback', 'smart-nlp-engine', fallbackTxns, undefined, undefined, fallbackClosingBal);
   }
 }
 
@@ -636,7 +713,8 @@ function buildParseResult(
   model: string,
   transactions: ParsedAiTransaction[],
   bankDetected?: string,
-  period?: string
+  period?: string,
+  closingBalance?: number
 ): AiParseResult {
   let totalDebits = 0;
   let totalCredits = 0;
@@ -651,6 +729,10 @@ function buildParseResult(
     categoriesFound[t.category] = (categoriesFound[t.category] || 0) + 1;
   }
 
+  const finalClosingBal = typeof closingBalance === 'number' && !isNaN(closingBalance)
+    ? closingBalance
+    : extractClosingBalance([], transactions);
+
   return {
     provider,
     model,
@@ -660,6 +742,7 @@ function buildParseResult(
       totalCredits: Math.round(totalCredits * 100) / 100,
       period,
       bankDetected,
+      closingBalance: finalClosingBal,
       categoriesFound,
     },
     transactions,
