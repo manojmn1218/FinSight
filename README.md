@@ -49,7 +49,8 @@ FinSight is a comprehensive personal finance management platform that transforms
 ## ✨ Features
 
 ### 🏦 Transaction Management
-- **PDF Statement Parser** — Upload bank statements (SBI, HDFC, ICICI, Kotak, Axis, etc.) with automatic transaction extraction
+- **PDF Statement Parser & AI Extraction** — Multi-tier parser powered by Google Gemini AI with resilient local regex fallbacks, extracting transactions from SBI, HDFC, ICICI, Kotak, Axis, and other Indian banks
+- **Statement Closing Balance Sync** — Automatically detects the final closing/available balance or multi-column running ledger balance and synchronizes it directly to the dashboard with a green "Statement Balance" badge
 - **Password-Protected PDFs** — Handles encrypted bank statements with a secure password prompt
 - **Setu Account Aggregator** — Connect bank accounts directly via India's AA framework for real-time data
 - **Smart Categorization** — Auto-categorizes transactions into Food, Transport, Utilities, Shopping, Subscriptions, and more
@@ -73,9 +74,10 @@ FinSight is a comprehensive personal finance management platform that transforms
 
 ### 📈 Portfolio & Investments *(Enterprise)*
 - **Multi-Asset Tracking** — Mutual Funds, Equity, Crypto, Gold, Real Estate, Cash
-- **Live Stock Quotes** — Real-time prices via Alpha Vantage API with caching
-- **AI Stock Recommendations** — Personalized picks based on your risk profile and portfolio
+- **Real-Time Market Analytics** — Curated market quotes for Indian ADRs and Global equities with intelligent client-side caching and resilient baseline fallbacks
+- **AI Stock Recommendations & SIP Planner** — Personalized picks and SIP allocations based on your risk profile and surplus
 - **Net Worth Timeline** — Historical chart of total portfolio value
+- **Zero Sensitive UI Exposure** — Removed sensitive user-facing API key panels; quotes are managed smoothly without requiring users to expose or manage third-party keys
 - **Auto-Detected Assets** — Identifies investments from bank transactions
 
 ### 🎯 Financial Goals
@@ -90,12 +92,14 @@ FinSight is a comprehensive personal finance management platform that transforms
 - **Print-Ready** — Clean report layouts optimized for printing
 
 ### 🔐 Authentication & Security
-- **Secure Signup/Login** — Password hashing with salted SHA-256
+- **SMS OTP Verification** — Phone number verification via Twilio SMS for secure account registration and identity confirmation
+- **Secure Signup/Login** — Password hashing with bcrypt (10 rounds) and signed JWT bearer tokens
 - **Password Strength Enforcement** — Min 8 chars, uppercase, number, special character
 - **Brute Force Protection** — Account lockout after 5 failed attempts (15-minute cooldown)
 - **Session Management** — 24-hour auto-expiry with live countdown timer
 - **Content Security Policy** — CSP headers restricting scripts, styles, and connections
 - **Route Guards** — Protected routes with automatic redirect for unauthenticated users
+- **Sensitive Data Isolation** — All third-party secrets and keys are strictly decoupled from client-side UI components
 
 ### 👑 Premium Tiers
 | Feature | Basic (Free) | Pro (₹349/mo) | Enterprise (₹999/mo) |
@@ -236,8 +240,12 @@ cp .env.example .env
 | Variable | Required | Description |
 |----------|:--------:|-------------|
 | `PORT` | No | Backend Express server port (default: `5000`) |
-| `JWT_SECRET` | No (Recommended in prod) | Secret key for signing and verifying JWT authentication tokens |
+| `JWT_SECRET` | Recommended | Secret key for signing and verifying JWT authentication tokens |
 | `MONGODB_URI` | No (Cloud Atlas) | MongoDB Atlas connection string (`mongodb+srv://...`). When omitted, FinSight uses local persistent JSON database storage (`server/data/finsight_db.json`) |
+| `GEMINI_API_KEY` | Recommended | Google Gemini API key for AI bank statement parsing and extraction |
+| `TWILIO_ACCOUNT_SID` | Optional | Twilio account SID for mobile SMS OTP verification |
+| `TWILIO_AUTH_TOKEN` | Optional | Twilio auth token for SMS OTP verification |
+| `TWILIO_PHONE_NUMBER` | Optional | Twilio sender phone number |
 | `SETU_CLIENT_ID` | For bank connect | Setu AA API client ID |
 | `SETU_CLIENT_SECRET` | For bank connect | Setu AA API secret |
 | `SETU_PRODUCT_INSTANCE_ID` | For bank connect | Setu product instance ID |
@@ -259,6 +267,15 @@ FinSight/
 │       ├── consent-status.ts     # GET  — Check consent status
 │       ├── fetch-data.ts         # POST — Fetch bank FI data
 │       └── webhook.ts            # POST — Setu event notifications
+│
+├── server/                       # Node.js + Express REST Backend
+│   ├── config/                   # Database & server configuration
+│   ├── data/                     # Local persistent JSON database fallback
+│   ├── middleware/               # Auth (JWT), rate limiting, security middleware
+│   ├── models/                   # Mongoose / schema models (User, Transaction, Goal)
+│   ├── routes/                   # API routes (auth, user, transaction, otp, setu)
+│   ├── services/                 # aiStatementParser (Gemini), twilioService, otpService
+│   └── index.ts                  # Backend server entry point
 │
 ├── public/                       # Static assets
 │   ├── favicon.svg
@@ -324,16 +341,17 @@ FinSight implements multiple layers of security:
 
 | Layer | Implementation |
 |-------|---------------|
-| **Password Storage** | Salted hash (never stored in plain text) |
+| **Password Storage** | bcrypt (10 salt rounds, salted hash never stored in plain text) |
+| **Two-Factor Auth** | Phone number verification via Twilio SMS OTP |
 | **Password Policy** | Min 8 chars + uppercase + number + special character |
 | **Brute Force** | Account lockout after 5 failed attempts (15 min) |
-| **Session Mgmt** | 24-hour auto-expiry with countdown timer |
+| **Session Mgmt** | Signed JWT bearer tokens with 24-hour auto-expiry & live countdown |
 | **Route Protection** | `ProtectedRoute` and `AdminRoute` wrappers |
 | **CSP Headers** | Restricts script, style, font, image, and connect sources |
 | **X-Content-Type** | `nosniff` to prevent MIME-type sniffing |
 | **Referrer Policy** | `strict-origin-when-cross-origin` |
 | **XSS Prevention** | No `dangerouslySetInnerHTML`, `innerHTML`, or `eval()` |
-| **API Secrets** | Setu credentials server-side only (Vercel functions) |
+| **API Secrets** | Third-party secrets stored securely in environment variables, isolated from UI |
 | **Input Validation** | Regex validation on API inputs (mobile number, IDs) |
 | **Method Enforcement** | All API routes reject unexpected HTTP methods (405) |
 
@@ -371,11 +389,14 @@ The output is in `dist/` — serve it with any static file server.
 
 ## 🗺️ Roadmap
 
-- [ ] 🔐 Backend authentication (Firebase / Supabase)
+- [x] 🔐 Full Node.js + Express backend with MongoDB Atlas & JWT authentication
+- [x] 🤖 Gemini AI-powered statement parsing & closing balance sync
+- [x] 📱 Phone SMS OTP verification (Twilio)
+- [x] 🛡️ Sensitive API credential shielding on Portfolio & UI views
+- [ ] 🤖 Dedicated in-app FinSight Chatbot (website guidance & user account assistant)
 - [ ] 📱 Progressive Web App (PWA) with offline support
 - [ ] 🔔 Push notifications for bill reminders
 - [ ] 📊 More bank statement formats (Excel, OFX, QIF)
-- [ ] 🤖 GPT-powered natural language financial queries
 - [ ] 📧 Email reports and weekly summaries
 - [ ] 🌍 Multi-currency support
 - [ ] 🏦 Additional Account Aggregator FIPs

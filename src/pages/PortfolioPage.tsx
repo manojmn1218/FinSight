@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Crown, Plus, Trash2, Calendar, UserCheck, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Sparkles, Info, Key, RefreshCw, Loader2 } from 'lucide-react';
+import { Crown, Plus, Trash2, Calendar, UserCheck, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Sparkles, Info, RefreshCw, Loader2 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { fetchQuotesWithCache, hasApiKey, getApiKey, setApiKey as saveApiKey } from '../utils/stockApi';
+import { fetchQuotesWithCache } from '../utils/stockApi';
 import type { StockQuote } from '../utils/stockApi';
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
@@ -359,12 +359,9 @@ export default function PortfolioPage() {
   const [liveQuotes, setLiveQuotes] = useState<Map<string, StockQuote>>(new Map());
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [quotesError, setQuotesError] = useState<string | null>(null);
-  const [apiKeyInput, setApiKeyInput] = useState(getApiKey());
-  const [showApiSetup, setShowApiSetup] = useState(!hasApiKey());
   const [lastFetchTime, setLastFetchTime] = useState<string | null>(null);
 
   const fetchLiveQuotes = useCallback(async () => {
-    if (!hasApiKey()) return;
     setQuotesLoading(true);
     setQuotesError(null);
     try {
@@ -373,18 +370,18 @@ export default function PortfolioPage() {
       setLiveQuotes(quotes);
       setLastFetchTime(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
       if (quotes.size === 0) {
-        setQuotesError('No data returned. API limit may be reached or symbols unavailable.');
+        setQuotesError('Market quotes temporarily unavailable.');
       }
     } catch (err: unknown) {
-      setQuotesError(err instanceof Error ? err.message : 'Failed to fetch live data. Check your API key.');
+      setQuotesError(err instanceof Error ? err.message : 'Failed to fetch live market data.');
     } finally {
       setQuotesLoading(false);
     }
   }, [stockPicks]);
 
-  // Auto-fetch on mount if API key exists
+  // Auto-fetch on mount when on Wealth Plan
   useEffect(() => {
-    if (!hasApiKey() || !isWealth) return;
+    if (!isWealth) return;
     let ignore = false;
     const timer = setTimeout(() => {
       if (!ignore) {
@@ -396,12 +393,6 @@ export default function PortfolioPage() {
       clearTimeout(timer);
     };
   }, [fetchLiveQuotes, isWealth]);
-
-  const handleSaveApiKey = () => {
-    saveApiKey(apiKeyInput);
-    setShowApiSetup(false);
-    fetchLiveQuotes();
-  };
 
   const tooltipStyle = { background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, color: 'var(--text)', boxShadow: 'var(--shadow)' };
   const an = (i: number) => ({ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { delay: i * 0.05, duration: 0.4, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] } });
@@ -738,75 +729,22 @@ export default function PortfolioPage() {
               }}>Live Data</span>
             </h2>
             <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
-              Real-time stock data via Alpha Vantage API{lastFetchTime && <span style={{ color: 'var(--text3)' }}> • Updated {lastFetchTime}</span>}
+              Real-time market analytics & personalized growth picks{lastFetchTime && <span style={{ color: 'var(--text3)' }}> • Updated {lastFetchTime}</span>}
             </p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            className="btn-ghost"
-            onClick={() => setShowApiSetup(!showApiSetup)}
-            style={{ padding: '6px 12px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}
+            className="btn-primary"
+            onClick={fetchLiveQuotes}
+            disabled={quotesLoading}
+            style={{ padding: '6px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--grad)' }}
           >
-            <Key size={14} /> API Key
+            {quotesLoading ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
+            {quotesLoading ? 'Fetching...' : 'Refresh'}
           </button>
-          {hasApiKey() && (
-            <button
-              className="btn-primary"
-              onClick={fetchLiveQuotes}
-              disabled={quotesLoading}
-              style={{ padding: '6px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--grad)' }}
-            >
-              {quotesLoading ? <Loader2 size={14} className="spin-icon" /> : <RefreshCw size={14} />}
-              {quotesLoading ? 'Fetching...' : 'Refresh'}
-            </button>
-          )}
         </div>
       </motion.div>
-
-      {/* API Key Configuration Panel */}
-      <AnimatePresence>
-        {showApiSetup && (
-          <motion.div
-            className="panel"
-            style={{ padding: 20, border: '1px solid rgba(129,140,248,0.15)' }}
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                background: 'rgba(129,140,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Key size={18} color="#818cf8" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Alpha Vantage API Key</h4>
-                <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 12, lineHeight: 1.5 }}>
-                  Get your free API key at <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>alphavantage.co</a> (25 requests/day free). Quotes are cached for 1 hour.
-                </p>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    className="input"
-                    value={apiKeyInput}
-                    onChange={e => setApiKeyInput(e.target.value)}
-                    placeholder="Paste your API key here..."
-                    style={{ flex: 1, fontSize: 13 }}
-                  />
-                  <button
-                    className="btn-primary"
-                    onClick={handleSaveApiKey}
-                    disabled={!apiKeyInput.trim()}
-                    style={{ padding: '8px 20px', fontSize: 12, background: 'var(--grad)', whiteSpace: 'nowrap' }}
-                  >
-                    Save & Fetch
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Quote Error Banner */}
       {quotesError && (
