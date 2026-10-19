@@ -154,7 +154,35 @@ router.post('/message', authenticateToken, async (req: AuthenticatedRequest, res
     } catch (pythonErr) {
       console.warn('[Chatbot Route] Python service unreachable, using local fallback:', pythonErr);
       const lowerMsg = message.toLowerCase();
-      let fallbackReply = "Cannot say. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details.";
+
+      function getDynamicRefusal(rawMsg: string): string {
+        const m = rawMsg.toLowerCase();
+        if (/weather|temperature|forecast|rain|climate/.test(m)) {
+          return "I cannot provide weather updates. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details. Let me know if you would like to check your balance, recent expenses, or savings goals instead!";
+        }
+        if (/code|coding|python|javascript|typescript|java|c\+\+|script|algorithm|bug|function/.test(m)) {
+          return "I cannot assist with coding, programming, or software scripts. As FinSight's dedicated assistant, my role is strictly to help you manage your financial accounts, statement transactions, and budget health on FinSight.";
+        }
+        if (/cricket|football|fifa|ipl|olympics|sports|match|score|tournament/.test(m)) {
+          return "I don't have information on sports match scores or tournament winners. As FinSight's dedicated AI assistant, I only answer questions regarding the FinSight platform and your personal financial records.";
+        }
+        if (/recipe|cook|bake|ingredients|biryani|dish|cuisine/.test(m)) {
+          return "I cannot assist with cooking recipes or culinary questions. As FinSight's financial assistant, I am designed to assist you with your bank statements, expense tracking, and savings milestones.";
+        }
+        if (/movie|film|actor|actress|cinema|song|music|celebrity/.test(m)) {
+          return "I cannot provide information about movies, celebrities, or entertainment. As FinSight's dedicated AI co-pilot, I only answer questions related to the FinSight website and your personal financial accounts.";
+        }
+        if (/president|minister|politics|election|government|parliament/.test(m)) {
+          return "I cannot answer questions regarding world politics or government officials. As FinSight's dedicated assistant, my role is strictly focused on your FinSight account and financial health.";
+        }
+        if (/capital of|where is|geography|country of|continent/.test(m)) {
+          return "I cannot answer questions about world geography, countries, or capitals. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details.";
+        }
+        const snippet = rawMsg.trim().slice(0, 50);
+        return `I cannot answer questions regarding "${snippet}". As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details. Let me know if you need help with your budget, transactions, or goals!`;
+      }
+
+      let fallbackReply = getDynamicRefusal(message);
 
       if (lowerMsg.includes('balance')) {
         fallbackReply = `Your current statement balance is **₹${(user.totalBalance ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}**.`;
@@ -172,10 +200,12 @@ router.post('/message', authenticateToken, async (req: AuthenticatedRequest, res
         }
       }
 
+      const isOut = fallbackReply.startsWith('I cannot') || fallbackReply.startsWith("I don't");
+
       res.json({
         reply: fallbackReply,
         provider: 'express-local-fallback',
-        isOutOfScope: fallbackReply.startsWith('Cannot say'),
+        isOutOfScope: isOut,
         timestamp: new Date().toISOString(),
       });
     }

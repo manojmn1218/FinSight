@@ -31,7 +31,37 @@ if GEMINI_API_KEY:
     except Exception as e:
         print(f"[FinSight Chatbot] Warning: Failed to initialize Google GenAI client: {e}", flush=True)
 
-STRICT_REFUSAL_MESSAGE = "Cannot say. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details."
+def generate_dynamic_refusal(message: str) -> str:
+    """Generates a polite, natural refusal statement tailored directly to what was asked."""
+    msg = message.lower().strip()
+    if re.search(r"\b(weather|forecast|temperature|rain|climate)\b", msg):
+        match = re.search(r"\b(?:weather|forecast|temperature|rain)\s+(?:in|for|at)?\s*([a-zA-Z\s]+)", message, re.I)
+        loc = f" in {match.group(1).strip()}" if match else ""
+        return f"I cannot provide weather updates{loc}. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details. Let me know if you would like to check your balance, recent expenses, or savings goals instead!"
+    
+    if re.search(r"\b(write\s+(?:python|java|c\+\+|javascript|typescript|code|script)|code|coding|algorithm|reverse\s+a\s+(?:string|linked|array)|bug|function)\b", msg):
+        return "I cannot assist with coding, programming, or writing software scripts. As FinSight's dedicated assistant, my role is strictly to help you manage your financial accounts, statement transactions, and budget health on FinSight. How can I help with your finances today?"
+    
+    if re.search(r"\b(cricket|football|fifa|ipl|olympics|sports|world cup|match|score|team|tournament)\b", msg):
+        return "I don't have information on sports match scores, tournament winners, or athletic competitions. As FinSight's dedicated AI assistant, I only answer questions regarding the FinSight platform and your personal financial records. Feel free to ask about your spending breakdown or current balance!"
+    
+    if re.search(r"\b(recipe|cook|bake|ingredients|biryani|dish|cuisine|food recipe)\b", msg):
+        return "I cannot assist with cooking recipes or culinary questions. As FinSight's financial assistant, I am designed to assist you with your bank statements, expense tracking, and savings milestones."
+    
+    if re.search(r"\b(movie|film|actor|actress|cinema|song|lyrics|singer|album|celebrity)\b", msg):
+        return "I cannot provide information about movies, celebrities, or entertainment. As FinSight's dedicated AI co-pilot, I only answer questions related to the FinSight website and your personal financial accounts."
+    
+    if re.search(r"\b(president|prime minister|politics|election|government|parliament)\b", msg):
+        return "I cannot answer questions regarding world politics or government officials. As FinSight's dedicated assistant, my role is strictly focused on your FinSight account and financial health."
+    
+    if re.search(r"\b(capital of|where is|continent|geography|country of)\b", msg):
+        return "I cannot answer questions about world geography, countries, or capitals. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details."
+    
+    if re.search(r"\b(joke|poem|story|riddle)\b", msg):
+        return "I cannot generate jokes, poems, or stories. As FinSight's dedicated financial assistant, I specialize in your account balances, spending breakdowns, and financial health."
+
+    snippet = message.strip()[:50]
+    return f"I cannot answer questions regarding '{snippet}'. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details. Let me know if you need help with your budget, transactions, or goals!"
 
 # ═══════════════════════════════════════════════
 # Comprehensive FinSight System & Financial Training Prompt
@@ -86,27 +116,36 @@ G. FinSight Platform Features & How-To:
    - How to upload bank statements, password-protected PDFs, supported banks (SBI, HDFC, ICICI, Axis, Kotak, etc.), statement closing balance auto-sync, plans (Basic, Pro, Enterprise), and export options.
 
 ═══════════════════════════════════════════════
-2. OUT-OF-SCOPE REFUSAL (REFUSE ONLY THESE):
+2. OUT-OF-SCOPE REFUSAL (MUST BE TAILORED ACCORDING TO THE QUESTION):
 ═══════════════════════════════════════════════
-If and ONLY IF the user asks about an entirely unrelated external topic that has NOTHING to do with FinSight, their finances, money, budget, purchases, or account:
-(e.g., "What is the capital of France?", "What is the weather in New York?", "Who won the cricket world cup?", "Write a python script to reverse a linked list", "How to cook biryani"):
--> You MUST output EXACTLY:
-"{STRICT_REFUSAL_MESSAGE}"
+If and ONLY IF the user asks about an external topic that is completely unrelated to FinSight, their finances, money, budget, purchases, or account:
+(e.g., world trivia, programming code, weather, sports, cooking recipes, movies, politics, etc.):
+
+CRITICAL REQUIREMENT - NEVER REPEAT THE SAME CANNED GENERIC SENTENCE:
+- Do NOT just output the exact same robotic sentence every time!
+- Instead, give a polite, natural response tailored ACCORDING TO THE SPECIFIC QUESTION OR SUBJECT ASKED:
+  1. Acknowledge what was asked (e.g. explain that you cannot check weather conditions for that city, write code/scripts, give sports tournament updates, share cooking recipes, answer geography/trivia questions, etc.).
+  2. State that as FinSight's dedicated AI assistant, you only answer questions related to the FinSight platform, its features, and their personal account details.
+  3. Politely invite them to ask about their balances, transactions, spending analysis, affordability checks, or savings goals instead.
+  4. Prefix your refusal response with `[OUT_OF_SCOPE] ` so the application can classify the domain boundary.
 
 ═══════════════════════════════════════════════
-FEW-SHOT EXAMPLES FOR CLARITY:
+FEW-SHOT EXAMPLES OF TAILORED REFUSALS:
 ═══════════════════════════════════════════════
-User: "Can I afford to buy a smartwatch for ₹5,000 right now?"
-Assistant: "Looking at your account, your current verified liquid balance is **₹958.62**. Because ₹5,000 exceeds your current balance, making this purchase right now is **not recommended** as it would cause an immediate cash-flow deficit before your next salary credit (monthly income of ₹85,000). Once your next income is credited, you have a monthly surplus of **₹40,000**, which will comfortably cover the ₹5,000 purchase."
+User: "What is the weather in London today?"
+Assistant: "[OUT_OF_SCOPE] I cannot check the weather conditions in London for you. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight platform, its features, and your personal account details. Feel free to ask me about your current balances, spending categories, or savings targets instead!"
 
-User: "What was my biggest expense on record?"
-Assistant: "Your largest single expense on record is **₹5,000.00** at **ATM Cash Withdrawal** on **2026-09-28**."
+User: "Write a python script to reverse a linked list"
+Assistant: "[OUT_OF_SCOPE] While writing Python code for data structures is a useful programming task, as FinSight's dedicated AI assistant, I cannot assist with coding or software scripts. My role is strictly to help you manage your financial accounts, statement transactions, and budget health on FinSight. How can I help with your finances today?"
 
-User: "Tell me about my financial goals and deadlines"
-Assistant: "You currently don't have any active goals saved in your FinSight account. You can set one up anytime on the **Goals** page (`/goals`) to track targets with visual progress bars."
+User: "Who won the cricket world cup?"
+Assistant: "[OUT_OF_SCOPE] I don't have information on cricket tournament winners or sports match results. As FinSight's dedicated AI co-pilot, I only answer questions regarding the FinSight platform and your personal account records. Feel free to ask about your spending breakdown or current balance!"
 
-User: "What is the weather in London?"
-Assistant: "{STRICT_REFUSAL_MESSAGE}"
+User: "How do I cook paneer butter masala?"
+Assistant: "[OUT_OF_SCOPE] While paneer butter masala is a delicious dish, as FinSight's dedicated AI assistant, I cannot provide cooking recipes or culinary advice. My focus is entirely on your FinSight account, budgets, and financial tracking. Feel free to ask about your expenses or affordability checks instead!"
+
+User: "What is the capital of France?"
+Assistant: "[OUT_OF_SCOPE] While Paris is great for geography, as FinSight's dedicated AI assistant, I only handle questions related to your personal finances, spending, budgets, and FinSight features. Feel free to ask me about your current balance, budget health, or if you can afford a specific purchase instead!"
 """
 
 OUT_OF_SCOPE_REGEX = re.compile(
@@ -213,7 +252,7 @@ def fallback_rule_based_response(message: str, user_context: dict) -> str:
 
     # Out-of-scope check
     if is_obviously_out_of_scope(msg):
-        return STRICT_REFUSAL_MESSAGE
+        return generate_dynamic_refusal(message)
 
     # Affordability analysis: "can I afford 5000 / buy phone for 10000"
     afford_match = re.search(r"(?:can\s+i\s+afford|should\s+i\s+buy|can\s+i\s+buy).*?(\d[\d,]*(?:\.\d+)?)", msg)
@@ -379,7 +418,7 @@ def fallback_rule_based_response(message: str, user_context: dict) -> str:
         bal = user_context.get("totalBalance", 0)
         return f"Hello {name}! I am FinSight AI. Your verified balance is **₹{bal:,.2f}**. You can ask me anything about your spending, recent transactions, goals, affordability checks, or platform features."
 
-    return STRICT_REFUSAL_MESSAGE
+    return generate_dynamic_refusal(message)
 
 
 @app.route("/health", methods=["GET"])
@@ -404,10 +443,10 @@ def chat():
     if not user_message:
         return jsonify({"error": "Message is required"}), 400
 
-    # 1. Immediate Pre-filter check for obvious out-of-scope requests
-    if is_obviously_out_of_scope(user_message):
+    # 1. Immediate Pre-filter check for obvious out-of-scope requests (only when Gemini client is unavailable)
+    if not genai_client and is_obviously_out_of_scope(user_message):
         return jsonify({
-            "reply": STRICT_REFUSAL_MESSAGE,
+            "reply": generate_dynamic_refusal(user_message),
             "provider": "python-scope-guardrail",
             "isOutOfScope": True
         })
@@ -440,10 +479,33 @@ USER'S QUESTION:
                     # Clean up quotes if wrapped
                     if reply_text.startswith('"') and reply_text.endswith('"'):
                         reply_text = reply_text[1:-1]
+
+                    is_out_of_scope = False
+                    if reply_text.startswith("[OUT_OF_SCOPE]"):
+                        reply_text = reply_text[len("[OUT_OF_SCOPE]"):].strip()
+                        is_out_of_scope = True
+                    elif any(phrase in reply_text.lower() for phrase in [
+                        "as finsight's dedicated",
+                        "as your finsight",
+                        "only answer questions related to finsight",
+                        "only answer questions related to the finsight",
+                        "only handle questions related to your finsight",
+                        "dedicated to helping you manage your finsight",
+                        "cannot assist with coding",
+                        "cannot assist with programming",
+                        "cannot provide sports",
+                        "cannot check the weather",
+                        "cannot provide weather",
+                        "cannot answer questions about world",
+                        "cannot provide cooking",
+                        "cannot assist with cooking"
+                    ]) and not is_financial_or_account_query(user_message):
+                        is_out_of_scope = True
+
                     return jsonify({
                         "reply": reply_text,
                         "provider": f"python-gemini ({model_name})",
-                        "isOutOfScope": reply_text.strip() == STRICT_REFUSAL_MESSAGE.strip()
+                        "isOutOfScope": is_out_of_scope
                     })
             except Exception as e:
                 print(f"[FinSight Chatbot] Model {model_name} error: {e}", flush=True)
@@ -451,10 +513,15 @@ USER'S QUESTION:
 
     # 3. Fallback to rich rule-based financial analysis engine
     fallback_reply = fallback_rule_based_response(user_message, user_context)
+    is_fallback_out = (
+        fallback_reply.startswith("I cannot") or
+        fallback_reply.startswith("I don't") or
+        "as finsight's dedicated" in fallback_reply.lower()
+    )
     return jsonify({
         "reply": fallback_reply,
         "provider": "python-knowledge-engine",
-        "isOutOfScope": fallback_reply == STRICT_REFUSAL_MESSAGE
+        "isOutOfScope": is_fallback_out
     })
 
 

@@ -78,7 +78,7 @@ export default function FinSightChatbot() {
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
-        text: res.reply || "Cannot say. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details.",
+        text: res.reply || "I'm here to assist you with your FinSight account and finances. Please ask about your balances, transactions, or goals.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         provider: res.provider,
         isOutOfScope: res.isOutOfScope,
@@ -89,10 +89,10 @@ export default function FinSightChatbot() {
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        text: "Cannot say. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details.",
+        text: "I'm temporarily having trouble connecting to the AI co-pilot. You can still check your balances, transactions, or goals directly in FinSight.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        provider: 'Domain Guardrail',
-        isOutOfScope: true,
+        provider: 'Connection Error',
+        isOutOfScope: false,
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
