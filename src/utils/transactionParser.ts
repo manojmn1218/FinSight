@@ -543,6 +543,31 @@ export function extractClosingBalance(
         return Math.round(pickedBalance * 100) / 100;
       }
     }
+
+    // 2b. If balance field was omitted, inspect rawDescription of newest transactions
+    const sortedDesc = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
+    for (const t of sortedDesc) {
+      const raw = (t as any).rawDescription || (t as any).description || '';
+      const m = raw.match(/[\d,]+\.\d{2}/g);
+      if (m && m.length >= 2) {
+        const val = parseFloat(m[m.length - 1].replace(/,/g, ''));
+        if (!isNaN(val) && val >= 0) {
+          return Math.round(val * 100) / 100;
+        }
+      }
+    }
+  }
+
+  // 3. Fall back to scanning statement lines in reverse for the last line with multiple amounts (amount + balance)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+    const m = line.match(/[\d,]+\.\d{2}/g);
+    if (m && m.length >= 2) {
+      const candidate = parseFloat(m[m.length - 1].replace(/,/g, ''));
+      if (!isNaN(candidate) && candidate >= 0) {
+        return Math.round(candidate * 100) / 100;
+      }
+    }
   }
 
   return undefined;

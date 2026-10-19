@@ -9,7 +9,33 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
   try {
     const userEmail = req.user!.email;
     const transactions = await db.getTransactions(userEmail);
-    return res.json({ transactions });
+
+    // Auto-enrich any transactions missing balance if rawDescription contains running balance
+    const enriched = transactions.map(t => {
+      if (t.balance == null) {
+        const raw = t.rawDescription || t.description || '';
+        const m = raw.match(/[\d,]+\.\d{2}/g);
+        if (m && m.length >= 2) {
+          const val = parseFloat(m[m.length - 1].replace(/,/g, ''));
+          if (!isNaN(val) && val >= 0) {
+            return { ...t, balance: Math.round(val * 100) / 100 };
+          }
+        }
+      }
+      return t;
+    });
+
+    // Auto-heal user.totalBalance if 0 or unset
+    const currentUser = await db.findUserByEmail(userEmail);
+    if (currentUser && (!currentUser.totalBalance || currentUser.totalBalance === 0)) {
+      const sorted = [...enriched].sort((a, b) => a.date.localeCompare(b.date));
+      const latest = [...sorted].reverse().find(t => t.balance != null);
+      if (latest?.balance != null) {
+        await db.updateUser(userEmail, { totalBalance: latest.balance });
+      }
+    }
+
+    return res.json({ transactions: enriched });
   } catch (error: any) {
     console.error('[Transactions] Fetch error:', error);
     return res.status(500).json({ error: 'Failed to fetch transactions.' });

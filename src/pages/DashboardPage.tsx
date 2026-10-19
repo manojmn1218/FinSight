@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,7 +8,13 @@ import { CATEGORY_CONFIG } from '../utils/types';
 import { computeMonthSummaries, detectRecurringGrouped } from '../utils/transactionParser';
 import type { Transaction, Category } from '../utils/types';
 
-const fmt = (n: number) => (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
+const fmt = (n: number) =>
+  (n < 0 ? '-' : '') +
+  '₹' +
+  Math.abs(n).toLocaleString('en-IN', {
+    minimumFractionDigits: n % 1 !== 0 ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
 
 // ─── Budget Health Score ───
 function HealthGauge({ score, label }: { score: number; label: string }) {
@@ -33,7 +39,7 @@ function HealthGauge({ score, label }: { score: number; label: string }) {
 }
 
 export default function DashboardPage() {
-  const { data, clearAllData } = useFinance();
+  const { data, setData, clearAllData } = useFinance();
   const [showClearModal, setShowClearModal] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
@@ -286,12 +292,29 @@ export default function DashboardPage() {
     const totalExpenses = txns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
     const netCashFlow = totalIncome - totalExpenses;
 
+    // Helper to resolve transaction running balance from explicit field or raw description
+    const resolveTxBalance = (tx: Transaction): number | undefined => {
+      if (typeof tx.balance === 'number' && !isNaN(tx.balance)) return tx.balance;
+      const raw = (tx.rawDescription || tx.description || '').trim();
+      if (!raw) return undefined;
+      const matches = raw.match(/[\d,]+\.\d{2}/g);
+      if (matches && matches.length >= 2) {
+        const val = parseFloat(matches[matches.length - 1].replace(/,/g, ''));
+        if (!isNaN(val) && val >= 0) return Math.round(val * 100) / 100;
+      }
+      return undefined;
+    };
+
     // Current balance (prioritizes statement closing balance synced to data.totalBalance, then latest transaction running balance)
     const sortedTxns = [...txns].sort((a, b) => a.date.localeCompare(b.date));
-    const lastTxnWithBal = [...sortedTxns].reverse().find(t => t.balance != null);
+    const lastTxnWithBal = [...sortedTxns].reverse().find(t => resolveTxBalance(t) != null);
+    const detectedClosingBal = lastTxnWithBal ? resolveTxBalance(lastTxnWithBal) : undefined;
+
     const currentBalance = (typeof data.totalBalance === 'number' && data.totalBalance > 0)
       ? data.totalBalance
-      : (lastTxnWithBal?.balance ?? netCashFlow);
+      : (detectedClosingBal !== undefined ? detectedClosingBal : netCashFlow);
+
+    const isStatementBalance = (typeof data.totalBalance === 'number' && data.totalBalance > 0) || detectedClosingBal !== undefined;
 
     // Category breakdown
     const catMap: Record<string, number> = {};
@@ -315,7 +338,8 @@ export default function DashboardPage() {
       const m = monthMap.get(month)!;
       if (tx.amount >= 0) m.income += tx.amount;
       else m.expenses += Math.abs(tx.amount);
-      if (tx.balance != null) m.balance = tx.balance;
+      const b = resolveTxBalance(tx);
+      if (b != null) m.balance = b;
     }
     const monthlyData = [...monthMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
@@ -371,7 +395,9 @@ export default function DashboardPage() {
       totalIncome: Math.round(totalIncome),
       totalExpenses: Math.round(totalExpenses),
       netCashFlow: Math.round(netCashFlow),
-      currentBalance: Math.round(currentBalance),
+      currentBalance: Math.round(currentBalance * 100) / 100,
+      detectedClosingBal,
+      isStatementBalance,
       categoryBreakdown,
       monthlyData,
       topExpenses,
@@ -382,7 +408,18 @@ export default function DashboardPage() {
       txnCount: txns.length,
       healthScore,
     };
-  }, [txns, hasTxns]);
+  }, [txns, hasTxns, data.totalBalance]);
+
+  // Auto-sync detected closing balance to user profile in backend if totalBalance is 0
+  useEffect(() => {
+    if (
+      (!data.totalBalance || data.totalBalance === 0) &&
+      txnStats?.detectedClosingBal !== undefined &&
+      txnStats.detectedClosingBal > 0
+    ) {
+      setData({ totalBalance: txnStats.detectedClosingBal });
+    }
+  }, [data.totalBalance, txnStats?.detectedClosingBal, setData]);
 
   // Recurring payments
   const recurringGroups = useMemo(() => {
@@ -436,7 +473,9 @@ export default function DashboardPage() {
       {
         label: 'Current Balance', value: fmt(txnStats.currentBalance), icon: Wallet,
         clr: '#818cf8', bg: 'rgba(129,140,248,0.1)',
-        badge: `${txnStats.txnCount} txns`, badgeBg: 'rgba(129,140,248,0.1)', badgeClr: '#818cf8',
+        badge: txnStats.isStatementBalance ? 'Statement Balance' : `${txnStats.txnCount} txns`,
+        badgeBg: txnStats.isStatementBalance ? 'rgba(52,211,153,0.14)' : 'rgba(129,140,248,0.1)',
+        badgeClr: txnStats.isStatementBalance ? '#34d399' : '#818cf8',
       },
     ];
 

@@ -10,6 +10,35 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
+
+  // Auto-heal totalBalance if 0 but user has statement transactions with running balances
+  if (!user.totalBalance || user.totalBalance === 0) {
+    const txns = await db.getTransactions(req.user!.email);
+    const sorted = [...txns].sort((a, b) => a.date.localeCompare(b.date));
+    const lastWithBal = [...sorted].reverse().find(t => {
+      if (typeof t.balance === 'number' && !isNaN(t.balance)) return true;
+      const raw = t.rawDescription || t.description || '';
+      const m = raw.match(/[\d,]+\.\d{2}/g);
+      return m && m.length >= 2;
+    });
+
+    if (lastWithBal) {
+      let bal = lastWithBal.balance;
+      if (bal == null) {
+        const raw = lastWithBal.rawDescription || lastWithBal.description || '';
+        const m = raw.match(/[\d,]+\.\d{2}/g);
+        if (m && m.length >= 2) {
+          bal = parseFloat(m[m.length - 1].replace(/,/g, ''));
+        }
+      }
+      if (typeof bal === 'number' && !isNaN(bal) && bal >= 0) {
+        const rounded = Math.round(bal * 100) / 100;
+        await db.updateUser(req.user!.email, { totalBalance: rounded });
+        user.totalBalance = rounded;
+      }
+    }
+  }
+
   return res.json({ user });
 });
 
