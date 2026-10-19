@@ -421,6 +421,18 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  async sendChatbotMessage(message: string, conversationHistory?: Array<{ role: 'user' | 'assistant'; text: string }>) {
+    return this.request<{
+      reply: string;
+      provider: string;
+      isOutOfScope?: boolean;
+      timestamp: string;
+    }>('/api/chatbot/message', {
+      method: 'POST',
+      body: JSON.stringify({ message, conversationHistory }),
+    });
+  }
 }
 
 export interface AiParseResponse {

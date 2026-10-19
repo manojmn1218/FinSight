@@ -4,6 +4,7 @@ import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, Sun, M
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
+import FinSightChatbot from './FinSightChatbot';
 
 const MAIN_NAV = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -201,6 +202,9 @@ export default function DashboardLayout() {
           #mobile-menu-btn { display: flex !important; }
         }
       `}</style>
+
+      {/* FinSight Dedicated AI Chatbot */}
+      <FinSightChatbot />
     </div>
   );
 }

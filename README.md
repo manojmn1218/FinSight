@@ -72,6 +72,12 @@ FinSight is a comprehensive personal finance management platform that transforms
 - **Cash Flow Predictions** — Forecasts future balances based on patterns
 - **Tax Optimization Hints** — Category-level spending analysis for tax planning
 
+### 💬 FinSight AI Chatbot *(Python-Powered)*
+- **Dedicated In-App Financial Assistant** — An interactive assistant built with Python (Flask) and Google Gemini AI to guide users through FinSight and answer questions about their account.
+- **Strict Domain Scope Guardrail** — Strictly restricted to only answer questions about the FinSight platform and the authenticated user's account details. Any out-of-scope question (general knowledge, coding, politics, weather, trivia) returns a polite refusal: *"Cannot say. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details."*
+- **Real-Time Account Context** — Accurately reports verified statement balances, monthly income, expenses, recent transactions, and goal progress directly from the user's database records.
+- **Always-Available Drawer** — Accessible across every dashboard page with quick-prompt chips, sleek typing indicators, and markdown formatting.
+
 ### 📈 Portfolio & Investments *(Enterprise)*
 - **Multi-Asset Tracking** — Mutual Funds, Equity, Crypto, Gold, Real Estate, Cash
 - **Real-Time Market Analytics** — Curated market quotes for Indian ADRs and Global equities with intelligent client-side caching and resilient baseline fallbacks
@@ -137,6 +143,7 @@ FinSight is a comprehensive personal finance management platform that transforms
 | **PDF Parsing** | pdf.js (pdfjs-dist) | Extract text and transactions from bank statement PDFs |
 | **Stock Data** | Alpha Vantage API | Live BSE/NSE market and equity quotes |
 | **Bank Connect** | Setu Account Aggregator | Direct bank account data via India's AA framework |
+| **AI Chatbot Service** | Python 3 + Flask + google-genai | Dedicated scoped chatbot microservice with dual-layer domain guardrails |
 | **Styling** | Vanilla CSS | Bespoke design system with CSS tokens and dark mode |
 
 ---
@@ -242,7 +249,9 @@ cp .env.example .env
 | `PORT` | No | Backend Express server port (default: `5000`) |
 | `JWT_SECRET` | Recommended | Secret key for signing and verifying JWT authentication tokens |
 | `MONGODB_URI` | No (Cloud Atlas) | MongoDB Atlas connection string (`mongodb+srv://...`). When omitted, FinSight uses local persistent JSON database storage (`server/data/finsight_db.json`) |
-| `GEMINI_API_KEY` | Recommended | Google Gemini API key for AI bank statement parsing and extraction |
+| `GEMINI_API_KEY` | Recommended | Google Gemini API key for AI bank statement parsing and chatbot intelligence |
+| `CHATBOT_PORT` | No | Python Chatbot microservice port (default: `5005`) |
+| `PYTHON_CHATBOT_URL` | No | Python chatbot service URL for Express proxy (default: `http://127.0.0.1:5005`) |
 | `TWILIO_ACCOUNT_SID` | Optional | Twilio account SID for mobile SMS OTP verification |
 | `TWILIO_AUTH_TOKEN` | Optional | Twilio auth token for SMS OTP verification |
 | `TWILIO_PHONE_NUMBER` | Optional | Twilio sender phone number |
@@ -268,12 +277,16 @@ FinSight/
 │       ├── fetch-data.ts         # POST — Fetch bank FI data
 │       └── webhook.ts            # POST — Setu event notifications
 │
+├── chatbot_service/              # Python AI Chatbot Microservice
+│   ├── app.py                    # Flask application with Gemini & domain guardrails
+│   └── requirements.txt          # Python dependencies
+│
 ├── server/                       # Node.js + Express REST Backend
 │   ├── config/                   # Database & server configuration
 │   ├── data/                     # Local persistent JSON database fallback
 │   ├── middleware/               # Auth (JWT), rate limiting, security middleware
 │   ├── models/                   # Mongoose / schema models (User, Transaction, Goal)
-│   ├── routes/                   # API routes (auth, user, transaction, otp, setu)
+│   ├── routes/                   # API routes (auth, user, transaction, chatbot, otp)
 │   ├── services/                 # aiStatementParser (Gemini), twilioService, otpService
 │   └── index.ts                  # Backend server entry point
 │
@@ -393,7 +406,7 @@ The output is in `dist/` — serve it with any static file server.
 - [x] 🤖 Gemini AI-powered statement parsing & closing balance sync
 - [x] 📱 Phone SMS OTP verification (Twilio)
 - [x] 🛡️ Sensitive API credential shielding on Portfolio & UI views
-- [ ] 🤖 Dedicated in-app FinSight Chatbot (website guidance & user account assistant)
+- [x] 💬 Dedicated in-app FinSight Chatbot (Python-powered website guidance & user account assistant)
 - [ ] 📱 Progressive Web App (PWA) with offline support
 - [ ] 🔔 Push notifications for bill reminders
 - [ ] 📊 More bank statement formats (Excel, OFX, QIF)

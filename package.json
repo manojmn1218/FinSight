@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run server:watch\" \"npm run client\"",
+    "dev": "concurrently -k -n \"BACKEND,FRONTEND,CHATBOT\" -c \"cyan,magenta,yellow\" \"npm run server:watch\" \"npm run client\" \"npm run chatbot\"",
     "client": "vite --port 5173 --strictPort",
     "server": "tsx server/index.ts",
     "server:watch": "tsx watch server/index.ts",
+    "chatbot": "python chatbot_service/app.py",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
