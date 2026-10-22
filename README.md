@@ -295,8 +295,7 @@ FinSight/
 │
 ├── public/                       # Static assets
 │   ├── favicon.svg
-│   ├── FT.png                    # Logo (full size)
-│   └── ft.jpeg                   # Logo (compact)
+│   └── ft.jpeg                   # FinSight logo
 │
 ├── src/
 │   ├── components/
