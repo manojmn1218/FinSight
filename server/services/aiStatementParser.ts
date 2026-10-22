@@ -137,7 +137,7 @@ function cleanMerchantName(rawText: string): string {
   cleaned = cleaned.replace(/^\d{2,4}[-/]\d{1,2}[-/]\d{2,4}\s*[-:–\s]*/g, '').trim();
 
   // 1b. Strip banking transfer prefixes before checking UPI slashes
-  cleaned = cleaned.replace(/^(?:BY|TO)?\s*TRANSFER[-_\s]*(?:INB|MB)?[\s\/:_-]*/gi, '').trim();
+  cleaned = cleaned.replace(/^(?:BY|TO)?\s*TRANSFER[-_\s]*(?:INB|MB)?[\s/:_-]*/gi, '').trim();
 
   // 2. Strip currency symbols & amounts
   cleaned = cleaned.replace(/\b(?:INR|RS\.?|USD|EUR)\b/gi, '');
@@ -147,7 +147,7 @@ function cleanMerchantName(rawText: string): string {
   cleaned = cleaned.replace(/\b(?:DR|CR|DEBIT|CREDIT)\b/gi, '');
 
   // 4. Match Indian UPI format: UPI/DR/123456789012/MERCHANT/BANK/...
-  const upiMatch = cleaned.match(/UPI[\/\-_](?:DR|CR)?[\/\-_]?(\d+)(?:[\/\-_]([^\/\-_]+))?(?:[\/\-_]([^\/\-_]+))?/i);
+  const upiMatch = cleaned.match(/UPI[/\-_](?:DR|CR)?[/\-_]?(\d+)(?:[/\-_]([^/\-_]+))?(?:[/\-_]([^/\-_]+))?/i);
   if (upiMatch) {
     const ref = upiMatch[1];
     const partA = (upiMatch[2] || '').trim();
@@ -184,7 +184,7 @@ function cleanMerchantName(rawText: string): string {
   }
 
   // 6. Remove common banking prefixes
-  cleaned = cleaned.replace(/^(?:[-_\s]*)(?:UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
+  cleaned = cleaned.replace(/^(?:[-_\s]*)(?:UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s/:_-]+/gi, '');
   cleaned = cleaned.replace(/@[a-zA-Z0-9._-]+/g, ''); // remove handles
   cleaned = cleaned.replace(/[-_/:.*#|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
@@ -227,7 +227,7 @@ export function extractClosingBalance(
   // 1. Look for explicit closing balance keywords in statement text
   const balancePatterns = [
     /(?:closing|ending|ledger|clear|effective\s*available|available|book)\s*bal(?:ance)?\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
-    /bal(?:ance)?\s*as\s*on\s*[\d\/\.\-A-Za-z\s]{0,25}[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+    /bal(?:ance)?\s*as\s*on\s*[\d/.\-A-Za-z\s]{0,25}[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
     /(?:total\s*available\s*balance|avail\s*bal|net\s*balance)\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
   ];
 

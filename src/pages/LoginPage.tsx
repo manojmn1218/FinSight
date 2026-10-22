@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { useFinance } from '../context/FinanceContext';
 import { Eye, EyeOff, TrendingUp, Shield, Zap } from 'lucide-react';
 import OtpModal from '../components/OtpModal';
@@ -115,34 +115,6 @@ export default function LoginPage() {
       }
     }
   };
-
-  const handleCustomPopupLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setError('');
-      setInfoMsg('');
-      setLoading(true);
-      const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
-      setLoading(false);
-      if (result.success) {
-        if (result.requiresOtp) {
-          setOtpState({
-            isOpen: true,
-            email: result.email || email || 'Google Account',
-            purpose: 'google_auth',
-            otpPreview: result.otpPreview,
-          });
-          return;
-        }
-        nav('/dashboard');
-      } else {
-        setError(result.error || 'Google sign-in failed.');
-      }
-    },
-    onError: (err) => {
-      console.warn('[Google Sign-In Popup Error]', err);
-      setError('Google sign-in popup was cancelled or failed.');
-    },
-  });
 
   const handleVerifyOtp = async (code: string) => {
     const res = await verifyOtpAndLogin(otpState.email, code, otpState.purpose);

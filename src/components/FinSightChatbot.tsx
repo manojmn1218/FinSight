@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, Sparkles, Trash2, ShieldCheck, ChevronDown, Loader2, ArrowUpRight, HelpCircle } from 'lucide-react';
+import { Bot, Send, Sparkles, Trash2, ShieldCheck, ChevronDown, Loader2, HelpCircle } from 'lucide-react';
 import { api } from '../services/api';
 import { useFinance } from '../context/FinanceContext';
 

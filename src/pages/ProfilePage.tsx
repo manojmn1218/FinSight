@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   User,
   Shield,
@@ -9,7 +9,6 @@ import {
   EyeOff,
   Bell,
   Globe,
-  Sliders,
   Crown,
   Download,
   AlertTriangle,
@@ -18,17 +17,12 @@ import {
   Smartphone,
   Briefcase,
   MapPin,
-  TrendingUp,
   Target,
   Sparkles,
   Save,
   ArrowRight,
-  RefreshCw,
-  CreditCard,
-  Building,
   Mail,
-  Zap,
-  Info
+  Zap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
@@ -70,7 +64,7 @@ const FINANCIAL_FOCUSES = [
 ];
 
 export default function ProfilePage() {
-  const { data, setData, reset, clearAllData, logoutUser } = useFinance();
+  const { data, setData, reset, clearAllData } = useFinance();
   const [activeTab, setActiveTab] = useState<'identity' | 'risk' | 'security' | 'preferences' | 'subscription'>('identity');
 
   // Form states
@@ -111,7 +105,6 @@ export default function ProfilePage() {
   // Action status
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Sync state from data
   useEffect(() => {

@@ -4,8 +4,6 @@ import {
   PlusCircle,
   ArrowDownLeft,
   ArrowUpRight,
-  Calendar,
-  Tag,
   Landmark,
   Trash2,
   FileSpreadsheet,
@@ -14,16 +12,8 @@ import {
   AlertCircle,
   Search,
   Sliders,
-  Wallet,
-  CreditCard,
-  Building,
   Coins,
-  Sparkles,
-  TrendingUp,
-  Percent,
-  Layers,
-  Clock,
-  ArrowRight
+  Sparkles
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORIES, CATEGORY_CONFIG, type Category, type Transaction } from '../utils/types';
@@ -105,7 +95,6 @@ export default function ManualEntryPage() {
   const [txnBank, setTxnBank] = useState('');
   const [txnRef, setTxnRef] = useState('');
   const [txnRecurring, setTxnRecurring] = useState(false);
-  const [txnNotes, setTxnNotes] = useState('');
 
   // Transaction list filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -175,7 +164,6 @@ export default function ManualEntryPage() {
     setTxnAmount('');
     setTxnDesc('');
     setTxnRef('');
-    setTxnNotes('');
     setTxnBank('');
 
     showToast('Entry Recorded', `Successfully saved manual ${txnType === 'credit' ? 'income' : 'expense'} of ₹${Math.abs(val).toLocaleString('en-IN')}`);
@@ -222,7 +210,9 @@ export default function ManualEntryPage() {
           }
         }).catch(() => {});
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, [data.userEmail]);
 
   const saveAssetsState = (newAssets: ManualAsset[]) => {

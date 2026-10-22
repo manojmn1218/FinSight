@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
             <TrendingUp size={18} color="var(--purple)" /> Monthly Income vs Expenses
           </h3>
           <div style={{ height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={summaries} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -141,7 +141,7 @@ export default function AnalyticsPage() {
           {catTotals.length > 0 ? (
             <>
               <div style={{ flex: 1, minHeight: 180 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie data={catTotals} dataKey="value" innerRadius={46} outerRadius={72} paddingAngle={3} strokeWidth={0}>
                       {catTotals.map(e => <Cell key={e.name} fill={e.color} />)}
@@ -179,7 +179,7 @@ export default function AnalyticsPage() {
           )}
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>Cumulative Savings Trend</h3>
           <div style={{ height: 240 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={savingsTimeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="savGrad" x1="0" y1="0" x2="0" y2="1">

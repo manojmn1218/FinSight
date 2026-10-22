@@ -498,12 +498,12 @@ export function detectRecurringGrouped(transactions: Transaction[]): RecurringGr
  */
 export function extractClosingBalance(
   lines: string[],
-  transactions?: Array<{ date: string; balance?: number }>
+  transactions?: Array<{ date: string; balance?: number; rawDescription?: string; description?: string }>
 ): number | undefined {
   // 1. Look for explicit closing balance keywords in statement text
   const balancePatterns = [
     /(?:closing|ending|ledger|clear|effective\s*available|available|book)\s*bal(?:ance)?\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
-    /bal(?:ance)?\s*as\s*on\s*[\d\/\.\-A-Za-z\s]{0,25}[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
+    /bal(?:ance)?\s*as\s*on\s*[\d/.\-A-Za-z\s]{0,25}[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
     /(?:total\s*available\s*balance|avail\s*bal|net\s*balance)\s*[:\-–]?\s*(?:inr|rs\.?|₹)?\s*([\d,]+\.\d{2})/i,
   ];
 
@@ -547,7 +547,7 @@ export function extractClosingBalance(
     // 2b. If balance field was omitted, inspect rawDescription of newest transactions
     const sortedDesc = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
     for (const t of sortedDesc) {
-      const raw = (t as any).rawDescription || (t as any).description || '';
+      const raw = t.rawDescription || t.description || '';
       const m = raw.match(/[\d,]+\.\d{2}/g);
       if (m && m.length >= 2) {
         const val = parseFloat(m[m.length - 1].replace(/,/g, ''));

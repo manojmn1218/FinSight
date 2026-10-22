@@ -289,7 +289,7 @@ router.post('/verify-otp', async (req, res: Response) => {
       }
 
       // Double-check if user was created in the interim
-      let existingUser = await db.findUserByEmail(cleanEmail);
+      const existingUser = await db.findUserByEmail(cleanEmail);
       if (existingUser) {
         user = existingUser;
       } else {

@@ -1,10 +1,10 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Upload, FileText, Search, Filter, Trash2, ChevronDown, ArrowUpDown,
+  Upload, FileText, Search, Trash2, ChevronDown, ArrowUpDown,
   CheckCircle2, AlertCircle, Loader2, Lock, Eye, EyeOff, Landmark,
-  Sparkles, Check, X, SlidersHorizontal, ArrowUpRight, ArrowDownLeft,
-  ShieldCheck, RefreshCw, Layers, PieChart, Calendar, Tag, ChevronLeft, ChevronRight
+  Sparkles, Check, X, ArrowUpRight, ArrowDownLeft,
+  ShieldCheck, RefreshCw, Layers, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { parsePdfFile, extractTransactions, extractClosingBalance, PasswordRequiredError } from '../utils/transactionParser';
@@ -112,7 +112,7 @@ function formatTransactionDisplay(tx: Transaction) {
   }
 
   // 3. Match Indian UPI format: UPI/DR/123456789012/MERCHANT/BANK/...
-  const upiMatch = title.match(/UPI[\/\-_](?:DR|CR)?[\/\-_]?(\d+)(?:[\/\-_]([^\/\-_]+))?(?:[\/\-_]([^\/\-_]+))?/i);
+  const upiMatch = title.match(/UPI[/\-_](?:DR|CR)?[/\-_]?(\d+)(?:[/\-_]([^/\-_]+))?(?:[/\-_]([^/\-_]+))?/i);
   if (upiMatch) {
     const ref = upiMatch[1];
     const partA = (upiMatch[2] || '').trim();
@@ -156,7 +156,7 @@ function formatTransactionDisplay(tx: Transaction) {
   }
 
   // 5. Clean common prefixes and handles
-  title = title.replace(/^(?:[-_\s]*)(?:UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s\/:_-]+/gi, '');
+  title = title.replace(/^(?:[-_\s]*)(?:UPI|NEFT|IMPS|RTGS|ACH|POS|ECOM|CMS|ATM|NFS|INB|MB|TRANSFER TO|SENT TO|RECEIVED FROM)[\s/:_-]+/gi, '');
   title = title.replace(/@[a-zA-Z0-9._-]+/g, '');
   title = title.replace(/[-_/:.*#|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
@@ -221,7 +221,6 @@ export default function TransactionsPage() {
 
   // --- Bank Connect state ---
   const [showBankConnect, setShowBankConnect] = useState(false);
-  const [bankResult, setBankResult] = useState<{ count: number; account: string } | null>(null);
 
   // --- Password modal state ---
   const [needsPassword, setNeedsPassword] = useState(false);
@@ -467,10 +466,6 @@ export default function TransactionsPage() {
 
   const handleBankSuccess = (result: BankDataResult) => {
     addTransactions(result.transactions);
-    setBankResult({
-      count: result.transactions.length,
-      account: result.accountInfo?.maskedAccNumber || 'Bank Account',
-    });
     setParseResult(null);
     setParseError('');
   };

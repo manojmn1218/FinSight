@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, ArrowLeft, RefreshCw, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface OtpModalProps {
   isOpen: boolean;
@@ -16,7 +16,6 @@ export default function OtpModal({
   isOpen,
   email,
   purpose,
-  otpPreview: initialOtpPreview,
   onVerify,
   onResend,
   onCancel,
@@ -27,12 +26,7 @@ export default function OtpModal({
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(25);
-  const [otpPreview, setOtpPreview] = useState(initialOtpPreview || '');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    setOtpPreview(initialOtpPreview || '');
-  }, [initialOtpPreview]);
 
   // Reset inputs when opened
   useEffect(() => {
@@ -142,9 +136,6 @@ export default function OtpModal({
     setResending(false);
     if (res.success) {
       setInfoMsg(res.message || 'A fresh verification code was sent.');
-      if (res.otpPreview) {
-        setOtpPreview(res.otpPreview);
-      }
       setCooldown(30);
       setDigits(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();

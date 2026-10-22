@@ -547,7 +547,7 @@ export default function PortfolioPage() {
             <LineChart size={18} color="var(--purple)" /> Net Worth growth (statement balance)
           </h3>
           <div style={{ height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={netWorthTimeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
@@ -571,7 +571,7 @@ export default function PortfolioPage() {
           {categoryTotals.length > 0 ? (
             <>
               <div style={{ flex: 1, minHeight: 160 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie data={categoryTotals} dataKey="value" innerRadius={42} outerRadius={68} paddingAngle={4} strokeWidth={0}>
                       {categoryTotals.map(c => <Cell key={c.name} fill={c.color} />)}

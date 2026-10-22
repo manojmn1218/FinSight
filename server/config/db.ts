@@ -145,7 +145,7 @@ export const db = {
       const updated = await UserModel.findOneAndUpdate(
         { email: cleanEmail },
         { $set: updates },
-        { new: true }
+        { returnDocument: 'after' }
       );
       return updated ? updated.toJSON() : null;
     }
@@ -201,7 +201,7 @@ export const db = {
       const updated = await TransactionModel.findOneAndUpdate(
         { _id: txnId, userEmail: cleanEmail },
         { $set: updates },
-        { new: true }
+        { returnDocument: 'after' }
       );
       if (updated) return updated.toJSON();
 
@@ -209,7 +209,7 @@ export const db = {
       const updatedById = await TransactionModel.findOneAndUpdate(
         { id: txnId, userEmail: cleanEmail },
         { $set: updates },
-        { new: true }
+        { returnDocument: 'after' }
       );
       return updatedById ? updatedById.toJSON() : null;
     }
@@ -269,13 +269,13 @@ export const db = {
       let updated = await GoalModel.findOneAndUpdate(
         { _id: goalId, userEmail: cleanEmail },
         { $set: updates },
-        { new: true }
+        { returnDocument: 'after' }
       );
       if (!updated) {
         updated = await GoalModel.findOneAndUpdate(
           { id: goalId, userEmail: cleanEmail },
           { $set: updates },
-          { new: true }
+          { returnDocument: 'after' }
         );
       }
       return updated ? updated.toJSON() : null;

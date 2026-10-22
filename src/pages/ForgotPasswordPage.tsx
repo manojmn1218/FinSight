@@ -20,7 +20,6 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(25);
-  const [otpPreview, setOtpPreview] = useState('');
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -62,7 +61,6 @@ export default function ForgotPasswordPage() {
 
     if (res.success) {
       setStep('verify_and_reset');
-      setOtpPreview(res.otpPreview || '');
       setCooldown(25);
       setInfoMsg(res.message || 'Verification code sent to your email.');
       setTimeout(() => {
@@ -127,9 +125,6 @@ export default function ForgotPasswordPage() {
 
     if (res.success) {
       setInfoMsg(res.message || 'A fresh code was sent to your email.');
-      if (res.otpPreview) {
-        setOtpPreview(res.otpPreview);
-      }
       setCooldown(30);
       setDigits(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();

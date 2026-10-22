@@ -185,6 +185,18 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return true;
   }, [currentUserEmail, sessionStart, sessionTimeLeft]);
 
+  const logoutUser = useCallback(() => {
+    api.setToken(null);
+    api.logout().catch(() => {});
+    setCurrentUserEmail(null);
+    setSessionStart(null);
+    localStorage.removeItem('fs_session_start');
+    localStorage.removeItem('fs_auth_token');
+    sessionStorage.removeItem('fs_auth_token');
+    setFinData(INIT);
+    setAdminUsersList([]);
+  }, []);
+
   // Session countdown timer
   useEffect(() => {
     if (!sessionStart || !currentUserEmail) return;
@@ -197,7 +209,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [sessionStart, currentUserEmail]);
+  }, [sessionStart, currentUserEmail, logoutUser]);
 
   // Load user data from backend API
   const refreshUserData = useCallback(async () => {
@@ -417,17 +429,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logoutUser = useCallback(() => {
-    api.setToken(null);
-    api.logout().catch(() => {});
-    setCurrentUserEmail(null);
-    setSessionStart(null);
-    localStorage.removeItem('fs_session_start');
-    localStorage.removeItem('fs_auth_token');
-    sessionStorage.removeItem('fs_auth_token');
-    setFinData(INIT);
-    setAdminUsersList([]);
-  }, []);
 
   const loginAs = useCallback((email: string) => {
     setCurrentUserEmail(email);

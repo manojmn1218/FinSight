@@ -612,7 +612,7 @@ export default function DashboardPage() {
           <motion.div className="panel" style={{ padding: 20 }} {...an(6)}>
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Monthly Trend</h3>
             <div style={{ width: '100%', height: 280 }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={txnStats.monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -631,7 +631,7 @@ export default function DashboardPage() {
             {txnStats.categoryBreakdown.length > 0 ? (
               <>
                 <div style={{ flex: 1, minHeight: 190 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <PieChart>
                       <Pie data={txnStats.categoryBreakdown} dataKey="value" innerRadius={48} outerRadius={76} paddingAngle={4} strokeWidth={0}>
                         {txnStats.categoryBreakdown.map(e => <Cell key={e.name} fill={e.color} />)}
@@ -673,7 +673,7 @@ export default function DashboardPage() {
           <motion.div className="panel" style={{ padding: 20 }} {...an(8)}>
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Net Savings Trend</h3>
             <div style={{ width: '100%', height: 200 }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={txnStats.monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gNet" x1="0" y1="0" x2="0" y2="1">
@@ -1004,7 +1004,7 @@ export default function DashboardPage() {
         <motion.div className="panel" style={{ padding: 20 }} {...an(6)}>
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Expense Breakdown (Profile Data)</h3>
           <div style={{ height: 200 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" innerRadius={48} outerRadius={76} paddingAngle={4} strokeWidth={0}>
                   {pieData.map(e => <Cell key={e.name} fill={e.color} />)}

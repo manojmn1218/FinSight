@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import OtpModal from '../components/OtpModal';
@@ -119,32 +119,6 @@ export default function SignupPage() {
       }
     }
   };
-
-  const handleCustomPopupSignup = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setError('');
-      setInfoMsg('');
-      const result = await loginWithGoogle({ accessToken: tokenResponse.access_token });
-      if (result.success) {
-        if (result.requiresOtp) {
-          setOtpState({
-            isOpen: true,
-            email: result.email || email || 'Google Account',
-            purpose: 'google_auth',
-            otpPreview: result.otpPreview,
-          });
-          return;
-        }
-        nav('/dashboard');
-      } else {
-        setError(result.error || 'Google sign-up failed.');
-      }
-    },
-    onError: (err) => {
-      console.warn('[Google Sign-Up Popup Error]', err);
-      setError('Google sign-up popup was cancelled or failed.');
-    },
-  });
 
   const handleCustomGoogleClick = () => {
     setInfoMsg(

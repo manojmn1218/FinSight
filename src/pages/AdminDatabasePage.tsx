@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Database, RefreshCw, Search, Layers, Server, CheckCircle2, Copy, Check, Table, Code, Eye } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Database, RefreshCw, Search, Layers, CheckCircle2, Copy, Check, Table, Code } from 'lucide-react';
 import { api, type DatabaseStatus } from '../services/api';
 
 interface CollectionStat {
@@ -17,20 +17,20 @@ export default function AdminDatabasePage() {
   const [viewMode, setViewMode] = useState<'table' | 'json'>('table');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const fetchOverview = async () => {
+  const fetchOverview = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getDatabaseOverview();
       setOverview(res);
-      if (res.collections.length > 0 && !selectedCol) {
-        setSelectedCol(res.collections[0].name);
+      if (res.collections.length > 0) {
+        setSelectedCol(prev => prev || res.collections[0].name);
       }
     } catch (err) {
       console.error('Failed to load DB overview:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const fetchCollectionDocs = async (colName: string) => {
     setDocsLoading(true);
@@ -47,7 +47,7 @@ export default function AdminDatabasePage() {
 
   useEffect(() => {
     fetchOverview();
-  }, []);
+  }, [fetchOverview]);
 
   useEffect(() => {
     if (selectedCol) {

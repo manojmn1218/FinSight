@@ -108,7 +108,8 @@ class ApiService {
       const isNetworkErr = err.name === 'TypeError' || String(err.message || '').toLowerCase().includes('fetch');
       if (isNetworkErr) {
         throw new Error(
-          'Cannot connect to FinSight backend server. Please make sure the server is running on http://127.0.0.1:5000 (run "npm run dev").'
+          'Cannot connect to FinSight backend server. Please make sure the server is running on http://127.0.0.1:5000 (run "npm run dev").',
+          { cause: err }
         );
       }
       throw err;
