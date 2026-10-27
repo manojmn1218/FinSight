@@ -12,6 +12,7 @@ import { CATEGORIES, CATEGORY_CONFIG } from '../utils/types';
 import type { Category, Transaction } from '../utils/types';
 import { Link } from 'react-router-dom';
 import BankConnect from '../components/BankConnect';
+import CategoryIcon from '../components/CategoryIcon';
 import type { BankDataResult } from '../utils/setuApi';
 import { api, type AiParseResponse, type AiStatusResponse } from '../services/api';
 
@@ -310,8 +311,8 @@ export default function TransactionsPage() {
 
       setParsingStage(
         aiStatus?.activeProvider === 'gemini'
-          ? '⚡ Google Gemini 2.5 Flash analyzing merchants & categories…'
-          : '⚡ Smart Neural Engine analyzing merchants & categories…'
+          ? 'Google Gemini 2.5 Flash analyzing merchants & categories…'
+          : 'Smart Neural Engine analyzing merchants & categories…'
       );
 
       let aiResult: AiParseResponse;
@@ -555,7 +556,7 @@ export default function TransactionsPage() {
             }}
           >
             <Sparkles size={14} color={aiStatus?.hasGeminiKey ? '#a855f7' : '#fbbf24'} />
-            {aiStatus?.hasGeminiKey ? '⚡ Gemini 2.5 Flash Active' : '⚡ Connect Gemini AI'}
+            {aiStatus?.hasGeminiKey ? 'Gemini 2.5 Flash Active' : 'Connect Gemini AI'}
           </button>
 
           {/* Re-classify with AI Button */}
@@ -612,8 +613,8 @@ export default function TransactionsPage() {
             border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13,
           }}
         >
-          <span style={{ color: 'var(--text2)' }}>
-            📁 Statement Uploads: <strong>{data.statementUploadsCount || 0}/3</strong> processed on free plan.
+          <span style={{ color: 'var(--text2)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <FileText size={15} color="var(--purple)" /> Statement Uploads: <strong>{data.statementUploadsCount || 0}/3</strong> processed on free plan.
           </span>
           {(data.statementUploadsCount || 0) >= 3 ? (
             <Link to="/premium" style={{ color: 'var(--purple)', fontWeight: 650, textDecoration: 'none' }}>
@@ -1068,7 +1069,8 @@ export default function TransactionsPage() {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <span>{cfg.icon}</span> {cat}
+                  <CategoryIcon category={cat} size={14} color={cfg.color} />
+                  <span>{cat}</span>
                   <span style={{
                     fontSize: 10.5,
                     padding: '1px 6px',
@@ -1160,7 +1162,7 @@ export default function TransactionsPage() {
                           borderColor: cfg.color + '30',
                         }}
                       >
-                        {cfg.icon}
+                        <CategoryIcon category={tx.category} size={18} color={cfg.color} />
                       </div>
 
                       <div className="tx-grid-merchant-details">
@@ -1547,7 +1549,8 @@ export default function TransactionsPage() {
                         display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
                       }}
                     >
-                      {cfg.icon} {cat}: <strong>{count}</strong>
+                      <CategoryIcon category={cat} size={12} color={cfg.color} />
+                      <span>{cat}: <strong>{count}</strong></span>
                     </span>
                   );
                 })}
@@ -1756,6 +1759,7 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)' }}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -1831,6 +1835,7 @@ export default function TransactionsPage() {
                 </div>
                 <button
                   onClick={() => !testingKey && setShowAiKeyModal(false)}
+                  aria-label="Close Gemini configuration modal"
                   style={{ background: 'transparent', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: 4 }}
                 >
                   <X size={18} />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
-import { User, DollarSign, CreditCard, Target, ArrowRight, ArrowLeft, Check, Sparkles } from 'lucide-react';
+import { User, DollarSign, CreditCard, Target, ArrowRight, ArrowLeft, Check, Sparkles, AlertCircle } from 'lucide-react';
 
 const STEPS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -69,19 +69,19 @@ export default function OnboardingPage() {
   const anim = { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, transition: { duration: 0.25 } };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="onboarding-container" style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Blobs */}
       <div style={{ position: 'absolute', width: 400, height: 400, background: '#a78bfa', filter: 'blur(180px)', opacity: 0.08, top: -60, left: -60, borderRadius: '50%' }} />
       <div style={{ position: 'absolute', width: 300, height: 300, background: '#f472b6', filter: 'blur(160px)', opacity: 0.06, bottom: -40, right: -40, borderRadius: '50%' }} />
 
       {/* Sidebar progress */}
-      <div style={{ width: 250, padding: '32px 24px', background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
+      <div className="onboarding-sidebar" style={{ width: 250, padding: '32px 24px', background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
           <img src="/ft.jpeg" alt="" className="app-logo" style={{ width: 34, height: 34 }} />
           <span style={{ fontSize: 18, fontWeight: 700 }}>FinSight</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+        <div className="onboarding-sidebar-steps" style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
           {STEPS.map((s, i) => {
             const done = i < step; const active = i === step;
             const Icon = done ? Check : s.icon;
@@ -100,7 +100,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '48px 56px', position: 'relative', zIndex: 1 }}>
+      <div className="onboarding-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '48px 56px', position: 'relative', zIndex: 1 }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <AnimatePresence mode="wait">
             {step === 0 && (
@@ -191,7 +191,11 @@ export default function OnboardingPage() {
                     <span>Remaining Budget</span>
                     <span style={{ color: remaining >= 0 ? '#34d399' : '#f87171' }}>₹{remaining.toLocaleString('en-IN')}</span>
                   </div>
-                  {remaining < 0 && <p style={{ fontSize: 13, color: '#fbbf24', marginTop: 12 }}>⚠️ Expenses + savings exceed income. Consider adjusting.</p>}
+                  {remaining < 0 && (
+                    <p style={{ fontSize: 13, color: '#fbbf24', marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <AlertCircle size={15} style={{ flexShrink: 0 }} /> Expenses + savings exceed income. Consider adjusting.
+                    </p>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -231,7 +235,15 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <style>{`@keyframes pulse { 0%,100%{box-shadow:0 0 20px rgba(167,139,250,0.3)} 50%{box-shadow:0 0 40px rgba(167,139,250,0.55)} }`}</style>
+      <style>{`
+        @keyframes pulse { 0%,100%{box-shadow:0 0 20px rgba(167,139,250,0.3)} 50%{box-shadow:0 0 40px rgba(167,139,250,0.55)} }
+        @media (max-width: 768px) {
+          .onboarding-container { flex-direction: column !important; }
+          .onboarding-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; padding: 20px 16px !important; }
+          .onboarding-sidebar-steps { flex-direction: row !important; overflow-x: auto !important; }
+          .onboarding-content { padding: 28px 16px !important; }
+        }
+      `}</style>
     </div>
   );
 }

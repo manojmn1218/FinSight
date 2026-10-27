@@ -48,6 +48,7 @@ export default function DashboardLayout() {
 
   const toggleTheme = () => {
     const isLight = document.body.classList.toggle('light');
+    localStorage.setItem('finsight_theme', isLight ? 'light' : 'dark');
     setIsDark(!isLight);
   };
 
@@ -83,9 +84,13 @@ export default function DashboardLayout() {
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
         className="btn-ghost"
+        aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
         style={{
           position: 'fixed', top: 12, left: 12, zIndex: 150, padding: 8,
           display: 'none',
+          background: 'var(--surface)',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
         }}
         id="mobile-menu-btn"
       >

@@ -9,17 +9,19 @@
   --bg3: #161b22;
   --surface: rgba(17, 24, 39, 0.6);
   --surface-hover: rgba(17, 24, 39, 0.8);
+  --panel-bg: rgba(17, 24, 39, 0.94);
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.14);
   --text: #f0f6fc;
   --text2: #8b949e;
-  --text3: #484f58;
+  --text3: #6e7681;
   --purple: #818cf8;
   --pink: #f472b6;
   --green: #34d399;
   --blue: #58a6ff;
   --amber: #f0b429;
   --red: #f87171;
+  --focus-ring: rgba(129, 140, 248, 0.5);
   --grad: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
   --grad-subtle: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(192, 132, 252, 0.08) 50%, rgba(244, 114, 182, 0.04) 100%);
   --radius: 16px;
@@ -31,21 +33,31 @@
 }
 
 /* ═══════════════════════════════════════════════
-   DESIGN TOKENS — Light Theme
+   DESIGN TOKENS — Light Theme (WCAG AA Compliant)
    ═══════════════════════════════════════════════ */
 body.light {
-  --bg: #f6f8fa;
+  --bg: #f8fafc;
   --bg2: #ffffff;
-  --bg3: #f0f2f5;
-  --surface: rgba(255, 255, 255, 0.8);
-  --surface-hover: rgba(255, 255, 255, 0.95);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.14);
-  --text: #0d1117;
-  --text2: #57606a;
-  --text3: #8b949e;
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.1);
+  --bg3: #f1f5f9;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-hover: rgba(255, 255, 255, 0.98);
+  --panel-bg: rgba(255, 255, 255, 0.96);
+  --border: rgba(15, 23, 42, 0.08);
+  --border-hover: rgba(15, 23, 42, 0.16);
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #64748b;
+  --purple: #4f46e5;
+  --pink: #db2777;
+  --green: #059669;
+  --blue: #2563eb;
+  --amber: #b45309;
+  --red: #dc2626;
+  --focus-ring: rgba(79, 70, 229, 0.4);
+  --grad: linear-gradient(135deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
+  --grad-subtle: linear-gradient(135deg, rgba(79, 70, 229, 0.06) 0%, rgba(147, 51, 234, 0.06) 50%, rgba(219, 39, 119, 0.04) 100%);
+  --shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.12);
 }
 
 /* ═══════════════════════════════════════════════
@@ -85,6 +97,11 @@ a:hover {
   text-decoration: none;
 }
 
+:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+
 /* ═══════════════════════════════════════════════
    SCROLLBAR
    ═══════════════════════════════════════════════ */
@@ -103,24 +120,23 @@ a:hover {
 }
 
 /* ═══════════════════════════════════════════════
-   LOGO BLEND MODES
+   LOGO STYLES
    ═══════════════════════════════════════════════ */
 .app-logo {
-  mix-blend-mode: screen;
   border-radius: 12px;
   object-fit: contain;
 }
 body.light .app-logo {
-  filter: invert(1) hue-rotate(180deg);
-  mix-blend-mode: multiply;
+  filter: none;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 .app-logo.auth-blend {
-  opacity: 0.9;
-  filter: contrast(2.5) brightness(0.7);
+  opacity: 0.95;
+  filter: none;
 }
 body.light .app-logo.auth-blend {
-  filter: invert(1) hue-rotate(180deg) contrast(1.2);
-  opacity: 0.85;
+  filter: none;
+  opacity: 1;
 }
 
 /* ═══════════════════════════════════════════════
@@ -653,8 +669,40 @@ body.light .app-logo.auth-blend {
 @media (max-width: 992px) {
   .tx-grid-header,
   .tx-grid-row {
-    grid-template-columns: 110px minmax(220px, 1fr) 120px 150px 50px;
-    padding: 12px 16px;
+    grid-template-columns: 100px minmax(180px, 1fr) 110px 130px 44px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tx-grid-header {
+    display: none;
+  }
+  .tx-grid-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 14px 16px;
+    position: relative;
+  }
+  .tx-grid-col-merchant {
+    width: 100%;
+    padding-right: 32px;
+  }
+  .tx-grid-col-amount {
+    align-items: flex-start;
+    text-align: left;
+    padding-right: 0;
+  }
+  .tx-grid-col-date {
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .tx-grid-col-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
   }
 }
 
@@ -969,4 +1017,108 @@ body.light .app-logo.auth-blend {
 
 .spin-icon {
   animation: spin-rotate 1s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE GRID UTILITIES
+   ═══════════════════════════════════════════════ */
+.responsive-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1100px) {
+  .responsive-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 580px) {
+  .responsive-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.responsive-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .responsive-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.responsive-grid-3-2 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .responsive-grid-3-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.responsive-grid-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .responsive-grid-2-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .responsive-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.responsive-grid-sidebar {
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) 1fr;
+  gap: 24px;
+  align-items: flex-start;
+}
+@media (max-width: 960px) {
+  .responsive-grid-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ACCESSIBILITY: REDUCED MOTION
+   ═══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Auth card responsive container */
+@media (max-width: 860px) {
+  .auth-split-panel {
+    flex-direction: column !important;
+  }
+  .auth-split-panel > div:first-child {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding: 36px 24px !important;
+  }
+  .auth-split-panel > div:last-child {
+    padding: 36px 24px !important;
+  }
 }

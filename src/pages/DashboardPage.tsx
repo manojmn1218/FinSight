@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2 } from 'lucide-react';
+import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORY_CONFIG } from '../utils/types';
+import CategoryIcon from '../components/CategoryIcon';
 import { computeMonthSummaries, detectRecurringGrouped } from '../utils/transactionParser';
 import type { Transaction, Category } from '../utils/types';
 
@@ -44,6 +45,16 @@ export default function DashboardPage() {
   const [isClearing, setIsClearing] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
   const [clearSuccess, setClearSuccess] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showClearModal && !isClearing) {
+        setShowClearModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showClearModal, isClearing]);
 
   const handleClearAllData = async () => {
     setIsClearing(true);
@@ -491,7 +502,7 @@ export default function DashboardPage() {
         <motion.div {...an(0)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
-              {greeting}, <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.userName || 'there'}</span> 👋
+              {greeting}, <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.userName || 'there'}</span>
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text2)' }}>
               <Calendar size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
@@ -534,7 +545,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Stat cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div className="responsive-grid-4">
           {stats.map((s, i) => (
             <motion.div key={s.label} className="panel panel-glow" style={{ padding: 20 }} {...an(i + 1)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -554,18 +565,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Income vs Expenses Bar + Budget Health Score */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 16 }}>
+        <div className="responsive-grid-2-1">
           {/* Spending Progress */}
           <motion.div className="panel" style={{ padding: 20 }} {...an(5)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600 }}>
-                📊 Income vs Expenses
+                <BarChart3 size={16} color="var(--purple)" /> Income vs Expenses
               </h3>
               <span className="badge" style={{
                 background: txnStats.savingsRate >= 20 ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)',
                 color: txnStats.savingsRate >= 20 ? 'var(--green)' : 'var(--amber)'
               }}>
-                {txnStats.savingsRate >= 20 ? '✅ Healthy' : '⚠️ Low savings'}
+                {txnStats.savingsRate >= 20 ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={12} /> Healthy</span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AlertTriangle size={12} /> Low savings</span>
+                )}
               </span>
             </div>
             <div style={{ width: '100%', height: 10, background: 'var(--bg3)', borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
@@ -607,7 +622,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Charts Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
+        <div className="responsive-grid-3-2">
           {/* Monthly Bar Chart */}
           <motion.div className="panel" style={{ padding: 20 }} {...an(6)}>
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Monthly Trend</h3>
@@ -782,16 +797,18 @@ export default function DashboardPage() {
         )}
 
         {/* Top Expenses + Recent Transactions */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="responsive-grid-2">
           <motion.div className="panel" style={{ padding: 20 }} {...an(11)}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>🔥 Top Expenses</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
+              <TrendingDown size={16} color="var(--pink)" /> Top Expenses
+            </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {txnStats.topExpenses.map((tx, i) => {
                 const cfg = CATEGORY_CONFIG[tx.category];
                 return (
                   <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < txnStats.topExpenses.length - 1 ? '1px solid var(--border)' : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 16 }}>{cfg?.icon || '📌'}</span>
+                      <CategoryIcon category={tx.category} size={16} color={cfg?.color} />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description}</div>
                         <div style={{ fontSize: 11, color: 'var(--text3)' }}>
@@ -915,7 +932,7 @@ export default function DashboardPage() {
       <motion.div {...an(0)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
-            {greeting}, <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.userName || 'there'}</span> 👋
+            {greeting}, <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.userName || 'there'}</span>
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text2)' }}>Upload a bank statement or connect your account to see your real financial data here.</p>
         </div>
@@ -955,7 +972,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      <div className="responsive-grid-4">
         {fallbackStats.map((s, i) => (
           <motion.div key={s.label} className="panel panel-glow" style={{ padding: 20 }} {...an(i + 1)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>

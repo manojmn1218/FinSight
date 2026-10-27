@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
 import { useFinance } from '../context/FinanceContext';
-import { Eye, EyeOff, TrendingUp, Shield, Zap } from 'lucide-react';
+import { Eye, EyeOff, TrendingUp, Shield, Zap, AlertCircle, Info } from 'lucide-react';
 import OtpModal from '../components/OtpModal';
 
 function GoogleIcon() {
@@ -195,7 +195,7 @@ export default function LoginPage() {
       <div className="blob blob-1" />
       <div className="blob blob-2" />
 
-      <div className="panel" style={{ display: 'flex', width: '100%', maxWidth: 1080, minHeight: 600, overflow: 'hidden', padding: 0, zIndex: 1, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+      <div className="panel auth-split-panel" style={{ display: 'flex', width: '100%', maxWidth: 1080, minHeight: 600, overflow: 'hidden', padding: 0, zIndex: 1, border: '1px solid var(--border)', background: 'var(--surface)' }}>
         {/* Left — Brand */}
         <motion.div
           style={{ flex: 1.2, padding: '60px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}
@@ -302,12 +302,13 @@ export default function LoginPage() {
               {error && (
                 <div style={{ padding: '12px 14px', background: 'rgba(248,113,113,0.12)', color: '#f87171', borderRadius: 8, fontSize: 13, fontWeight: 500, border: '1px solid rgba(248,113,113,0.25)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <span style={{ flexShrink: 0 }}>⚠️</span>
+                    <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
                     <span>{error}</span>
                   </div>
                   {error.includes('backend server') && (
                     <div style={{ fontSize: 12, color: 'var(--text2)', borderTop: '1px solid rgba(248,113,113,0.2)', paddingTop: 6, lineHeight: 1.4 }}>
-                      💡 <strong>Tip:</strong> In your terminal, run <code style={{ color: '#a78bfa', background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>npm run dev</code> to start both frontend &amp; backend.
+                      <Info size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+                      <strong>Tip:</strong> In your terminal, run <code style={{ color: '#a78bfa', background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>npm run dev</code> to start both frontend &amp; backend.
                     </div>
                   )}
                 </div>
@@ -324,7 +325,7 @@ export default function LoginPage() {
                 </div>
                 <div style={{ position: 'relative' }}>
                   <input type={show ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" required className="input" style={{ paddingRight: 44 }} />
-                  <button type="button" onClick={() => setShow(!show)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', padding: 4 }}>
+                  <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', padding: 4 }}>
                     {show ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>

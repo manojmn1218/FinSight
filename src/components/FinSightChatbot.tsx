@@ -14,11 +14,11 @@ interface ChatMessage {
 }
 
 const SUGGESTED_PROMPTS = [
-  '💰 What is my current balance?',
-  '📄 How do I upload a statement?',
-  '🎯 What are my savings goals?',
-  '👑 What features are in Enterprise?',
-  '📊 How is my budget health calculated?',
+  'What is my current balance?',
+  'How do I upload a statement?',
+  'What are my savings goals?',
+  'What features are in Enterprise?',
+  'How is my budget health calculated?',
 ];
 
 export default function FinSightChatbot() {
@@ -31,7 +31,7 @@ export default function FinSightChatbot() {
       {
         id: 'welcome-1',
         role: 'assistant',
-        text: `Hello ${data.userName || 'there'}! 👋 I am **FinSight AI**, your dedicated personal finance assistant powered by Python.\n\nI can answer questions regarding the **FinSight platform** or your **personal account details** (balance, income, expenses, and goals).\n\n*Note: Questions outside FinSight or your account data will return "Cannot say".*`,
+        text: `Hello ${data.userName || 'there'}! I am **FinSight AI**, your dedicated personal finance assistant powered by Python.\n\nI can answer questions regarding the **FinSight platform** or your **personal account details** (balance, income, expenses, and goals).\n\n*Note: Questions outside FinSight or your account data will return "Cannot say".*`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         provider: 'FinSight Python Core',
       },
@@ -218,15 +218,17 @@ export default function FinSightChatbot() {
         <AnimatePresence>
           {isOpen && (
             <motion.div
+              role="region"
+              aria-label="FinSight AI Chatbot"
               style={{
                 width: 'min(400px, calc(100vw - 32px))',
                 height: 'min(600px, calc(100vh - 100px))',
                 borderRadius: 20,
-                background: 'var(--panel-bg, rgba(17, 24, 39, 0.94))',
+                background: 'var(--panel-bg)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(129, 140, 248, 0.25)',
-                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--border)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.4), var(--shadow-lg)',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -242,7 +244,7 @@ export default function FinSightChatbot() {
                 style={{
                   padding: '14px 18px',
                   background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.12))',
-                  borderBottom: '1px solid rgba(129, 140, 248, 0.2)',
+                  borderBottom: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -276,14 +278,14 @@ export default function FinSightChatbot() {
                           padding: '1px 6px',
                           borderRadius: 99,
                           background: 'rgba(16, 185, 129, 0.15)',
-                          color: '#34d399',
+                          color: 'var(--green)',
                           border: '1px solid rgba(16, 185, 129, 0.3)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 3,
                         }}
                       >
-                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#34d399' }} />
+                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--green)' }} />
                         Python Active
                       </span>
                     </div>
@@ -298,6 +300,7 @@ export default function FinSightChatbot() {
                     onClick={clearChat}
                     className="btn-ghost"
                     title="Clear Chat History"
+                    aria-label="Clear chat history"
                     style={{ padding: 6, borderRadius: 8, color: 'var(--text3)' }}
                   >
                     <Trash2 size={15} />
@@ -306,6 +309,7 @@ export default function FinSightChatbot() {
                     onClick={() => setIsOpen(false)}
                     className="btn-ghost"
                     title="Minimize"
+                    aria-label="Minimize chatbot window"
                     style={{ padding: 6, borderRadius: 8, color: 'var(--text3)' }}
                   >
                     <ChevronDown size={18} />
@@ -466,7 +470,7 @@ export default function FinSightChatbot() {
               <div
                 style={{
                   padding: '10px 14px 14px 14px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderTop: '1px solid var(--border)',
                   background: 'var(--bg2)',
                 }}
               >
@@ -489,6 +493,7 @@ export default function FinSightChatbot() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask about FinSight or your balance..."
                     disabled={loading}
+                    aria-label="Chat input message"
                     style={{
                       flex: 1,
                       background: 'transparent',
@@ -502,6 +507,7 @@ export default function FinSightChatbot() {
                     onClick={() => handleSend()}
                     disabled={!input.trim() || loading}
                     className="btn-primary"
+                    aria-label="Send message to AI assistant"
                     style={{
                       width: 32,
                       height: 32,

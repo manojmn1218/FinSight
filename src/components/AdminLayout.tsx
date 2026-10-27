@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon, Timer, Database } from 'lucide-react';
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon, Timer, Database, ArrowLeft, Menu, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 const NAV_ITEMS = [
@@ -16,6 +16,7 @@ export default function AdminLayout() {
   const nav = useNavigate();
   const loc = useLocation();
   const [isDark, setIsDark] = useState(!document.body.classList.contains('light'));
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const logout = () => { logoutUser(); nav('/login'); };
 
@@ -26,13 +27,39 @@ export default function AdminLayout() {
 
   const toggleTheme = () => {
     const isLight = document.body.classList.toggle('light');
+    localStorage.setItem('finsight_theme', isLight ? 'light' : 'dark');
     setIsDark(!isLight);
   };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'Inter', sans-serif" }}>
+      {/* Mobile toggle button */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="btn-ghost"
+        aria-label={mobileOpen ? 'Close admin navigation' : 'Open admin navigation'}
+        style={{
+          position: 'fixed', top: 12, left: 12, zIndex: 150, padding: 8,
+          display: 'none',
+          background: 'var(--surface)',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+        }}
+        id="admin-mobile-menu-btn"
+      >
+        {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`sidebar-collapsible${mobileOpen ? ' open' : ''}`} style={{
         width: 280,
         padding: '24px 16px',
         background: 'var(--bg2)',
@@ -63,6 +90,29 @@ export default function AdminLayout() {
           </div>
         </div>
 
+        {/* Back to User Dashboard Link */}
+        <Link
+          to="/dashboard"
+          className="btn-ghost"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'var(--purple)',
+            background: 'rgba(129, 140, 248, 0.08)',
+            border: '1px solid rgba(129, 140, 248, 0.2)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '8px 12px',
+            marginBottom: 4,
+          }}
+          onClick={() => setMobileOpen(false)}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to App</span>
+        </Link>
+
         <div style={{ height: 1, background: 'var(--border)', margin: '4px 14px 12px' }} />
 
         {/* Nav */}
@@ -75,9 +125,10 @@ export default function AdminLayout() {
                 key={n.path}
                 to={n.path}
                 className={`nav-item${active ? ' active' : ''}`}
+                onClick={() => setMobileOpen(false)}
               >
                 <n.icon size={18} />
-                {n.label}
+                <span>{n.label}</span>
               </NavLink>
             );
           })}
@@ -107,11 +158,11 @@ export default function AdminLayout() {
 
         {/* Bottom actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
-          <button onClick={toggleTheme} className="btn-ghost">
+          <button onClick={toggleTheme} className="btn-ghost" aria-label="Toggle visual theme">
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
             <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
-          <button onClick={logout} className="btn-ghost danger">
+          <button onClick={logout} className="btn-ghost danger" aria-label="Sign out">
             <LogOut size={18} />
             <span>Secure Logout</span>
           </button>
@@ -119,9 +170,15 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', maxHeight: '100vh' }}>
+      <main className="main-content-area" style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', maxHeight: '100vh' }}>
         <Outlet />
       </main>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #admin-mobile-menu-btn { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }
