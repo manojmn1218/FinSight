@@ -338,6 +338,14 @@ export default function LoginPage() {
               <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', marginTop: 8 }}>
                 Don't have an account? <Link to="/signup" style={{ fontWeight: 600 }}>Sign up free</Link>
               </p>
+
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)', textAlign: 'center', fontSize: 11, color: 'var(--text3)' }}>
+                <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'underline', marginRight: 10 }}>Terms of Service</Link>
+                •
+                <Link to="/legal#privacy" style={{ color: 'var(--text3)', textDecoration: 'underline', margin: '0 10px' }}>Privacy Policy</Link>
+                •
+                <Link to="/legal#dmca" style={{ color: 'var(--text3)', textDecoration: 'underline', marginLeft: 10 }}>DMCA Notice</Link>
+              </div>
             </form>
           </motion.div>
         </div>

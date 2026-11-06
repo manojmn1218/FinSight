@@ -24,6 +24,7 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
@@ -70,6 +71,11 @@ export default function SignupPage() {
 
     if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (!ageConfirmed) {
+      setError('Under COPPA and applicable regulations, you must confirm that you are at least 18 years of age (or at least 13 with verified parental consent).');
       return;
     }
 
@@ -212,6 +218,12 @@ export default function SignupPage() {
           )}
         </div>
 
+        <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginBottom: 16, lineHeight: 1.4 }}>
+          By continuing, you verify you are 18+ and accept our{' '}
+          <Link to="/legal" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>Terms</Link> &amp;{' '}
+          <Link to="/legal#privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>Privacy Policy</Link>.
+        </p>
+
         {infoMsg && (
           <div style={{ padding: '10px 14px', background: 'rgba(96,165,250,0.12)', color: '#93c5fd', borderRadius: 8, fontSize: 12, marginBottom: 14, border: '1px solid rgba(96,165,250,0.25)', lineHeight: 1.4 }}>
             {infoMsg}
@@ -252,7 +264,47 @@ export default function SignupPage() {
               </div>
             )}
           </div>
-          <button type="submit" disabled={!allPass || loading} className="btn-primary" style={{ width: '100%', marginTop: 8, opacity: (allPass && !loading) ? 1 : 0.5, cursor: (allPass && !loading) ? 'pointer' : 'not-allowed' }}>
+
+          {/* COPPA Compliance & Age Verification Gate */}
+          <div style={{
+            padding: '12px 14px',
+            borderRadius: 'var(--radius-sm)',
+            background: ageConfirmed ? 'rgba(52, 211, 153, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+            border: `1px solid ${ageConfirmed ? 'rgba(52, 211, 153, 0.3)' : 'var(--border)'}`,
+            transition: 'all 0.2s ease',
+          }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={e => setAgeConfirmed(e.target.checked)}
+                required
+                style={{ marginTop: 2, accentColor: 'var(--purple)', cursor: 'pointer', width: 16, height: 16, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5 }}>
+                I confirm that I am at least <strong>18 years of age</strong> (or at least 13 with parental consent under COPPA) and agree to FinSight's{' '}
+                <Link to="/legal" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'underline' }}>
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link to="/legal#privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'underline' }}>
+                  Privacy Policy
+                </Link>.
+              </span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!allPass || !ageConfirmed || loading}
+            className="btn-primary"
+            style={{
+              width: '100%',
+              marginTop: 4,
+              opacity: (allPass && ageConfirmed && !loading) ? 1 : 0.5,
+              cursor: (allPass && ageConfirmed && !loading) ? 'pointer' : 'not-allowed',
+            }}
+          >
             {loading ? 'Creating account...' : 'Create account'}
           </button>
           <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', marginTop: 8 }}>

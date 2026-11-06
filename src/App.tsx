@@ -25,6 +25,8 @@ import GoalsPage from './pages/GoalsPage';
 import ExportPage from './pages/ExportPage';
 import PortfolioPage from './pages/PortfolioPage';
 import ManualEntryPage from './pages/ManualEntryPage';
+import LegalPage from './pages/LegalPage';
+import PrivacyConsentBanner from './components/PrivacyConsentBanner';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useFinance();
@@ -61,6 +63,10 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/legal" element={<LegalPage />} />
+          <Route path="/terms" element={<Navigate to="/legal#terms" replace />} />
+          <Route path="/privacy" element={<Navigate to="/legal#privacy" replace />} />
+          <Route path="/dmca" element={<Navigate to="/legal#dmca" replace />} />
           <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="dashboard" replace />} />
@@ -87,6 +93,7 @@ export default function App() {
             <Route path="coming-soon" element={<ComingSoonPage />} />
           </Route>
         </Routes>
+        <PrivacyConsentBanner />
       </BrowserRouter>
     </FinanceProvider>
   );

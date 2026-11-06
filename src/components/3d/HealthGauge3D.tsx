@@ -108,3 +108,4 @@ export default function HealthGauge3D({ score, label, size = 150 }: HealthGauge3
     </div>
   );
 }
+

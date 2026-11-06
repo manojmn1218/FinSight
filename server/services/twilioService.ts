@@ -69,9 +69,19 @@ export class TwilioService {
             </p>
           </div>
           
-          <p style="margin: 0; color: #64748b; font-size: 12px; text-align: center;">
-            Dispatched via Twilio SendGrid API • FinSight Security
-          </p>
+          <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid rgba(148, 163, 184, 0.15); text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
+            <p style="margin: 0 0 6px 0; color: #94a3b8; font-weight: 600;">
+              FinSight Technologies Inc. • 548 Market St, Suite 300, San Francisco, CA 94104, USA
+            </p>
+            <p style="margin: 0 0 8px 0; color: #64748b;">
+              You received this essential transactional security notification for your FinSight account. Dispatched via Twilio SendGrid API.
+            </p>
+            <p style="margin: 0;">
+              <a href="https://finsight.com/legal" style="color: #a78bfa; text-decoration: underline; margin-right: 12px;">Terms &amp; Privacy</a>
+              <a href="https://finsight.com/legal#dmca" style="color: #a78bfa; text-decoration: underline; margin-right: 12px;">DMCA Notice</a>
+              <a href="mailto:support@finsight.com?subject=Unsubscribe%20Notification%20Preferences" style="color: #a78bfa; text-decoration: underline;">Manage Preferences / Unsubscribe</a>
+            </p>
+          </div>
         </div>
       </div>
     `;

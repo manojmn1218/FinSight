@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet } from 'lucide-react';
+import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
@@ -22,6 +22,7 @@ const ACCOUNT_NAV = [
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/premium', label: 'Premium', icon: Crown },
   { path: '/support', label: 'Support', icon: HelpCircle },
+  { path: '/legal', label: 'Legal & DMCA', icon: Scale },
 ];
 
 export default function DashboardLayout() {

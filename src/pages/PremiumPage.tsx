@@ -125,6 +125,7 @@ function CheckoutModal({
 
   const [step, setStep] = useState<CheckoutStep>('select');
   const [method, setMethod] = useState<PaymentMethod>('upi');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
 
   // UPI state
@@ -151,6 +152,11 @@ function CheckoutModal({
   // ── Validate & Pay ──
   const handlePay = useCallback(() => {
     setError('');
+
+    if (!termsAccepted) {
+      setError('Under subscription regulations, please review and accept the Automatic Renewal Terms before completing checkout.');
+      return;
+    }
 
     if (method === 'upi') {
       if (!upiId.trim() || !upiId.includes('@')) {
@@ -432,10 +438,44 @@ function CheckoutModal({
               </AnimatePresence>
             </div>
 
+            {/* Automatic Renewal Law (ARL) Compliance & Consent Box */}
+            <div style={{ padding: '0 28px 12px' }}>
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-sm)',
+                background: termsAccepted ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                border: `1px solid ${termsAccepted ? 'rgba(99, 102, 241, 0.35)' : 'var(--border)'}`,
+                transition: 'all 0.2s ease',
+              }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={e => setTermsAccepted(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: 'var(--purple)', cursor: 'pointer', width: 16, height: 16, flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5 }}>
+                    <strong>Continuous Service &amp; Auto-Renewal Terms:</strong> I authorize FinSight to automatically renew my {plan.name} Plan {billing === 'yearly' ? 'annually' : 'monthly'} at <strong>{fmt(total)}</strong> until I cancel. I understand I can cancel anytime with 1-click in Account Profile or by emailing <span style={{ color: 'var(--purple)' }}>support@finsight.com</span> at least 24h prior to renewal to prevent future billing.
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {/* Pay Button */}
-            <div style={{ padding: '20px 28px 28px' }}>
-              <button onClick={handlePay} className="btn-primary" style={{ width: '100%', padding: '14px 0', fontSize: 15 }}>
-                <Lock size={15} /> Pay {fmt(total)}
+            <div style={{ padding: '0 28px 28px' }}>
+              <button
+                onClick={handlePay}
+                disabled={!termsAccepted}
+                className="btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '14px 0',
+                  fontSize: 15,
+                  opacity: termsAccepted ? 1 : 0.5,
+                  cursor: termsAccepted ? 'pointer' : 'not-allowed',
+                }}
+              >
+                <Lock size={15} /> Authorize &amp; Pay {fmt(total)}
               </button>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 14 }}>
                 <span style={{ fontSize: 10, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -448,6 +488,9 @@ function CheckoutModal({
                   <CheckCircle2 size={10} /> 14-day refund
                 </span>
               </div>
+              <p style={{ fontSize: 10, color: 'var(--text3)', textAlign: 'center', marginTop: 10 }}>
+                Disclosed in accordance with California Automatic Renewal Law (Cal. Bus. &amp; Prof. Code § 17602).
+              </p>
             </div>
           </>
         )}

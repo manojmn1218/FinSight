@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Timer, Database, ArrowLeft, Menu, X } from 'lucide-react';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Timer, Database, ArrowLeft, Menu, X, Scale } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { path: '/admin/users', icon: Users, label: 'User Management' },
   { path: '/admin/revenue', icon: CreditCard, label: 'Revenue Analytics' },
   { path: '/admin/settings', icon: Settings, label: 'Platform Settings' },
+  { path: '/legal', icon: Scale, label: 'Legal & DMCA Hub' },
 ];
 
 export default function AdminLayout() {

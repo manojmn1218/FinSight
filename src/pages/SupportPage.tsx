@@ -1,14 +1,16 @@
 import React from 'react';
-import { Mail, MessageCircle, FileText } from 'lucide-react';
+import { Mail, MessageCircle, FileText, Scale } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 export default function SupportPage() {
   const submit = (e: React.FormEvent) => { e.preventDefault(); alert('Message sent! We\'ll get back to you shortly.'); };
 
   const contacts = [
-    { icon: Mail, title: 'Email Us', desc: 'support@finsight.ai', clr: '#58a6ff', bg: 'rgba(88,166,255,0.1)' },
+    { icon: Mail, title: 'Email Us', desc: 'support@finsight.com', clr: '#58a6ff', bg: 'rgba(88,166,255,0.1)' },
     { icon: MessageCircle, title: 'Live Chat', desc: 'Available 9AM – 5PM IST', clr: '#34d399', bg: 'rgba(52,211,153,0.1)' },
     { icon: FileText, title: 'Documentation', desc: 'Read our detailed guides', clr: '#f472b6', bg: 'rgba(244,114,182,0.1)' },
+    { icon: Scale, title: 'Legal & DMCA', desc: 'Terms, Privacy & Agent Notice', clr: '#818cf8', bg: 'rgba(129,140,248,0.1)', link: '/legal' },
   ];
 
   return (
@@ -22,11 +24,11 @@ export default function SupportPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {contacts.map((c, i) => {
             const Icon = c.icon;
-            return (
+            const content = (
               <motion.div
                 key={c.title}
                 className="panel panel-glow"
-                style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '20px 24px', cursor: 'pointer' }}
+                style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '20px 24px', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.35 }}
@@ -40,6 +42,12 @@ export default function SupportPage() {
                 </div>
               </motion.div>
             );
+
+            return c.link ? (
+              <Link key={c.title} to={c.link} style={{ textDecoration: 'none' }}>
+                {content}
+              </Link>
+            ) : content;
           })}
         </div>
 
