@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
       <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16, textAlign: 'center' }}>
         <BarChart3 size={48} color="var(--text3)" />
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>No Transaction Data</h2>
-        <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 400 }}>Upload a bank statement in the Transactions tab to unlock spending analytics, trend charts, and budget recommendations.</p>
+        <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 400 }}>Upload a bank statement in Transactions to view category breakdowns, monthly trends, and spending summaries.</p>
         <Link to="/transactions" className="btn-primary" style={{ marginTop: 8 }}>Go to Transactions</Link>
       </div>
     );
@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Spending Analytics</h1>
-        <p style={{ color: 'var(--text2)', fontSize: 14 }}>Deep insights from your {txns.length} parsed transactions.</p>
+        <p style={{ color: 'var(--text2)', fontSize: 14 }}>Analysis across your {txns.length} recorded transactions.</p>
       </div>
 
       {/* Monthly income vs expenses */}

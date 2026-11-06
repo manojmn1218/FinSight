@@ -744,7 +744,7 @@ export default function DashboardPage() {
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(13,17,23,0.85)', backdropFilter: 'blur(4px)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20, textAlign: 'center' }}>
                 <Lock size={24} color="var(--purple)" />
                 <h4 style={{ fontSize: 15, fontWeight: 700 }}>Smart Recurring Payment Detection</h4>
-                <p style={{ fontSize: 12, color: 'var(--text2)', maxWidth: 320, lineHeight: 1.5 }}>Unlock subscription tracking, alerts for price increases, and potential annual saving estimates.</p>
+                <p style={{ fontSize: 12, color: 'var(--text2)', maxWidth: 320, lineHeight: 1.5 }}>Available on Pro: track recurring subscriptions, get price change alerts, and estimate yearly recurring costs.</p>
                 <Link to="/premium" className="btn-primary" style={{ padding: '8px 20px', fontSize: 13, marginTop: 4 }}>Upgrade to Pro</Link>
               </div>
             )}
@@ -994,7 +994,7 @@ export default function DashboardPage() {
       {/* Upload CTA — Enhanced */}
       <motion.div className="panel" style={{ padding: '36px 32px', textAlign: 'center', background: 'var(--grad-subtle)' }} {...an(5)}>
         <Upload size={44} color="var(--purple)" style={{ marginBottom: 16, opacity: 0.8 }} />
-        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Unlock Your Financial Dashboard</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Set Up Your Financial Dashboard</h2>
         <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.6 }}>
           Upload your bank statement PDF or connect your bank account directly to get automatic expense categorization, monthly summaries, budget health scoring, and recurring payment alerts.
         </p>

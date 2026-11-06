@@ -1102,7 +1102,7 @@ export default function ManualEntryPage() {
                 <Coins size={40} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
                 <h4 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>No Assets Logged</h4>
                 <p style={{ fontSize: 13, maxWidth: 360, margin: '0 auto' }}>
-                  Add properties, mutual fund folios, gold, or private holdings to monitor your holistic net worth.
+                  Add real estate, mutual funds, gold, or private holdings to monitor your total net worth.
                 </p>
               </div>
             ) : (

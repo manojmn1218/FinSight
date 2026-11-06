@@ -35,7 +35,7 @@
 
 ## 🔍 Overview
 
-FinSight is a comprehensive personal finance management platform that transforms raw bank statements into actionable financial intelligence. Upload a PDF bank statement or connect your bank via Setu Account Aggregator, and FinSight automatically parses transactions, categorizes spending, detects recurring payments, and generates AI-powered insights — all within a beautiful, responsive dashboard.
+FinSight parses bank statements and tracks personal finances. Upload a PDF statement or connect via Setu Account Aggregator to automatically extract transactions, categorize spending, flag recurring bills, and view spending patterns on an interactive dashboard.
 
 ### Who is it for?
 
@@ -73,12 +73,12 @@ FinSight is a comprehensive personal finance management platform that transforms
 - **Tax Optimization Hints** — Category-level spending analysis for tax planning
 
 ### 💬 FinSight AI Chatbot *(Python-Powered)*
-- **Dedicated In-App Financial Intelligence Co-pilot** — An interactive assistant built with Python (Flask) and Google Gemini AI (`gemini-3.5-flash-lite`) to guide users through FinSight and answer questions about their account requirements, balances, and finances.
-- **Deep Account Requirements & Affordability Engine** — Trained to evaluate purchase feasibility in real time (*"Can I afford to buy [item] for ₹[amount] right now?"*). Checks current liquid balance, monthly surplus (income minus expenses), and active savings goals, providing clear affordability verdicts and exact cash deficit/surplus figures.
-- **Comprehensive Expense & Category Intelligence** — Accurately analyzes category spending breakdowns (Education, Shopping, Utilities, Food, Transport, etc.), pinpoints the largest single expense on record with date and merchant, and tracks recurring subscriptions.
-- **Goals & Milestone Requirements** — Tracks active targets, percentage completion, remaining capital needed, and deadlines. For users with no active goals, it guides them on setting targets or calculates required monthly savings.
-- **Budget Health Scoring & Tailored Guidance** — Provides personalized 0–100 Budget Health Scores with concrete, actionable advice based on real account numbers and cash-flow patterns.
-- **Dynamic, Question-Tailored Domain Guardrail** — Strictly restricted to only answer questions about the FinSight platform and the authenticated user's account details. When an out-of-scope question is received (e.g. coding, weather, sports, cooking, politics, trivia), the assistant never repeats a generic robotic canned phrase; it generates a polite, contextual refusal tailored directly to the specific subject asked (acknowledging the topic and seamlessly guiding the user back to their balances, expenses, or financial goals).
+- **Account Assistant** — Built with Python (Flask) and Google Gemini (`gemini-3.5-flash-lite`) to answer questions about balances, spending categories, and FinSight features.
+- **Affordability Checks** — Evaluates purchase questions (*"Can I afford [item] for ₹[amount]?"*) against liquid balance, monthly surplus, and active savings goals.
+- **Expense & Category Breakdown** — Details category spending, highlights largest expenses with merchant and date, and tracks recurring bills.
+- **Goals & Milestones** — Tracks progress toward savings targets, calculates required monthly contributions, and flags approaching deadlines.
+- **Budget Health Scoring** — Rates budget health from 0 to 100 with recommendations based on current cash flow.
+- **Domain Guardrails** — Restricts answers to user account records and FinSight features, redirecting external queries directly to relevant financial metrics.
 - **Always-Available Drawer** — Accessible across every dashboard page with quick-prompt chips, sleek typing indicators, and markdown formatting.
 
 ### 📈 Portfolio & Investments *(Enterprise)*
@@ -86,7 +86,7 @@ FinSight is a comprehensive personal finance management platform that transforms
 - **Real-Time Market Analytics** — Curated market quotes for Indian ADRs and Global equities with intelligent client-side caching and resilient baseline fallbacks
 - **AI Stock Recommendations & SIP Planner** — Personalized picks and SIP allocations based on your risk profile and surplus
 - **Net Worth Timeline** — Historical chart of total portfolio value
-- **Zero Sensitive UI Exposure** — Removed sensitive user-facing API key panels; quotes are managed smoothly without requiring users to expose or manage third-party keys
+- **Secure Quote Delivery** — Server-managed market quotes eliminate client-side API key exposure
 - **Auto-Detected Assets** — Identifies investments from bank transactions
 
 ### 🎯 Financial Goals
@@ -95,7 +95,7 @@ FinSight is a comprehensive personal finance management platform that transforms
 - **Color-Coded Cards** — Each goal gets a unique visual identity
 
 ### 📋 Reports & Export
-- **Financial Reports** — Comprehensive reports with monthly summaries, category breakdowns, and budget variance analysis
+- **Financial Reports** — Monthly summaries, category breakdowns, and budget variance reports
 - **Multi-Format Export** — Download as CSV, JSON, or formatted PDF
 - **Date Range Filtering** — Export specific time periods
 - **Print-Ready** — Clean report layouts optimized for printing
@@ -146,7 +146,7 @@ FinSight is a comprehensive personal finance management platform that transforms
 | **PDF Parsing** | pdf.js (pdfjs-dist) | Extract text and transactions from bank statement PDFs |
 | **Stock Data** | Alpha Vantage API | Live BSE/NSE market and equity quotes |
 | **Bank Connect** | Setu Account Aggregator | Direct bank account data via India's AA framework |
-| **AI Chatbot Service** | Python 3 + Flask + google-genai | Dedicated scoped chatbot microservice with dual-layer domain guardrails |
+| **AI Chatbot Service** | Python 3 + Flask + google-genai | Chatbot microservice with financial domain guardrails |
 | **Styling** | Vanilla CSS | Bespoke design system with CSS tokens and dark mode |
 
 ---
@@ -370,7 +370,7 @@ FinSight implements multiple layers of security:
 | **Input Validation** | Regex validation on API inputs (mobile number, IDs) |
 | **Method Enforcement** | All API routes reject unexpected HTTP methods (405) |
 
-> **Note:** Authentication is currently client-side (localStorage). For production with real financial data, integrate a backend auth provider (Firebase Auth, Supabase, or custom JWT server).
+> **Note:** Authentication runs through the Express server using signed JWT bearer tokens and bcrypt password hashing, with persistent storage in MongoDB Atlas or local JSON database fallback.
 
 ---
 

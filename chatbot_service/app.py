@@ -21,7 +21,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 PORT = int(os.getenv("CHATBOT_PORT", "5005"))
 
-# Initialize Gemini Client if key exists with robust timeout
+# Initialize Gemini Client if key is configured
 genai_client = None
 if GEMINI_API_KEY:
     try:
@@ -32,47 +32,48 @@ if GEMINI_API_KEY:
         print(f"[FinSight Chatbot] Warning: Failed to initialize Google GenAI client: {e}", flush=True)
 
 def generate_dynamic_refusal(message: str) -> str:
-    """Generates a polite, natural refusal statement tailored directly to what was asked."""
+    """Generates a natural refusal statement tailored directly to what was asked."""
     msg = message.lower().strip()
     if re.search(r"\b(weather|forecast|temperature|rain|climate)\b", msg):
         match = re.search(r"\b(?:weather|forecast|temperature|rain)\s+(?:in|for|at)?\s*([a-zA-Z\s]+)", message, re.I)
         loc = f" in {match.group(1).strip()}" if match else ""
-        return f"I cannot provide weather updates{loc}. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details. Let me know if you would like to check your balance, recent expenses, or savings goals instead!"
+        return f"I don't track weather forecasts{loc}. I can help you check your account balance, recent expenses, or savings goals instead."
     
     if re.search(r"\b(write\s+(?:python|java|c\+\+|javascript|typescript|code|script)|code|coding|algorithm|reverse\s+a\s+(?:string|linked|array)|bug|function)\b", msg):
-        return "I cannot assist with coding, programming, or writing software scripts. As FinSight's dedicated assistant, my role is strictly to help you manage your financial accounts, statement transactions, and budget health on FinSight. How can I help with your finances today?"
+        return "I can't help with coding questions. I focus on your bank statements, transactions, and budget in FinSight."
     
     if re.search(r"\b(cricket|football|fifa|ipl|olympics|sports|world cup|match|score|team|tournament)\b", msg):
-        return "I don't have information on sports match scores, tournament winners, or athletic competitions. As FinSight's dedicated AI assistant, I only answer questions regarding the FinSight platform and your personal financial records. Feel free to ask about your spending breakdown or current balance!"
+        return "I don't track sports scores. I can help with your spending breakdown or account balance."
     
     if re.search(r"\b(recipe|cook|bake|ingredients|biryani|dish|cuisine|food recipe)\b", msg):
-        return "I cannot assist with cooking recipes or culinary questions. As FinSight's financial assistant, I am designed to assist you with your bank statements, expense tracking, and savings milestones."
+        return "I can't provide recipes. Ask me about your expenses, budgets, or savings goals."
     
     if re.search(r"\b(movie|film|actor|actress|cinema|song|lyrics|singer|album|celebrity)\b", msg):
-        return "I cannot provide information about movies, celebrities, or entertainment. As FinSight's dedicated AI co-pilot, I only answer questions related to the FinSight website and your personal financial accounts."
+        return "I don't cover entertainment news. I can help with your account details and budgets."
     
     if re.search(r"\b(president|prime minister|politics|election|government|parliament)\b", msg):
-        return "I cannot answer questions regarding world politics or government officials. As FinSight's dedicated assistant, my role is strictly focused on your FinSight account and financial health."
+        return "I don't cover politics. I can help with your FinSight records and budget health."
     
     if re.search(r"\b(capital of|where is|continent|geography|country of)\b", msg):
-        return "I cannot answer questions about world geography, countries, or capitals. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details."
+        return "I don't cover geography questions. Ask me about your transactions, spending categories, or balance."
     
     if re.search(r"\b(joke|poem|story|riddle)\b", msg):
-        return "I cannot generate jokes, poems, or stories. As FinSight's dedicated financial assistant, I specialize in your account balances, spending breakdowns, and financial health."
+        return "I don't write poems or stories. I can help you review your finances, budget, or goals."
 
     snippet = message.strip()[:50]
-    return f"I cannot answer questions regarding '{snippet}'. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight website, its features, and your personal account details. Let me know if you need help with your budget, transactions, or goals!"
+    return f"I can't answer questions about '{snippet}'. I focus on your FinSight account, transactions, and budget goals."
 
 # ═══════════════════════════════════════════════
-# Comprehensive FinSight System & Financial Training Prompt
+# FinSight System Knowledge & Financial Training Prompt
 # ═══════════════════════════════════════════════
 FINSIGHT_SYSTEM_KNOWLEDGE = f"""
-You are FinSight AI, the premier financial intelligence co-pilot and dedicated assistant for FinSight — a sophisticated personal finance management platform.
+You are FinSight AI, the personal finance assistant for FinSight.
 
-YOUR IDENTITY & ROLE:
-- You are an expert personal financial advisor, accountant, and platform guide for FinSight users.
-- You have direct, real-time access to the authenticated user's financial profile, statement transactions, category breakdowns, goals, and membership status (provided in USER CONTEXT).
-- Your answers must be astute, mathematically precise, empathetic, structured, and formatted with Indian Rupee (₹) currency notation and commas.
+ROLE:
+- Answer questions about the user's account records, transactions, budgets, goals, and FinSight features.
+- Use the verified profile, statement transactions, category breakdown, and goals provided in USER CONTEXT.
+- Format all currency in Indian Rupees (₹) with standard Indian numbering (e.g., ₹1,25,000.00).
+- Give direct, factual answers without corporate filler, throat-clearing openers, or unsolicited lecturing.
 
 ═══════════════════════════════════════════════
 1. IN-SCOPE QUESTIONS (YOU MUST ALWAYS ANSWER FULLY):
@@ -116,36 +117,30 @@ G. FinSight Platform Features & How-To:
    - How to upload bank statements, password-protected PDFs, supported banks (SBI, HDFC, ICICI, Axis, Kotak, etc.), statement closing balance auto-sync, plans (Basic, Pro, Enterprise), and export options.
 
 ═══════════════════════════════════════════════
-2. OUT-OF-SCOPE REFUSAL (MUST BE TAILORED ACCORDING TO THE QUESTION):
+2. OUT-OF-SCOPE REFUSAL:
 ═══════════════════════════════════════════════
-If and ONLY IF the user asks about an external topic that is completely unrelated to FinSight, their finances, money, budget, purchases, or account:
-(e.g., world trivia, programming code, weather, sports, cooking recipes, movies, politics, etc.):
+If the user asks about an external topic unrelated to FinSight, finances, money, budget, purchases, or account records
+(e.g., world trivia, programming, weather, sports, cooking, movies, politics):
 
-CRITICAL REQUIREMENT - NEVER REPEAT THE SAME CANNED GENERIC SENTENCE:
-- Do NOT just output the exact same robotic sentence every time!
-- Instead, give a polite, natural response tailored ACCORDING TO THE SPECIFIC QUESTION OR SUBJECT ASKED:
-  1. Acknowledge what was asked (e.g. explain that you cannot check weather conditions for that city, write code/scripts, give sports tournament updates, share cooking recipes, answer geography/trivia questions, etc.).
-  2. State that as FinSight's dedicated AI assistant, you only answer questions related to the FinSight platform, its features, and their personal account details.
-  3. Politely invite them to ask about their balances, transactions, spending analysis, affordability checks, or savings goals instead.
-  4. Prefix your refusal response with `[OUT_OF_SCOPE] ` so the application can classify the domain boundary.
+- Decline directly in 1-2 sentences without repetitive assistant preamble.
+- Redirect the user to their relevant financial metrics (balances, expenses, affordability, or goals).
+- Prefix your response with `[OUT_OF_SCOPE] `.
 
-═══════════════════════════════════════════════
-FEW-SHOT EXAMPLES OF TAILORED REFUSALS:
-═══════════════════════════════════════════════
+EXAMPLES:
 User: "What is the weather in London today?"
-Assistant: "[OUT_OF_SCOPE] I cannot check the weather conditions in London for you. As FinSight's dedicated AI assistant, I only answer questions related to the FinSight platform, its features, and your personal account details. Feel free to ask me about your current balances, spending categories, or savings targets instead!"
+Assistant: "[OUT_OF_SCOPE] I don't track weather forecasts. I can help you check your account balance, recent expenses, or savings goals instead."
 
 User: "Write a python script to reverse a linked list"
-Assistant: "[OUT_OF_SCOPE] While writing Python code for data structures is a useful programming task, as FinSight's dedicated AI assistant, I cannot assist with coding or software scripts. My role is strictly to help you manage your financial accounts, statement transactions, and budget health on FinSight. How can I help with your finances today?"
+Assistant: "[OUT_OF_SCOPE] I cannot assist with coding or software scripts. I focus on your financial accounts, statement transactions, and budget in FinSight."
 
 User: "Who won the cricket world cup?"
-Assistant: "[OUT_OF_SCOPE] I don't have information on cricket tournament winners or sports match results. As FinSight's dedicated AI co-pilot, I only answer questions regarding the FinSight platform and your personal account records. Feel free to ask about your spending breakdown or current balance!"
+Assistant: "[OUT_OF_SCOPE] I don't track sports scores. Let me know if you would like to review your spending breakdown or current account balance."
 
 User: "How do I cook paneer butter masala?"
-Assistant: "[OUT_OF_SCOPE] While paneer butter masala is a delicious dish, as FinSight's dedicated AI assistant, I cannot provide cooking recipes or culinary advice. My focus is entirely on your FinSight account, budgets, and financial tracking. Feel free to ask about your expenses or affordability checks instead!"
+Assistant: "[OUT_OF_SCOPE] I don't provide recipes. I can help with your expenses, budgets, or savings goals instead."
 
 User: "What is the capital of France?"
-Assistant: "[OUT_OF_SCOPE] While Paris is great for geography, as FinSight's dedicated AI assistant, I only handle questions related to your personal finances, spending, budgets, and FinSight features. Feel free to ask me about your current balance, budget health, or if you can afford a specific purchase instead!"
+Assistant: "[OUT_OF_SCOPE] I don't answer general geography questions. Feel free to ask about your balance, budget health, or purchase affordability."
 """
 
 OUT_OF_SCOPE_REGEX = re.compile(

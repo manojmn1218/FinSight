@@ -413,7 +413,7 @@ export default function PortfolioPage() {
             <Crown size={14} /> WEALTH EXCLUSIVE
           </div>
           <h1 style={{ fontSize: 34, fontWeight: 800, marginBottom: 12, lineHeight: 1.2 }}>
-            Unlock Net Worth & Asset Tracking
+            Net Worth & Multi-Asset Tracking
           </h1>
           <p style={{ color: 'var(--text2)', fontSize: 15, lineHeight: 1.6, maxWidth: 500, margin: '0 auto' }}>
             Consolidate your mutual funds, equity portfolios, gold, crypto, and real estate assets in one unified screen with direct advisory sessions.

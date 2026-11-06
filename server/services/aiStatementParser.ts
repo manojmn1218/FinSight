@@ -400,8 +400,7 @@ export async function parseStatementWithAi(lines: string[]): Promise<AiParseResu
     console.log('[AI Statement Parser] Initializing Google Gemini 2.5 Flash analysis...');
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-    const systemPrompt = `You are an expert AI financial statement extractor and transaction classifier for FinSight.
-Your job is to read raw text lines from a bank statement PDF and extract structured financial transactions.
+    const systemPrompt = `Extract financial transactions from raw bank statement text lines and classify each transaction into structured fields.
 
 CRITICAL INSTRUCTIONS:
 1. Extract ALL valid debit and credit financial transactions from the text lines.
@@ -589,7 +588,7 @@ export async function reclassifyTransactionsWithAi(
   if (geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here') {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-      const prompt = `You are FinSight's expert Indian financial transaction classifier and entity extraction AI.
+      const prompt = `Classify Indian financial transactions and extract clean merchant entities.
 Analyze each transaction below and return JSON with the structure:
 {
   "classifications": [

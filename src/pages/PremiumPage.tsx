@@ -662,14 +662,13 @@ export default function PremiumPage() {
           <Sparkles size={14} /> PREMIUM PLANS
         </div>
         <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, lineHeight: 1.2 }}>
-          Take Control of Your <br />
+          FinSight <br />
           <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Financial Future
+            Plans & Pricing
           </span>
         </h1>
         <p style={{ color: 'var(--text2)', fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
-          Unlock AI-powered insights, smart recurring alerts, budget health scoring,
-          and tools that help you save more every month.
+          Automated subscription tracking, anomaly alerts, budget health scoring, and multi-asset portfolio management.
         </p>
       </motion.div>
 
@@ -863,8 +862,8 @@ export default function PremiumPage() {
       {/* ═══ Feature Highlights ═══ */}
       <motion.div {...an(5)}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Why Upgrade to Pro?</h2>
-          <p style={{ color: 'var(--text2)', fontSize: 14 }}>Features that pay for themselves within the first month.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Pro Features</h2>
+          <p style={{ color: 'var(--text2)', fontSize: 14 }}>Built for detailed statement tracking and analysis.</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {[
@@ -1058,9 +1057,9 @@ export default function PremiumPage() {
         }} />
         <div style={{ position: 'relative' }}>
           <Sparkles size={32} color="var(--purple)" style={{ marginBottom: 16, opacity: 0.8 }} />
-          <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Ready to Take Control?</h2>
+          <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Upgrade to Pro</h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', maxWidth: 460, margin: '0 auto 24px', lineHeight: 1.6 }}>
-            Join thousands of users who are saving more, spending smarter, and building real financial wellness with FinSight Pro.
+            Automate recurring payment detection, catch spending spikes, and export reports in multiple formats.
           </p>
           <button
             onClick={() => handleUpgrade('pro')}

@@ -86,7 +86,7 @@ export default function InsightsPage() {
       results.push({
         icon: ShoppingBag,
         title: `Top Spend: ${topCat} (${topPct}%)`,
-        desc: `${fmt(topAmt)} spent on ${topCat}, making up ${topPct}% of all expenses.${sortedCats.length > 1 ? ` Runner-up: ${sortedCats[1][0]} at ${fmt(sortedCats[1][1])}.` : ''} ${topPct > 40 ? 'This is a high concentration — consider diversifying or reducing.' : ''}`,
+        desc: `${fmt(topAmt)} spent on ${topCat}, making up ${topPct}% of all expenses.${sortedCats.length > 1 ? ` Runner-up: ${sortedCats[1][0]} at ${fmt(sortedCats[1][1])}.` : ''} ${topPct > 40 ? 'This category accounts for over 40% of your total spend.' : ''}`,
         color: cfg?.color || '#818cf8',
         bg: cfg?.bg || 'rgba(129,140,248,0.08)',
         link: '/analytics',
@@ -96,14 +96,14 @@ export default function InsightsPage() {
     // 3. Savings rate
     results.push({
       icon: PiggyBank,
-      title: savingsRate >= 20 ? `💪 Strong Savings: ${savingsRate}%` : `⚠️ Low Savings: ${savingsRate}%`,
+      title: savingsRate >= 20 ? `Strong Savings: ${savingsRate}%` : `Low Savings: ${savingsRate}%`,
       desc: savingsRate >= 30
-        ? `Excellent! You're saving ${savingsRate}% of your income (${fmt(net)}). You're well above the 20% recommended rate. Consider investing the surplus in mutual funds or FDs.`
+        ? `Savings rate is ${savingsRate}% of income (${fmt(net)}), above the standard 20% benchmark.`
         : savingsRate >= 20
-          ? `Healthy savings rate at ${savingsRate}%. You're meeting the recommended 20% target. Keep it steady!`
+          ? `Steady savings rate at ${savingsRate}%, meeting the 20% target.`
           : savingsRate >= 0
-            ? `Your savings rate is ${savingsRate}%, below the recommended 20%. You need to save ${fmt(income * 0.2 - net)} more per period to hit the target. Review your top categories for cuts.`
-            : `You're spending more than you earn by ${fmt(Math.abs(net))}. This is unsustainable — immediately review and reduce non-essential spending.`,
+            ? `Savings rate is ${savingsRate}%, below the 20% target. Saving ${fmt(income * 0.2 - net)} more reaches the target.`
+            : `Expenses exceed income by ${fmt(Math.abs(net))}. Review top expense categories to rebalance cash flow.`,
       color: savingsRate >= 20 ? '#34d399' : savingsRate >= 0 ? '#f0b429' : '#f87171',
       bg: savingsRate >= 20 ? 'rgba(52,211,153,0.08)' : savingsRate >= 0 ? 'rgba(240,180,41,0.08)' : 'rgba(248,113,113,0.08)',
     });
@@ -121,8 +121,8 @@ export default function InsightsPage() {
         icon: change > 0 ? TrendingUp : TrendingDown,
         title: change > 0 ? `Spending Up ${Math.abs(changePct)}%` : `Spending Down ${Math.abs(changePct)}%`,
         desc: change > 0
-          ? `Your spending increased from ${fmt(prevMonth[1].expense)} in ${prevLabel} to ${fmt(lastMonth[1].expense)} in ${lastLabel} (+${Math.abs(changePct)}%). Review what changed.`
-          : `Great news! Spending dropped from ${fmt(prevMonth[1].expense)} in ${prevLabel} to ${fmt(lastMonth[1].expense)} in ${lastLabel} (−${Math.abs(changePct)}%). Keep it up!`,
+          ? `Spending rose from ${fmt(prevMonth[1].expense)} in ${prevLabel} to ${fmt(lastMonth[1].expense)} in ${lastLabel} (+${Math.abs(changePct)}%).`
+          : `Spending dropped from ${fmt(prevMonth[1].expense)} in ${prevLabel} to ${fmt(lastMonth[1].expense)} in ${lastLabel} (−${Math.abs(changePct)}%).`,
         color: change > 0 ? '#f87171' : '#34d399',
         bg: change > 0 ? 'rgba(248,113,113,0.08)' : 'rgba(52,211,153,0.08)',
         link: '/reports',
@@ -135,7 +135,7 @@ export default function InsightsPage() {
       results.push({
         icon: CreditCard,
         title: 'Biggest Single Expense',
-        desc: `Your largest transaction was ${fmt(Math.abs(largestExpense.amount))} on "${largestExpense.description.slice(0, 50)}" (${new Date(largestExpense.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}). ${Math.abs(largestExpense.amount) > avgMonthlyExpense * 0.3 ? 'This is a significant chunk of your monthly spend.' : ''}`,
+        desc: `Your largest single transaction was ${fmt(Math.abs(largestExpense.amount))} for "${largestExpense.description.slice(0, 50)}" on ${new Date(largestExpense.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}.`,
         color: '#f472b6',
         bg: 'rgba(244,114,182,0.08)',
         link: '/transactions',
@@ -180,8 +180,8 @@ export default function InsightsPage() {
     if (topDay) {
       results.push({
         icon: CalendarDays,
-        title: `You Spend Most on ${topDay[0]}s`,
-        desc: `${topDay[0]} is your highest spending day with ${fmt(topDay[1])} total. Being mindful of ${topDay[0]} spending habits could help reduce unnecessary purchases.`,
+        title: `Highest Spending Day: ${topDay[0]}`,
+        desc: `${topDay[0]} is your highest spending day with ${fmt(topDay[1])} total recorded expenses.`,
         color: '#60a5fa',
         bg: 'rgba(96,165,250,0.08)',
       });
@@ -194,7 +194,7 @@ export default function InsightsPage() {
         results.push({
           icon: Flame,
           title: `Top 3 Categories = ${top3Pct}% of Spend`,
-          desc: `${sortedCats[0][0]}, ${sortedCats[1][0]}, and ${sortedCats[2][0]} account for ${top3Pct}% of all spending. Focus your budget optimization efforts on these three areas for maximum impact.`,
+          desc: `${sortedCats[0][0]}, ${sortedCats[1][0]}, and ${sortedCats[2][0]} account for ${top3Pct}% of your total expenses.`,
           color: '#fb923c',
           bg: 'rgba(251,146,60,0.08)',
           link: '/analytics',
@@ -213,9 +213,9 @@ export default function InsightsPage() {
             <Lock size={40} />
           </div>
         </motion.div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Unlock AI-Powered Insights</h2>
+        <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>AI Insights</h2>
         <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 440, marginBottom: 32, lineHeight: 1.6 }}>
-          AI Insights analyzes your actual statement details to spot transaction anomalies, detect hidden subscription creep, optimize savings targets, and predict cash flow trends.
+          AI Insights analyzes your statements to flag unusual transactions, track recurring subscription charges, and project cash flow trends.
         </p>
         <Link to="/premium" className="btn-primary" style={{ padding: '12px 32px', fontSize: 15 }}>
           Upgrade to Pro ⚡

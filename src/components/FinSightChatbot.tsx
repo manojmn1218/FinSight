@@ -31,9 +31,9 @@ export default function FinSightChatbot() {
       {
         id: 'welcome-1',
         role: 'assistant',
-        text: `Hello ${data.userName || 'there'}! I am **FinSight AI**, your dedicated personal finance assistant powered by Python.\n\nI can answer questions regarding the **FinSight platform** or your **personal account details** (balance, income, expenses, and goals).\n\n*Note: Questions outside FinSight or your account data will return "Cannot say".*`,
+        text: `Hello ${data.userName || 'there'}! Ask me about your account balance, recent transactions, spending categories, or savings goals. I can also help you with FinSight features.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        provider: 'FinSight Python Core',
+        provider: 'FinSight Assistant',
       },
     ];
   });
@@ -78,7 +78,7 @@ export default function FinSightChatbot() {
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
-        text: res.reply || "I'm here to assist you with your FinSight account and finances. Please ask about your balances, transactions, or goals.",
+        text: res.reply || "Ask about your balances, recent transactions, or savings goals.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         provider: res.provider,
         isOutOfScope: res.isOutOfScope,
@@ -89,7 +89,7 @@ export default function FinSightChatbot() {
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        text: "I'm temporarily having trouble connecting to the AI co-pilot. You can still check your balances, transactions, or goals directly in FinSight.",
+        text: "Could not connect to the assistant right now. You can check your balances, transactions, and goals directly on your dashboard.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         provider: 'Connection Error',
         isOutOfScope: false,

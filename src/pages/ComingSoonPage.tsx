@@ -12,9 +12,9 @@ export default function ComingSoonPage() {
           <Sparkles size={40} />
         </div>
       </motion.div>
-      <h1 style={{ fontSize: 40, fontWeight: 800, marginBottom: 16 }}>Coming Soon!</h1>
-      <p style={{ fontSize: 18, color: 'var(--text2)', maxWidth: 500, marginBottom: 40, lineHeight: 1.6 }}>
-        We are working hard to build these advanced premium features. Check back later for our official launch.
+      <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 16 }}>Coming Soon</h1>
+      <p style={{ fontSize: 16, color: 'var(--text2)', maxWidth: 480, marginBottom: 36, lineHeight: 1.6 }}>
+        These premium features are in active development. Check back for upcoming releases.
       </p>
       <button onClick={() => nav(-1)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
         <ArrowLeft size={18} /> Go Back
