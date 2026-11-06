@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Sun, Moon, Timer, Database, ArrowLeft, Menu, X } from 'lucide-react';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Timer, Database, ArrowLeft, Menu, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 const NAV_ITEMS = [
@@ -15,7 +15,6 @@ export default function AdminLayout() {
   const { logoutUser, sessionTimeLeft } = useFinance();
   const nav = useNavigate();
   const loc = useLocation();
-  const [isDark, setIsDark] = useState(!document.body.classList.contains('light'));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const logout = () => { logoutUser(); nav('/login'); };
@@ -24,12 +23,6 @@ export default function AdminLayout() {
   const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
   const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
   const sessionLow = sessionHours === 0 && sessionMins < 5;
-
-  const toggleTheme = () => {
-    const isLight = document.body.classList.toggle('light');
-    localStorage.setItem('finsight_theme', isLight ? 'light' : 'dark');
-    setIsDark(!isLight);
-  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'Inter', sans-serif" }}>
@@ -158,10 +151,6 @@ export default function AdminLayout() {
 
         {/* Bottom actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
-          <button onClick={toggleTheme} className="btn-ghost" aria-label="Toggle visual theme">
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-          </button>
           <button onClick={logout} className="btn-ghost danger" aria-label="Sign out">
             <LogOut size={18} />
             <span>Secure Logout</span>
