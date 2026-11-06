@@ -154,7 +154,9 @@ export default function LoginPage() {
           animate={{ opacity: 1, scale: 1 }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 56, height: 56 }} />
+            <Link to="/dashboard" aria-label="Go to Dashboard">
+              <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 56, height: 56, cursor: 'pointer' }} />
+            </Link>
           </div>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Active Session Found</h2>
           <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 24, lineHeight: 1.5 }}>
@@ -201,13 +203,13 @@ export default function LoginPage() {
           style={{ flex: 1.2, padding: '60px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}
           initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
+          <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 14, marginBottom: 48, textDecoration: 'none', color: 'inherit' }}>
             <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 46, height: 46 }} />
             <div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>FinSight</div>
               <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1 }}>Smart AI Finance</div>
             </div>
-          </div>
+          </Link>
 
           <h1 style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.15, marginBottom: 16 }}>
             Take control of<br />

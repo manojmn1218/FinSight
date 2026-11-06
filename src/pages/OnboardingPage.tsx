@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { User, DollarSign, CreditCard, Target, ArrowRight, ArrowLeft, Check, Sparkles, AlertCircle } from 'lucide-react';
@@ -76,10 +76,10 @@ export default function OnboardingPage() {
 
       {/* Sidebar progress */}
       <div className="onboarding-sidebar" style={{ width: 250, padding: '32px 24px', background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
-          <img src="/ft.jpeg" alt="" className="app-logo" style={{ width: 34, height: 34 }} />
+        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48, textDecoration: 'none', color: 'inherit' }}>
+          <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 34, height: 34, borderRadius: 8 }} />
           <span style={{ fontSize: 18, fontWeight: 700 }}>FinSight</span>
-        </div>
+        </Link>
 
         <div className="onboarding-sidebar-steps" style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
           {STEPS.map((s, i) => {

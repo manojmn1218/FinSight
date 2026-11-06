@@ -102,15 +102,23 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside className={`sidebar-collapsible${mobileOpen ? ' open' : ''}`} style={{
         width: 260,
-        padding: '24px 16px',
+        padding: '20px 16px',
         background: 'var(--bg2)',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
       }}>
-        {/* Brand + Avatar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', marginBottom: 8 }}>
+        {/* Clickable Brand Logo Header */}
+        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 12px 14px', textDecoration: 'none', color: 'inherit' }}>
+          <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }} />
+          <span className="sidebar-session-text" style={{ fontWeight: 800, fontSize: 18, letterSpacing: -0.4, background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            FinSight
+          </span>
+        </Link>
+
+        {/* User Card */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', marginBottom: 4, background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
           <div style={{
             width: 40, height: 40, borderRadius: 12,
             background: 'var(--grad)',
@@ -177,18 +185,53 @@ export default function DashboardLayout() {
             <span>Logout</span>
           </button>
         </div>
+
+        {/* Footer info & copyright */}
+        <div className="sidebar-session-text" style={{ padding: '10px 12px 4px', fontSize: 10, color: 'var(--text3)', borderTop: '1px solid var(--border)', marginTop: 8, lineHeight: 1.5 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+            <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>Legal Hub</Link>
+            •
+            <Link to="/support" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>Help Desk</Link>
+          </div>
+          <div>&copy; {new Date().getFullYear()} FinSight Inc.</div>
+        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="main-content-area" style={{ flex: 1, padding: '32px 40px', background: 'var(--bg)', overflowY: 'auto', maxHeight: '100vh' }}>
+      <main className="main-content-area" style={{ flex: 1, padding: '32px 40px', background: 'var(--bg)', overflowY: 'auto', maxHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <motion.div
           key={loc.pathname}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{ flex: 1 }}
         >
           <Outlet />
         </motion.div>
+
+        {/* Dashboard Universal Footer */}
+        <footer style={{
+          marginTop: 48,
+          paddingTop: 20,
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 12,
+          color: 'var(--text3)',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}>
+          <div>
+            &copy; {new Date().getFullYear()} FinSight Technologies Inc. Bank-grade 256-bit AES encryption.
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Terms &amp; ARL</Link>
+            <Link to="/legal#privacy" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/legal#dmca" style={{ color: 'var(--text3)', textDecoration: 'none' }}>DMCA Notice</Link>
+            <Link to="/support" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Contact Support</Link>
+          </div>
+        </footer>
       </main>
 
       {/* Mobile menu button styles (inline for simplicity) */}

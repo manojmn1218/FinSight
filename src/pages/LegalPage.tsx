@@ -191,7 +191,15 @@ export default function LegalPage() {
                   </div>
                   <div>
                     <span style={{ color: 'var(--text3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Email Address</span>
-                    <p style={{ margin: '4px 0 0', fontWeight: 600, color: 'var(--purple)' }}>dmca@finsight.com</p>
+                    <p style={{ margin: '4px 0 0', fontWeight: 600 }}>
+                      <a href="mailto:dmca@finsight.com" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>dmca@finsight.com</a>
+                    </p>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Telephone Contact</span>
+                    <p style={{ margin: '4px 0 0', fontWeight: 600 }}>
+                      <a href="tel:+14158905412" style={{ color: 'var(--text)', textDecoration: 'underline' }}>+1 (415) 890-5412</a>
+                    </p>
                   </div>
                   <div>
                     <span style={{ color: 'var(--text3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Physical Address</span>
@@ -287,7 +295,7 @@ export default function LegalPage() {
 
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 20, marginBottom: 10 }}>2. 1-Click Online Cancellation Mechanism</h3>
                 <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 14 }}>
-                  You may cancel your subscription at any time by navigating to your <strong>Account Profile &gt; Subscription &gt; Manage Plan</strong> and clicking "Cancel Auto-Renewal". Alternatively, email <strong>support@finsight.com</strong> with "Cancel Subscription" at least 24 hours prior to your scheduled renewal date.
+                  You may cancel your subscription at any time by navigating to your <strong>Account Profile &gt; Subscription &gt; Manage Plan</strong> and clicking "Cancel Auto-Renewal". Alternatively, email <a href="mailto:support@finsight.com?subject=Cancel%20Subscription" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>support@finsight.com</a> with "Cancel Subscription" at least 24 hours prior to your scheduled renewal date.
                 </p>
 
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 20, marginBottom: 10 }}>3. Refund &amp; Trial Terms</h3>
@@ -326,7 +334,7 @@ export default function LegalPage() {
 
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 20, marginBottom: 10 }}>2. Immediate Account Deletion for Underage Submissions</h3>
                 <p style={{ fontSize: 13, color: 'var(--text2)' }}>
-                  If FinSight learns that personal data of an individual under 13 has been collected without parental consent, we immediately purge all associated records, uploaded statements, and telemetry. Parents may contact <strong>privacy@finsight.com</strong> for inquiries.
+                  If FinSight learns that personal data of an individual under 13 has been collected without parental consent, we immediately purge all associated records, uploaded statements, and telemetry. Parents may contact <a href="mailto:privacy@finsight.com" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>privacy@finsight.com</a> for inquiries.
                 </p>
               </div>
             )}
@@ -400,7 +408,7 @@ export default function LegalPage() {
 
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 20, marginBottom: 10 }}>3. Instant Unsubscribe &amp; Opt-Out Mechanism</h3>
                 <p style={{ fontSize: 13, color: 'var(--text2)' }}>
-                  Users may opt out of non-essential marketing notifications with one click or by emailing <strong>support@finsight.com</strong> with "Unsubscribe" in the subject line. Opt-out requests are processed immediately and honored permanently.
+                  Users may opt out of non-essential marketing notifications with one click or by emailing <a href="mailto:support@finsight.com?subject=Unsubscribe" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>support@finsight.com</a> with "Unsubscribe" in the subject line. Opt-out requests are processed immediately and honored permanently.
                 </p>
               </div>
             )}
@@ -410,3 +418,4 @@ export default function LegalPage() {
     </div>
   );
 }
+

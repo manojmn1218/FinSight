@@ -63,7 +63,7 @@ export default function AdminLayout() {
         gap: 8,
       }}>
         {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', marginBottom: 8 }}>
+        <Link to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', marginBottom: 8, textDecoration: 'none', color: 'inherit' }}>
           <div style={{
             width: 42, height: 42, borderRadius: 12,
             background: 'var(--grad)',
@@ -82,7 +82,7 @@ export default function AdminLayout() {
               Central Control
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Back to User Dashboard Link */}
         <Link
@@ -160,8 +160,33 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="main-content-area" style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', maxHeight: '100vh' }}>
-        <Outlet />
+      <main className="main-content-area" style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', maxHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ flex: 1 }}>
+          <Outlet />
+        </div>
+
+        {/* Admin Footer */}
+        <footer style={{
+          marginTop: 48,
+          paddingTop: 18,
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 12,
+          color: 'var(--text3)',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}>
+          <div>
+            &copy; {new Date().getFullYear()} FinSight Executive Console • Internal Administration Only
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Legal Hub</Link>
+            <Link to="/legal#dmca" style={{ color: 'var(--text3)', textDecoration: 'none' }}>DMCA Notice</Link>
+            <Link to="/dashboard" style={{ color: 'var(--text3)', textDecoration: 'none' }}>User Dashboard</Link>
+          </div>
+        </footer>
       </main>
 
       <style>{`

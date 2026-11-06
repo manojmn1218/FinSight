@@ -157,7 +157,9 @@ export default function SignupPage() {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 48, height: 48 }} />
+          <Link to="/login" aria-label="FinSight Home">
+            <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 48, height: 48, cursor: 'pointer' }} />
+          </Link>
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, textAlign: 'center' }}>Get started free</div>
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Create your account</h2>

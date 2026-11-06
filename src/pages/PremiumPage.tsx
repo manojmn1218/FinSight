@@ -455,7 +455,7 @@ function CheckoutModal({
                     style={{ marginTop: 2, accentColor: 'var(--purple)', cursor: 'pointer', width: 16, height: 16, flexShrink: 0 }}
                   />
                   <span style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5 }}>
-                    <strong>Continuous Service &amp; Auto-Renewal Terms:</strong> I authorize FinSight to automatically renew my {plan.name} Plan {billing === 'yearly' ? 'annually' : 'monthly'} at <strong>{fmt(total)}</strong> until I cancel. I understand I can cancel anytime with 1-click in Account Profile or by emailing <span style={{ color: 'var(--purple)' }}>support@finsight.com</span> at least 24h prior to renewal to prevent future billing.
+                    <strong>Continuous Service &amp; Auto-Renewal Terms:</strong> I authorize FinSight to automatically renew my {plan.name} Plan {billing === 'yearly' ? 'annually' : 'monthly'} at <strong>{fmt(total)}</strong> until I cancel. I understand I can cancel anytime with 1-click in Account Profile or by emailing <a href="mailto:support@finsight.com?subject=Cancel%20Subscription" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>support@finsight.com</a> at least 24h prior to renewal to prevent future billing.
                   </span>
                 </label>
               </div>

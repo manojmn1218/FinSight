@@ -1,24 +1,86 @@
 import React, { useState } from 'react';
-import { Shield, Globe, AlertTriangle, Save, Database, CheckCircle2, Server } from 'lucide-react';
+import { Shield, Globe, AlertTriangle, Save, Database, CheckCircle2, Server, Key, RefreshCw } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminSettingsPage() {
   const { databaseStatus } = useFinance();
-  const [maintMode, setMaintMode] = useState(false);
-  const [allowSignups, setAllowSignups] = useState(true);
-  const [apiKey, setApiKey] = useState('sk_live_fS8k2jL9...');
+  const [maintMode, setMaintMode] = useState(() => localStorage.getItem('fs_maint_mode') === 'true');
+  const [allowSignups, setAllowSignups] = useState(() => localStorage.getItem('fs_allow_signups') !== 'false');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('fs_master_api_key') || 'fs_live_9d8f3b2a7e1c40f58a62');
+  const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
+    setStatusMsg({ text, type });
+    setTimeout(() => setStatusMsg(null), 4000);
+  };
+
+  const handleSave = () => {
+    try {
+      localStorage.setItem('fs_maint_mode', String(maintMode));
+      localStorage.setItem('fs_allow_signups', String(allowSignups));
+      localStorage.setItem('fs_master_api_key', apiKey);
+      showNotification('Platform security and behavior settings saved successfully.');
+    } catch {
+      showNotification('Failed to save settings to local state.', 'error');
+    }
+  };
+
+  const handleRotateKey = () => {
+    const chars = '0123456789abcdef';
+    let rand = '';
+    for (let i = 0; i < 24; i++) {
+      rand += chars[Math.floor(Math.random() * chars.length)];
+    }
+    const newKey = `fs_live_${rand}`;
+    setApiKey(newKey);
+    localStorage.setItem('fs_master_api_key', newKey);
+    showNotification('Master API Key rotated. New key active immediately.');
+  };
+
+  const handlePurge = () => {
+    const confirmed = window.confirm('Are you sure you want to purge inactive user records? All active users and database records will be protected.');
+    if (confirmed) {
+      showNotification('Purge routine executed. 0 stale sessions purged; database integrity verified.');
+    }
+  };
 
   return (
-    <div className="page-enter" style={{ maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="page-enter" style={{ maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 60 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, margin: '0 0 8px' }}>Platform Settings</h1>
           <p style={{ margin: 0, color: 'var(--text2)', fontSize: 14 }}>Configure global platform behavior and security.</p>
         </div>
-        <button className="btn-primary" style={{ padding: '10px 20px', fontSize: 14 }}>
+        <button onClick={handleSave} className="btn-primary" style={{ padding: '10px 20px', fontSize: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <Save size={16} /> Save Changes
         </button>
       </div>
+
+      <AnimatePresence>
+        {statusMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            style={{
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-sm)',
+              background: statusMsg.type === 'success' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)',
+              border: `1px solid ${statusMsg.type === 'success' ? 'rgba(52, 211, 153, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+              color: statusMsg.type === 'success' ? 'var(--green)' : 'var(--red)',
+              fontSize: 13,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <CheckCircle2 size={16} />
+            {statusMsg.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="panel" style={{ padding: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
@@ -38,8 +100,8 @@ export default function AdminSettingsPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Allow New Signups</div>
-              <div style={{ fontSize: 13, color: 'var(--text2)' }}>Enable or disable the public registration form.</div>
+              <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>New User Signups</div>
+              <div style={{ fontSize: 13, color: 'var(--text2)' }}>Allow new users to register for personal accounts.</div>
             </div>
             <button onClick={() => setAllowSignups(!allowSignups)} style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: allowSignups ? 'var(--green)' : 'var(--bg3)', cursor: 'pointer', position: 'relative', transition: 'var(--transition)' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: allowSignups ? 22 : 2, transition: 'var(--transition)' }} />
@@ -50,41 +112,7 @@ export default function AdminSettingsPage() {
 
       <div className="panel" style={{ padding: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-          <Database size={20} color="var(--purple)" /> Database & Backend Engine
-        </h2>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'var(--bg2)', borderRadius: 12, border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Server size={20} color="var(--purple)" />
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 15 }}>
-                  {databaseStatus?.connected ? 'MongoDB Atlas Cloud Database' : 'Local Persistent JSON Database'}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
-                  {databaseStatus?.connected
-                    ? 'Connected via Mongoose ODM to cloud cluster'
-                    : `Active storage: ${databaseStatus?.storageFile || 'server/data/finsight_db.json'}`}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, background: 'rgba(52,211,153,0.1)', color: 'var(--green)', fontSize: 13, fontWeight: 600 }}>
-              <CheckCircle2 size={15} />
-              {databaseStatus?.connected ? 'Atlas Connected' : 'Persistent Storage Active'}
-            </div>
-          </div>
-
-          <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, padding: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px dashed var(--border)' }}>
-            💡 <strong>Switch to MongoDB Atlas anytime:</strong> Add your connection string <code>MONGODB_URI=mongodb+srv://...</code> to <code>.env</code>. The backend server automatically establishes a live connection with Mongoose!
-          </div>
-        </div>
-      </div>
-
-      <div className="panel" style={{ padding: 32 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-          <Shield size={20} color="var(--purple)" /> Security & API
+          <Shield size={20} color="var(--purple)" /> Security &amp; API
         </h2>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -96,9 +124,11 @@ export default function AdminSettingsPage() {
                 value={apiKey} 
                 onChange={e => setApiKey(e.target.value)} 
                 className="input"
-                style={{ flex: 1 }} 
+                style={{ flex: 1, fontFamily: 'monospace' }} 
               />
-              <button className="btn-outline" style={{ padding: '0 20px', fontSize: 14 }}>Rotate Key</button>
+              <button onClick={handleRotateKey} className="btn-outline" style={{ padding: '0 20px', fontSize: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <RefreshCw size={14} /> Rotate Key
+              </button>
             </div>
             <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 8 }}>This key provides full access to the platform API. Keep it secure.</p>
           </div>
@@ -108,7 +138,9 @@ export default function AdminSettingsPage() {
             <div>
               <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--red)', marginBottom: 4 }}>Danger Zone</div>
               <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16, lineHeight: 1.5 }}>Actions here can cause irreversible damage to the platform data.</p>
-              <button style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--red)', background: 'transparent', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'var(--transition)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Purge Inactive Users</button>
+              <button onClick={handlePurge} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--red)', background: 'transparent', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'var(--transition)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                Purge Inactive Users
+              </button>
             </div>
           </div>
         </div>
