@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2, BarChart3 } from 'lucide-react';
+import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2, BarChart3, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
@@ -8,6 +8,10 @@ import { CATEGORY_CONFIG } from '../utils/types';
 import CategoryIcon from '../components/CategoryIcon';
 import { computeMonthSummaries, detectRecurringGrouped } from '../utils/transactionParser';
 import type { Transaction, Category } from '../utils/types';
+import InteractiveCard3D from '../components/3d/InteractiveCard3D';
+import FinancialCore3D from '../components/3d/FinancialCore3D';
+import Tilt3DCard from '../components/3d/Tilt3DCard';
+import HealthGauge3D from '../components/3d/HealthGauge3D';
 
 const fmt = (n: number) =>
   (n < 0 ? '-' : '') +
@@ -544,22 +548,104 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Stat cards */}
+        {/* 3D Wealth Command Center Hero */}
+        <motion.div className="dashboard-hero-3d" {...an(1)}>
+          {/* Interactive 3D Obsidian Card */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <InteractiveCard3D
+              balance={txnStats.currentBalance}
+              userName={data.userName}
+              isStatementBalance={txnStats.isStatementBalance}
+            />
+          </div>
+
+          {/* 3D WebGL Financial Engine & Summary */}
+          <div
+            className="panel"
+            style={{
+              padding: '22px 26px',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 20,
+              position: 'relative',
+              overflow: 'hidden',
+              minHeight: 226,
+            }}
+          >
+            <div style={{ flex: 1, zIndex: 2 }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  background: 'rgba(129, 140, 248, 0.12)',
+                  border: '1px solid rgba(129, 140, 248, 0.25)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'var(--purple)',
+                  letterSpacing: 0.8,
+                  marginBottom: 12,
+                }}
+              >
+                <Activity size={13} /> 3D WEALTH INTELLIGENCE
+              </div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, letterSpacing: -0.6 }}>
+                Real-Time Financial Core
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, maxWidth: 380, marginBottom: 18 }}>
+                Synthesized across {txnStats.txnCount} transactions in {txnStats.categoryBreakdown.length} spending categories with {txnStats.savingsRate}% capital retention.
+              </p>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700, display: 'block' }}>Daily Burn</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmt(txnStats.avgDailySpending)}/day</span>
+                </div>
+                <div style={{ width: 1, height: 26, background: 'var(--border)' }} />
+                <div>
+                  <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700, display: 'block' }}>Net Cash Flow</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: txnStats.netCashFlow >= 0 ? '#34d399' : '#f87171', fontVariantNumeric: 'tabular-nums' }}>
+                    {fmt(txnStats.netCashFlow)}
+                  </span>
+                </div>
+                <div style={{ width: 1, height: 26, background: 'var(--border)' }} />
+                <div>
+                  <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700, display: 'block' }}>Capital Saved</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#34d399', fontVariantNumeric: 'tabular-nums' }}>{txnStats.savingsRate}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive 3D WebGL Crystal Core */}
+            <div style={{ width: 180, height: 180, flexShrink: 0, position: 'relative' }}>
+              <FinancialCore3D healthScore={txnStats.healthScore} savingsRate={txnStats.savingsRate} />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* 3D Tilt Stat cards */}
         <div className="responsive-grid-4">
           {stats.map((s, i) => (
-            <motion.div key={s.label} className="panel panel-glow" style={{ padding: 20 }} {...an(i + 1)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: s.bg, color: s.clr }}>
-                  <s.icon size={20} />
+            <motion.div key={s.label} {...an(i + 2)}>
+              <Tilt3DCard glowColor={s.clr} maxTilt={7} style={{ height: '100%' }}>
+                <div className="panel panel-glow" style={{ padding: 22, height: '100%', margin: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: s.bg, color: s.clr }}>
+                      <s.icon size={20} />
+                    </div>
+                    {s.badge && (
+                      <span className="badge" style={{ background: s.badgeBg, color: s.badgeClr }}>
+                        {s.badgeIcon && <s.badgeIcon size={11} />}{s.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500, marginBottom: 4 }}>{s.label}</p>
+                  <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.6, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
                 </div>
-                {s.badge && (
-                  <span className="badge" style={{ background: s.badgeBg, color: s.badgeClr }}>
-                    {s.badgeIcon && <s.badgeIcon size={11} />}{s.badge}
-                  </span>
-                )}
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500, marginBottom: 4 }}>{s.label}</p>
-              <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5 }}>{s.value}</p>
+              </Tilt3DCard>
             </motion.div>
           ))}
         </div>
@@ -567,7 +653,7 @@ export default function DashboardPage() {
         {/* Income vs Expenses Bar + Budget Health Score */}
         <div className="responsive-grid-2-1">
           {/* Spending Progress */}
-          <motion.div className="panel" style={{ padding: 20 }} {...an(5)}>
+          <motion.div className="panel" style={{ padding: 22 }} {...an(6)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600 }}>
                 <BarChart3 size={16} color="var(--purple)" /> Income vs Expenses
@@ -601,8 +687,8 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Health Score Gauge */}
-          <motion.div className="panel" style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: 180, position: 'relative', overflow: 'hidden' }} {...an(5)}>
+          {/* 3D Health Score Gauge */}
+          <motion.div className="panel" style={{ padding: 22, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: 200, position: 'relative', overflow: 'hidden' }} {...an(6)}>
             {data.currentPlan === 'Basic' ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, textAlign: 'center', padding: '10px 0' }}>
                 <Lock size={20} color="var(--purple)" />
@@ -612,9 +698,9 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                <HealthGauge score={txnStats.healthScore} label="Health" />
-                <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8, textAlign: 'center' }}>
-                  {txnStats.healthScore >= 75 ? 'Excellent financial health' : txnStats.healthScore >= 50 ? 'Room for improvement' : 'Needs attention'}
+                <HealthGauge3D score={txnStats.healthScore} label="Health" />
+                <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 12, textAlign: 'center', fontWeight: 500 }}>
+                  {txnStats.healthScore >= 75 ? 'Optimal cash flow health' : txnStats.healthScore >= 50 ? 'Moderate spending balance' : 'Requires attention'}
                 </p>
               </>
             )}
@@ -971,22 +1057,85 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Stat cards */}
+      {/* 3D Command Center Banner */}
+      <motion.div className="dashboard-hero-3d" {...an(1)}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <InteractiveCard3D
+            balance={data.totalBalance}
+            userName={data.userName}
+          />
+        </div>
+        <div
+          className="panel"
+          style={{
+            padding: '22px 26px',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 20,
+            position: 'relative',
+            overflow: 'hidden',
+            minHeight: 226,
+          }}
+        >
+          <div style={{ flex: 1, zIndex: 2 }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 12px',
+                borderRadius: 999,
+                background: 'rgba(129, 140, 248, 0.12)',
+                border: '1px solid rgba(129, 140, 248, 0.25)',
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--purple)',
+                letterSpacing: 0.8,
+                marginBottom: 12,
+              }}
+            >
+              <Activity size={13} /> 3D WEALTH INTELLIGENCE
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, letterSpacing: -0.6 }}>
+              Welcome to FinSight
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, maxWidth: 380, marginBottom: 18 }}>
+              Connect your bank or upload a statement PDF to unlock automated categorization, recurring bill detection, and live financial twin telemetry.
+            </p>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <Link to="/transactions" className="btn-primary" style={{ padding: '8px 20px', fontSize: 13 }}>
+                <Upload size={14} /> Upload Statement
+              </Link>
+            </div>
+          </div>
+          <div style={{ width: 180, height: 180, flexShrink: 0, position: 'relative' }}>
+            <FinancialCore3D healthScore={data.monthlyIncome > 0 ? 65 : 45} savingsRate={data.savingsPercent || 20} />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 3D Tilt Stat cards */}
       <div className="responsive-grid-4">
         {fallbackStats.map((s, i) => (
-          <motion.div key={s.label} className="panel panel-glow" style={{ padding: 20 }} {...an(i + 1)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: s.bg, color: s.clr }}>
-                <s.icon size={20} />
+          <motion.div key={s.label} {...an(i + 2)}>
+            <Tilt3DCard glowColor={s.clr} maxTilt={7} style={{ height: '100%' }}>
+              <div className="panel panel-glow" style={{ padding: 22, height: '100%', margin: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: s.bg, color: s.clr }}>
+                    <s.icon size={20} />
+                  </div>
+                  {s.badge && (
+                    <span className="badge" style={{ background: s.badgeBg, color: s.badgeClr }}>
+                      {s.badge === 'Income' && <ArrowUpRight size={11} />}{s.badge}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500, marginBottom: 4 }}>{s.label}</p>
+                <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.6, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
               </div>
-              {s.badge && (
-                <span className="badge" style={{ background: s.badgeBg, color: s.badgeClr }}>
-                  {s.badge === 'Income' && <ArrowUpRight size={11} />}{s.badge}
-                </span>
-              )}
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500, marginBottom: 4 }}>{s.label}</p>
-            <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5 }}>{s.value}</p>
+            </Tilt3DCard>
           </motion.div>
         ))}
       </div>

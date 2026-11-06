@@ -7,11 +7,11 @@
   --bg: #06080f;
   --bg2: #0d1117;
   --bg3: #161b22;
-  --surface: rgba(17, 24, 39, 0.6);
-  --surface-hover: rgba(17, 24, 39, 0.8);
-  --panel-bg: rgba(17, 24, 39, 0.94);
+  --surface: rgba(14, 18, 28, 0.75);
+  --surface-hover: rgba(20, 26, 40, 0.85);
+  --panel-bg: rgba(13, 17, 26, 0.95);
   --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.14);
+  --border-hover: rgba(255, 255, 255, 0.16);
   --text: #f0f6fc;
   --text2: #8b949e;
   --text3: #6e7681;
@@ -22,13 +22,14 @@
   --amber: #f0b429;
   --red: #f87171;
   --focus-ring: rgba(129, 140, 248, 0.5);
-  --grad: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
-  --grad-subtle: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(192, 132, 252, 0.08) 50%, rgba(244, 114, 182, 0.04) 100%);
-  --radius: 16px;
+  --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+  --grad-subtle: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(217, 70, 239, 0.04) 100%);
+  --radius: 18px;
   --radius-sm: 10px;
-  --radius-lg: 24px;
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.35);
+  --radius-lg: 26px;
+  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), 0 0 1px 1px rgba(255, 255, 255, 0.04);
+  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.08);
+  --shadow-3d: 0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 18px 36px -18px rgba(0, 0, 0, 0.8);
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -78,7 +79,15 @@ body.light {
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(circle at 12% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 88% 18%, rgba(217, 70, 239, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 85%, rgba(52, 211, 153, 0.04) 0%, transparent 50%),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 54px 54px, 54px 54px;
+  background-attachment: fixed;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -143,26 +152,26 @@ body.light .app-logo.auth-blend {
    REUSABLE COMPONENT CLASSES
    ═══════════════════════════════════════════════ */
 
-/* Glassmorphism Panel */
+/* Glassmorphism Panel with 3D Depth & Specular Sheen */
 .panel {
-  background: var(--surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(22, 27, 40, 0.72) 0%, rgba(13, 17, 26, 0.84) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.09), 0 12px 36px -8px rgba(0, 0, 0, 0.5);
   transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 .panel:hover {
-  border-color: var(--border-hover);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 .panel-glow:hover {
-  border-color: rgba(129, 140, 248, 0.2);
-  box-shadow: var(--shadow), 0 0 20px rgba(129, 140, 248, 0.06);
-  transform: translateY(-2px);
+  border-color: rgba(129, 140, 248, 0.3);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.14), 0 20px 45px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(129, 140, 248, 0.15);
+  transform: translateY(-3px);
 }
 
-/* Buttons */
+/* Buttons with 3D Bevel & Light Edge */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -170,19 +179,19 @@ body.light .app-logo.auth-blend {
   gap: 8px;
   padding: 12px 24px;
   border-radius: 999px;
-  border: none;
-  background: var(--grad);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 20px rgba(129, 140, 248, 0.25);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
   transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 28px rgba(129, 140, 248, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 .btn-primary:active {
   transform: translateY(0px);
@@ -1094,9 +1103,20 @@ body.light .app-logo.auth-blend {
   }
 }
 
-/* ═══════════════════════════════════════════════
-   ACCESSIBILITY: REDUCED MOTION
-   ═══════════════════════════════════════════════ */
+/* 3D Dashboard Command Center */
+.dashboard-hero-3d {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 980px) {
+  .dashboard-hero-3d {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

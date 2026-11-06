@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { fetchQuotesWithCache } from '../utils/stockApi';
 import type { StockQuote } from '../utils/stockApi';
+import Tilt3DCard from '../components/3d/Tilt3DCard';
+import InteractiveCard3D from '../components/3d/InteractiveCard3D';
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 
@@ -420,52 +422,32 @@ export default function PortfolioPage() {
           </p>
         </motion.div>
 
-        {/* Mock/Preview Dashboard Layout */}
+        {/* 3D Wealth Showcase Panel */}
         <motion.div
           className="panel"
           style={{
-            width: '100%', padding: 24, position: 'relative', overflow: 'hidden',
-            filter: 'blur(3.5px)', opacity: 0.35, pointerEvents: 'none',
+            width: '100%',
+            padding: '48px 32px',
+            background: 'linear-gradient(135deg, rgba(240, 180, 41, 0.06) 0%, rgba(13, 17, 26, 0.95) 100%)',
+            border: '1px solid rgba(240, 180, 41, 0.25)',
+            boxShadow: '0 24px 60px -15px rgba(0, 0, 0, 0.65), 0 0 35px rgba(240, 180, 41, 0.08)',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
           {...an(1)}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
-            <div className="panel" style={{ padding: 18 }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)' }}>TOTAL NET WORTH</span>
-              <p style={{ fontSize: 24, fontWeight: 800, marginTop: 4 }}>₹20,05,000</p>
-            </div>
-            <div className="panel" style={{ padding: 18 }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)' }}>PORTFOLIO CHANGE (YTD)</span>
-              <p style={{ fontSize: 24, fontWeight: 800, marginTop: 4, color: 'var(--green)' }}>+14.25%</p>
-            </div>
-            <div className="panel" style={{ padding: 18 }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)' }}>1-ON-1 ADVISORY</span>
-              <p style={{ fontSize: 16, fontWeight: 700, marginTop: 10, color: 'var(--purple)' }}>1 Available session</p>
-            </div>
+          <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <InteractiveCard3D
+              balance={2005000}
+              userName={data.userName || 'Wealth Client'}
+              bankName="FinSight Wealth Reserve"
+              isStatementBalance={true}
+            />
           </div>
-          <div style={{ height: 200, background: 'var(--bg2)', borderRadius: 12, marginBottom: 16 }} />
-        </motion.div>
-
-        {/* Unlock Prompt Panel */}
-        <motion.div
-          className="panel"
-          style={{
-            width: '100%', padding: 40, marginTop: -200, zIndex: 10,
-            background: 'var(--surface)', border: '1px solid rgba(240,180,41,0.25)',
-            boxShadow: 'var(--shadow-lg), 0 0 32px rgba(240,180,41,0.06)',
-            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          }}
-          {...an(2)}
-        >
-          <div style={{
-            width: 72, height: 72, borderRadius: 24, background: 'rgba(240,180,41,0.15)',
-            color: 'var(--amber)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 20,
-          }}>
-            <Crown size={36} />
-          </div>
-          <h3 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>Wealth Management Dashboard</h3>
-          <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 440, marginBottom: 28, lineHeight: 1.6 }}>
+          <h3 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Wealth Management Dashboard</h3>
+          <p style={{ fontSize: 14, color: 'var(--text2)', maxWidth: 460, marginBottom: 28, lineHeight: 1.6 }}>
             Track total asset allocation, monitor net worth growth timelines, calculate real-time asset returns, and schedule your monthly 1-on-1 call with a certified financial advisor.
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 28 }}>
@@ -504,38 +486,50 @@ export default function PortfolioPage() {
         </button>
       </motion.div>
 
-      {/* Top Cards Row */}
+      {/* Top Cards Row with 3D Tilt */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-        <motion.div className="panel panel-glow" style={{ padding: 20 }} {...an(1)}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(52,211,153,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wallet size={18} color="#34d399" />
+        <motion.div {...an(1)}>
+          <Tilt3DCard glowColor="rgba(52, 211, 153, 0.3)" maxTilt={7} style={{ height: '100%' }}>
+            <div className="panel panel-glow" style={{ padding: 20, height: '100%', margin: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(52,211,153,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Wallet size={18} color="#34d399" />
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Total Assets Valuation</span>
+              </div>
+              <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{fmt(totalPortfolioValue)}</p>
             </div>
-            <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Total Assets Valuation</span>
-          </div>
-          <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)' }}>{fmt(totalPortfolioValue)}</p>
+          </Tilt3DCard>
         </motion.div>
 
-        <motion.div className="panel panel-glow" style={{ padding: 20 }} {...an(2)}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(129,140,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Briefcase size={18} color="var(--purple)" />
+        <motion.div {...an(2)}>
+          <Tilt3DCard glowColor="rgba(129, 140, 248, 0.3)" maxTilt={7} style={{ height: '100%' }}>
+            <div className="panel panel-glow" style={{ padding: 20, height: '100%', margin: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(129,140,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Briefcase size={18} color="var(--purple)" />
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Asset Classes</span>
+              </div>
+              <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)' }}>{categoryTotals.length} categories</p>
             </div>
-            <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Asset Classes</span>
-          </div>
-          <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)' }}>{categoryTotals.length} categories</p>
+          </Tilt3DCard>
         </motion.div>
 
-        <motion.div className="panel panel-glow" style={{ padding: 20 }} {...an(3)}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(240,180,41,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <UserCheck size={18} color="var(--amber)" />
+        <motion.div {...an(3)}>
+          <Tilt3DCard glowColor="rgba(240, 180, 41, 0.3)" maxTilt={7} style={{ height: '100%' }}>
+            <div className="panel panel-glow" style={{ padding: 20, height: '100%', margin: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(240,180,41,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <UserCheck size={18} color="var(--amber)" />
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Advisor Consultations</span>
+              </div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: advisorBooked ? 'var(--green)' : 'var(--amber)', marginTop: 4 }}>
+                {advisorBooked ? `Booked for ${new Date(advisorDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : '1 Monthly Session Available'}
+              </p>
             </div>
-            <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Advisor Consultations</span>
-          </div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: advisorBooked ? 'var(--green)' : 'var(--amber)', marginTop: 4 }}>
-            {advisorBooked ? `Booked for ${new Date(advisorDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : '1 Monthly Session Available'}
-          </p>
+          </Tilt3DCard>
         </motion.div>
       </div>
 
