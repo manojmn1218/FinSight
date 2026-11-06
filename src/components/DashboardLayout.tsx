@@ -22,7 +22,6 @@ const ACCOUNT_NAV = [
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/premium', label: 'Premium', icon: Crown },
   { path: '/support', label: 'Support', icon: HelpCircle },
-  { path: '/legal', label: 'Legal & DMCA', icon: Scale },
 ];
 
 export default function DashboardLayout() {
@@ -176,14 +175,6 @@ export default function DashboardLayout() {
             animation: sessionLow ? 'pulse 1s infinite' : 'none',
             marginLeft: 'auto',
           }} />
-        </div>
-
-        {/* Bottom actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
-          <button onClick={logout} className="btn-ghost danger">
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
         </div>
 
         {/* Footer info & copyright */}

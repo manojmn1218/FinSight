@@ -22,9 +22,14 @@ import {
   Save,
   ArrowRight,
   Mail,
-  Zap
+  Zap,
+  LogOut,
+  Scale,
+  Timer,
+  ExternalLink,
+  FileText
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { api } from '../services/api';
 
@@ -64,8 +69,18 @@ const FINANCIAL_FOCUSES = [
 ];
 
 export default function ProfilePage() {
-  const { data, setData, reset, clearAllData } = useFinance();
-  const [activeTab, setActiveTab] = useState<'identity' | 'risk' | 'security' | 'preferences' | 'subscription'>('identity');
+  const nav = useNavigate();
+  const { data, setData, reset, clearAllData, logoutUser, sessionTimeLeft } = useFinance();
+  const [activeTab, setActiveTab] = useState<'identity' | 'risk' | 'security' | 'preferences' | 'subscription' | 'legal' | 'session'>('identity');
+
+  const handleLogout = () => {
+    logoutUser();
+    nav('/login');
+  };
+
+  const sessionHours = Math.floor(sessionTimeLeft / 3600000);
+  const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
+  const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
 
   // Form states
   const [name, setName] = useState(data.userName || '');
@@ -347,8 +362,8 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Quick Metrics */}
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {/* Quick Metrics & Logout */}
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ padding: '12px 18px', borderRadius: 14, background: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--border)', textAlign: 'center' }}>
               <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>Security Score</p>
               <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', margin: '4px 0 0 0' }}>96% High</p>
@@ -357,6 +372,28 @@ export default function ProfilePage() {
               <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>Savings Target</p>
               <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--purple)', margin: '4px 0 0 0' }}>{savingsPercent}%</p>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="btn-ghost danger"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 18px',
+                borderRadius: 14,
+                border: '1px solid rgba(248, 113, 113, 0.3)',
+                background: 'rgba(248, 113, 113, 0.08)',
+                color: 'var(--red)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              title="Terminate current authenticated session"
+            >
+              <LogOut size={16} /> Sign Out
+            </button>
           </div>
         </div>
       </motion.div>
@@ -369,6 +406,8 @@ export default function ProfilePage() {
           { id: 'security', label: 'Security & Verification', icon: Shield },
           { id: 'preferences', label: 'Preferences & Alerts', icon: Bell },
           { id: 'subscription', label: 'Plan & Governance', icon: Crown },
+          { id: 'legal', label: 'Legal & DMCA Hub', icon: Scale },
+          { id: 'session', label: 'Session & Logout', icon: LogOut },
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -1057,6 +1096,171 @@ export default function ProfilePage() {
                 Clear All Transactions & Statements
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. LEGAL & DMCA HUB TAB */}
+      {activeTab === 'legal' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* DMCA Safe Harbor Panel */}
+          <div className="panel" style={{ padding: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Scale size={22} color="var(--purple)" /> DMCA Safe Harbor &amp; Designated Agent
+              </h3>
+              <Link to="/legal" target="_blank" rel="noopener noreferrer" className="btn-outline" style={{ fontSize: 12, padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                Open Full Legal Hub <ExternalLink size={12} />
+              </Link>
+            </div>
+
+            <div style={{ padding: '14px 18px', borderRadius: 'var(--radius-sm)', background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.25)', marginBottom: 20 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ShieldCheck size={16} /> Statutory Safe Harbor Registered (17 U.S.C. § 512(c))
+              </p>
+              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text2)', lineHeight: 1.5 }}>
+                FinSight maintains an active designated agent registration protecting against third-party user upload infringement liability.
+              </p>
+            </div>
+
+            {/* Agent Details Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '20px 24px' }}>
+              <div>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Designated Agent</span>
+                <p style={{ margin: '4px 0 0', fontWeight: 600, fontSize: 14 }}>DMCA Compliance Officer</p>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Direct Email</span>
+                <p style={{ margin: '4px 0 0', fontWeight: 600, fontSize: 14 }}>
+                  <a href="mailto:dmca@finsight.com" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>dmca@finsight.com</a>
+                </p>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Phone Hotline</span>
+                <p style={{ margin: '4px 0 0', fontWeight: 600, fontSize: 14 }}>
+                  <a href="tel:+14158905412" style={{ color: 'var(--text)', textDecoration: 'underline' }}>+1 (415) 890-5412</a>
+                </p>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Physical Office</span>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text2)' }}>548 Market St, Suite 300, San Francisco, CA 94104</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Key Statutory Shields Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+            <div className="panel" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--blue)' }}>
+                <Lock size={18} />
+                <span style={{ fontWeight: 700, fontSize: 14 }}>CIPA Non-Wiretapping (Cal. § 631)</span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text2)', margin: 0, lineHeight: 1.5 }}>
+                FinSight never installs session recording surveillance (Hotjar/FullStory) and does not intercept keystrokes.
+              </p>
+            </div>
+
+            <div className="panel" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--pink)' }}>
+                <FileText size={18} />
+                <span style={{ fontWeight: 700, fontSize: 14 }}>California Auto-Renewal (ARL)</span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text2)', margin: 0, lineHeight: 1.5 }}>
+                Clear visual-proximity renewal terms with 1-click online cancellation in your Profile Subscription tab.
+              </p>
+            </div>
+
+            <div className="panel" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--amber)' }}>
+                <User size={18} />
+                <span style={{ fontWeight: 700, fontSize: 14 }}>COPPA Age Gate (18+ / 13+)</span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text2)', margin: 0, lineHeight: 1.5 }}>
+                Mandatory age verification prevents unauthorized underage account creation under federal regulations.
+              </p>
+            </div>
+
+            <div className="panel" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--green)' }}>
+                <Globe size={18} />
+                <span style={{ fontWeight: 700, fontSize: 14 }}>GDPR Self-Hosted Fonts</span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text2)', margin: 0, lineHeight: 1.5 }}>
+                100% locally bundled Inter fonts prevent unauthorized visitor IP leakage to remote US server CDNs.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. SESSION & LOGOUT TAB */}
+      {activeTab === 'session' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Active Session Overview */}
+          <div className="panel" style={{ padding: 28 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Timer size={20} color="var(--purple)" /> Active Authentication Session
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 24 }}>
+              <div style={{ padding: 18, borderRadius: 12, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Authenticated User</span>
+                <p style={{ margin: '6px 0 0', fontWeight: 700, fontSize: 14 }}>{data.userEmail || 'Active User'}</p>
+              </div>
+
+              <div style={{ padding: 18, borderRadius: 12, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Session Time Remaining</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 16, color: 'var(--green)', fontFamily: 'monospace' }}>
+                    {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}m {sessionSecs.toString().padStart(2, '0')}s
+                  </p>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', animation: 'pulse 1.5s infinite' }} />
+                </div>
+              </div>
+
+              <div style={{ padding: 18, borderRadius: 12, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Encryption Status</span>
+                <p style={{ margin: '6px 0 0', fontWeight: 700, fontSize: 14, color: 'var(--green)' }}>AES-256 GCM Live</p>
+              </div>
+            </div>
+
+            <div style={{ padding: '16px 20px', borderRadius: 12, background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)', fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontWeight: 600, color: 'var(--text)' }}>Rolling 24-Hour JWT Security Protocol:</p>
+              <p style={{ margin: '4px 0 0' }}>
+                Your session automatically invalidates upon inactivity or browser close. Signing out clears local token storage and revokes authentication keys across all active tabs.
+              </p>
+            </div>
+          </div>
+
+          {/* Secure Sign Out Section */}
+          <div className="panel" style={{ padding: 28, borderColor: 'rgba(248, 113, 113, 0.3)', background: 'rgba(248, 113, 113, 0.04)' }}>
+            <h4 style={{ fontSize: 17, fontWeight: 700, color: 'var(--red)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <LogOut size={20} /> Terminate Current Session
+            </h4>
+            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20, maxWidth: 650, lineHeight: 1.6 }}>
+              Ready to log out? This action safely unbinds your financial credentials and returns you to the login screen. You will need to verify your email and password (or OTP) to access your dashboard again.
+            </p>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="btn-primary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '12px 28px',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                borderColor: '#ef4444',
+                color: '#ffffff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 8px 20px rgba(239, 68, 68, 0.25)',
+              }}
+            >
+              <LogOut size={16} /> Sign Out of FinSight
+            </button>
           </div>
         </div>
       )}

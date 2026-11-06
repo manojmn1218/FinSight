@@ -9,7 +9,6 @@ const NAV_ITEMS = [
   { path: '/admin/users', icon: Users, label: 'User Management' },
   { path: '/admin/revenue', icon: CreditCard, label: 'Revenue Analytics' },
   { path: '/admin/settings', icon: Settings, label: 'Platform Settings' },
-  { path: '/legal', icon: Scale, label: 'Legal & DMCA Hub' },
 ];
 
 export default function AdminLayout() {
@@ -148,14 +147,6 @@ export default function AdminLayout() {
             animation: sessionLow ? 'pulse 1s infinite' : 'none',
             marginLeft: 'auto',
           }} />
-        </div>
-
-        {/* Bottom actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
-          <button onClick={logout} className="btn-ghost danger" aria-label="Sign out">
-            <LogOut size={18} />
-            <span>Secure Logout</span>
-          </button>
         </div>
       </aside>
 
