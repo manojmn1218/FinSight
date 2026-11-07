@@ -53,30 +53,35 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside className={`sidebar-collapsible${mobileOpen ? ' open' : ''}`} style={{
-        width: 280,
-        padding: '24px 16px',
+        width: 250,
+        height: '100vh',
+        maxHeight: '100vh',
+        overflowY: 'hidden',
+        overflowX: 'hidden',
+        padding: '16px 12px 10px',
         background: 'var(--bg2)',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 4,
+        flexShrink: 0,
       }}>
         {/* Brand */}
-        <Link to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', marginBottom: 8, textDecoration: 'none', color: 'inherit' }}>
+        <Link to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px 10px', textDecoration: 'none', color: 'inherit' }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: 36, height: 36, borderRadius: 10,
             background: 'var(--grad)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', flexShrink: 0,
           }}>
-            <ShieldAlert size={20} strokeWidth={2.5} />
+            <ShieldAlert size={18} strokeWidth={2.5} />
           </div>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: 0.3 }}>Executive</div>
+            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 0.2 }}>Executive</div>
             <div style={{
               fontSize: 10, fontWeight: 700,
               background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              textTransform: 'uppercase', letterSpacing: 1.5,
+              textTransform: 'uppercase', letterSpacing: 1.2,
             }}>
               Central Control
             </div>
@@ -120,7 +125,7 @@ export default function AdminLayout() {
                 className={`nav-item${active ? ' active' : ''}`}
                 onClick={() => setMobileOpen(false)}
               >
-                <n.icon size={18} />
+                <n.icon size={16} />
                 <span>{n.label}</span>
               </NavLink>
             );

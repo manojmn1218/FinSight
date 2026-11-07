@@ -59,7 +59,7 @@ export default function DashboardLayout() {
         onClick={() => setMobileOpen(false)}
       >
         <div style={{ position: 'relative', display: 'flex' }}>
-          <Icon size={18} />
+          <Icon size={16} />
           {showBadge && (
             <span className="notif-badge" style={{ position: 'absolute', top: -6, right: -8 }}>
               {recurringAlertCount}
@@ -100,55 +100,56 @@ export default function DashboardLayout() {
 
       {/* Sidebar */}
       <aside className={`sidebar-collapsible${mobileOpen ? ' open' : ''}`} style={{
-        width: 260,
-        padding: '20px 16px',
+        width: 240,
+        height: '100vh',
+        maxHeight: '100vh',
+        overflowY: 'hidden',
+        overflowX: 'hidden',
+        padding: '12px 10px 8px',
         background: 'var(--bg2)',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        flexShrink: 0,
       }}>
         {/* Clickable Brand Logo Header */}
-        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 12px 14px', textDecoration: 'none', color: 'inherit' }}>
-          <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }} />
-          <span className="sidebar-session-text" style={{ fontWeight: 800, fontSize: 18, letterSpacing: -0.4, background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 8px 6px', textDecoration: 'none', color: 'inherit' }}>
+          <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover' }} />
+          <span className="sidebar-session-text" style={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.4, background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             FinSight
           </span>
         </Link>
 
         {/* User Card */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', marginBottom: 4, background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px', marginBottom: 2, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 12,
+            width: 28, height: 28, borderRadius: 8,
             background: 'var(--grad)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: 15, letterSpacing: 0.5,
+            color: '#fff', fontWeight: 700, fontSize: 12,
             flexShrink: 0,
           }}>
             {initials}
           </div>
-          <div className="sidebar-user-info" style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div className="sidebar-user-info" style={{ overflow: 'hidden', lineHeight: 1.2 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {data.userName || 'User'}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 10, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {data.userEmail || 'user@finsight.ai'}
             </div>
           </div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: 'var(--border)', margin: '4px 14px 12px' }} />
+        </Link>
 
         {/* Main nav */}
-        <div className="section-label">Main</div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div className="section-label" style={{ fontSize: 10, padding: '0 8px', marginBottom: 2, marginTop: 4 }}>Main</div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {renderNav(MAIN_NAV)}
         </nav>
 
         {/* Account nav */}
-        <div className="section-label" style={{ marginTop: 20 }}>Account</div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div className="section-label" style={{ fontSize: 10, padding: '0 8px', marginBottom: 2, marginTop: 6 }}>Account</div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {renderNav(ACCOUNT_NAV)}
         </nav>
 
@@ -158,14 +159,14 @@ export default function DashboardLayout() {
         {/* Session timer pill */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6,
-          padding: '6px 12px', margin: '0 4px',
+          padding: '4px 10px', margin: '0 2px',
           borderRadius: 999,
           background: sessionLow ? 'rgba(248,113,113,0.08)' : 'var(--surface)',
           border: `1px solid ${sessionLow ? 'rgba(248,113,113,0.15)' : 'var(--border)'}`,
-          fontSize: 11, fontWeight: 600,
+          fontSize: 10, fontWeight: 600,
           color: sessionLow ? 'var(--red)' : 'var(--text3)',
         }}>
-          <Timer size={12} />
+          <Timer size={11} />
           <span className="sidebar-session-text">
             {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}:{sessionSecs.toString().padStart(2, '0')}
           </span>
@@ -178,11 +179,11 @@ export default function DashboardLayout() {
         </div>
 
         {/* Footer info & copyright */}
-        <div className="sidebar-session-text" style={{ padding: '10px 12px 4px', fontSize: 10, color: 'var(--text3)', borderTop: '1px solid var(--border)', marginTop: 8, lineHeight: 1.5 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-            <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>Legal Hub</Link>
+        <div className="sidebar-session-text" style={{ padding: '6px 8px 2px', fontSize: 9.5, color: 'var(--text3)', borderTop: '1px solid var(--border)', marginTop: 4, lineHeight: 1.4, textAlign: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 2 }}>
+            <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Legal Hub</Link>
             •
-            <Link to="/support" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>Help Desk</Link>
+            <Link to="/support" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Help Desk</Link>
           </div>
           <div>&copy; {new Date().getFullYear()} FinSight Inc.</div>
         </div>
