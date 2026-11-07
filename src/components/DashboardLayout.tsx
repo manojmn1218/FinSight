@@ -123,10 +123,10 @@ export default function DashboardLayout() {
         {/* User Card */}
         <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px', marginBottom: 2, background: 'rgba(255,255,255,0.02)', borderRadius: 9, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
           <div style={{
-            width: 30, height: 30, borderRadius: 8,
+            width: 45, height: 45, borderRadius: 10,
             background: 'var(--grad)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: 12.5,
+            color: '#ffffff', fontWeight: 700, fontSize: 16,
             flexShrink: 0,
           }}>
             {initials}
