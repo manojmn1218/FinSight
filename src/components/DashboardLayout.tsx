@@ -59,7 +59,7 @@ export default function DashboardLayout() {
         onClick={() => setMobileOpen(false)}
       >
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <Icon size={18} />
+          <Icon size={18} className="nav-icon" />
           {showBadge && (
             <span className="notif-badge" style={{ position: 'absolute', top: -6, right: -8 }}>
               {recurringAlertCount}
@@ -141,20 +141,22 @@ export default function DashboardLayout() {
           </div>
         </Link>
 
-        {/* Main nav */}
-        <div className="section-label" style={{ fontSize: 10.5, padding: '0 8px', marginBottom: 2, marginTop: 4, fontWeight: 700 }}>Main</div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {renderNav(MAIN_NAV)}
-        </nav>
+        {/* Navigation Tabs Container — Fills sidebar with regular space without scrolling */}
+        <div className="sidebar-nav-container">
+          <div className="sidebar-nav-section">
+            <div className="section-label" style={{ fontSize: 10, padding: '0 8px', marginBottom: 3, fontWeight: 700, letterSpacing: 0.8 }}>Main</div>
+            <nav className="sidebar-nav-group">
+              {renderNav(MAIN_NAV)}
+            </nav>
+          </div>
 
-        {/* Account nav */}
-        <div className="section-label" style={{ fontSize: 10.5, padding: '0 8px', marginBottom: 2, marginTop: 5, fontWeight: 700 }}>Account</div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {renderNav(ACCOUNT_NAV)}
-        </nav>
-
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
+          <div className="sidebar-nav-section">
+            <div className="section-label" style={{ fontSize: 10, padding: '0 8px', marginBottom: 3, fontWeight: 700, letterSpacing: 0.8 }}>Tools &amp; Account</div>
+            <nav className="sidebar-nav-group">
+              {renderNav(ACCOUNT_NAV)}
+            </nav>
+          </div>
+        </div>
 
         {/* Session timer pill */}
         <div style={{
