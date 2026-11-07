@@ -20,15 +20,16 @@
   --text: #f0f6fc;
   --text2: #8b949e;
   --text3: #6e7681;
-  --purple: #818cf8;
-  --pink: #f472b6;
+  --purple: #3b82f6; /* Modern authoritative fintech sapphire (replaces generic AI purple) */
+  --purple-hover: #2563eb;
+  --pink: #0ea5e9;   /* Precision cyan-sky accent (replaces generic AI pink) */
   --green: #34d399;
   --blue: #58a6ff;
   --amber: #f0b429;
   --red: #f87171;
-  --focus-ring: rgba(129, 140, 248, 0.5);
-  --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-  --grad-subtle: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(217, 70, 239, 0.04) 100%);
+  --focus-ring: rgba(59, 130, 246, 0.5);
+  --grad: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #0ea5e9 100%);
+  --grad-subtle: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(14, 165, 233, 0.04) 100%);
   --radius: 18px;
   --radius-sm: 10px;
   --radius-lg: 26px;
@@ -155,12 +156,12 @@ body.light .app-logo.auth-blend {
   border-color: rgba(255, 255, 255, 0.16);
 }
 .panel-glow:hover {
-  border-color: rgba(129, 140, 248, 0.3);
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.14), 0 20px 45px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(129, 140, 248, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.14), 0 20px 45px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.18);
   transform: translateY(-3px);
 }
 
-/* Buttons with 3D Bevel & Light Edge */
+/* Buttons with 3D Bevel & Light Edge — High Precision Fintech */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -168,19 +169,20 @@ body.light .app-logo.auth-blend {
   gap: 8px;
   padding: 12px 24px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
   transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 8px 26px rgba(37, 99, 235, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 .btn-primary:active {
   transform: translateY(0px);
@@ -444,14 +446,14 @@ body.light .app-logo.auth-blend {
 .blob-1 {
   width: 500px;
   height: 500px;
-  background: rgba(129, 140, 248, 0.12);
+  background: rgba(37, 99, 235, 0.08);
   top: -10%;
   left: 5%;
 }
 .blob-2 {
   width: 400px;
   height: 400px;
-  background: rgba(244, 114, 182, 0.08);
+  background: rgba(14, 165, 233, 0.06);
   bottom: -10%;
   right: 5%;
   animation-delay: -4s;
@@ -459,7 +461,7 @@ body.light .app-logo.auth-blend {
 .blob-3 {
   width: 300px;
   height: 300px;
-  background: rgba(192, 132, 252, 0.06);
+  background: rgba(16, 185, 129, 0.04);
   top: 40%;
   right: 25%;
   animation-delay: -8s;

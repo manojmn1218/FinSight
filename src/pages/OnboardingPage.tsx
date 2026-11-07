@@ -224,11 +224,11 @@ export default function OnboardingPage() {
           </button>
           <div style={{ flex: 1 }} />
           {step < 3 ? (
-            <button type="button" disabled={!canNext()} onClick={() => setStep(step + 1)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, border: 'none', background: canNext() ? 'var(--grad)' : '#1e293b', color: canNext() ? '#fff' : '#475569', fontSize: 15, fontWeight: 600, cursor: canNext() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', boxShadow: canNext() ? '0 4px 20px rgba(167,139,250,0.3)' : 'none' }}>
+            <button type="button" disabled={!canNext()} onClick={() => setStep(step + 1)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, border: 'none', background: canNext() ? 'var(--grad)' : '#1e293b', color: canNext() ? '#fff' : '#475569', fontSize: 15, fontWeight: 600, cursor: canNext() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', boxShadow: canNext() ? '0 4px 20px rgba(37,99,235,0.35)' : 'none' }}>
               Continue <ArrowRight size={16} />
             </button>
           ) : (
-            <button type="button" onClick={finish} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, border: 'none', background: 'var(--grad)', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 0 30px rgba(167,139,250,0.35)', animation: 'pulse 2s ease-in-out infinite' }}>
+            <button type="button" onClick={finish} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, border: 'none', background: 'var(--grad)', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 0 30px rgba(37,99,235,0.4)', animation: 'pulse 2s ease-in-out infinite' }}>
               <Sparkles size={16} /> Launch My Dashboard
             </button>
           )}
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
       </div>
 
       <style>{`
-        @keyframes pulse { 0%,100%{box-shadow:0 0 20px rgba(167,139,250,0.3)} 50%{box-shadow:0 0 40px rgba(167,139,250,0.55)} }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 20px rgba(37,99,235,0.3)} 50%{box-shadow:0 0 40px rgba(37,99,235,0.55)} }
         @media (max-width: 768px) {
           .onboarding-container { flex-direction: column !important; }
           .onboarding-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; padding: 20px 16px !important; }

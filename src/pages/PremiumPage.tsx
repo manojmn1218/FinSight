@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Check, X, Crown, Sparkles, Zap, Shield, Star, ArrowRight, ChevronDown, CreditCard, BarChart3, Download, Bell, Lock, Cpu, Users, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Check, X, Crown, Sparkles, Zap, Shield, ShieldCheck, Star, ArrowRight, ChevronDown, CreditCard, BarChart3, Download, Bell, Lock, Cpu, Users, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 
@@ -74,10 +74,28 @@ const PLANS = [
   },
 ];
 
-const TESTIMONIALS = [
-  { name: 'Priya Sharma', role: 'Freelance Designer', text: 'FinSight Pro completely changed how I manage my money. The AI insights caught ₹4,000/month in forgotten subscriptions!', avatar: '👩‍💻' },
-  { name: 'Rahul Mehra', role: 'Startup Founder', text: 'The recurring payment alerts alone saved me ₹15,000 in a quarter. Worth every rupee of the Pro subscription.', avatar: '👨‍💼' },
-  { name: 'Ananya Reddy', role: 'Software Engineer', text: 'I love the budget health score. It gamifies saving money and keeps me motivated to hit my financial goals.', avatar: '👩‍🔬' },
+const ARCHITECTURE_PILLARS = [
+  {
+    title: '100% In-Browser Execution',
+    subtitle: 'Zero Statement Uploads to Cloud',
+    desc: 'Bank statement PDFs and transaction logs are parsed directly inside your browser memory using WebAssembly. Raw statements never upload to our cloud or external databases.',
+    icon: ShieldCheck,
+    badge: 'Client-Side Sandbox',
+  },
+  {
+    title: 'Independent Subscription Model',
+    subtitle: 'No Lead Brokering or Ad Trackers',
+    desc: 'FinSight operates without ad tracking, credit card referral kickbacks, or personal data sales. Your net worth and balance sheets are never shared with lending institutions.',
+    icon: Lock,
+    badge: 'Zero Ad Monetization',
+  },
+  {
+    title: 'Complete Ledger Portability',
+    subtitle: 'Instant Standardized JSON & CSV Export',
+    desc: 'Maintain absolute data sovereignty. Export your categorized financial transactions, manual assets, and goal models in portable JSON or CSV anytime with zero vendor lock-in.',
+    icon: Download,
+    badge: 'Zero Vendor Lock-in',
+  },
 ];
 
 const FAQS = [
@@ -978,35 +996,38 @@ export default function PremiumPage() {
         </div>
       </motion.div>
 
-      {/* ═══ Testimonials ═══ */}
+      {/* ═══ Engineering & Privacy Architecture ═══ */}
       <motion.div {...an(11)}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Loved by Users</h2>
-          <p style={{ color: 'var(--text2)', fontSize: 14 }}>See what Pro users are saying.</p>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>
+            Core Engineering Principles
+          </div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Built on Verifiable Privacy Guarantees</h2>
+          <p style={{ color: 'var(--text2)', fontSize: 14, maxWidth: 560, margin: '0 auto' }}>
+            Zero advertising, zero lead-selling kickbacks, and strict client-side bank statement processing.
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          {TESTIMONIALS.map((t, i) => (
-            <motion.div key={t.name} className="panel" style={{ padding: 28 }} {...an(i + 12)}>
-              <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-                {[...Array(5)].map((_, j) => <Star key={j} size={14} fill="#f0b429" color="#f0b429" />)}
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, marginBottom: 20, fontStyle: 'italic' }}>
-                "{t.text}"
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12, background: 'var(--bg3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
-                }}>
-                  {t.avatar}
-                </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
+          {ARCHITECTURE_PILLARS.map((p, i) => {
+            const Icon = p.icon;
+            return (
+              <motion.div key={p.title} className="panel" style={{ padding: 26, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} {...an(i + 12)}>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text3)' }}>{t.role}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple)' }}>
+                      <Icon size={20} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', background: 'rgba(37,99,235,0.1)', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(37,99,235,0.2)' }}>
+                      {p.badge}
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--text)' }}>{p.title}</h3>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', margin: '0 0 12px 0' }}>{p.subtitle}</p>
+                  <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, margin: 0 }}>{p.desc}</p>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </motion.div>
 
@@ -1016,7 +1037,7 @@ export default function PremiumPage() {
           { icon: Shield, text: 'Bank-grade encryption', sub: 'AES-256 + TLS 1.3' },
           { icon: Lock, text: 'Local PDF processing', sub: 'Data never leaves your browser' },
           { icon: CreditCard, text: 'Secure payments', sub: 'Razorpay certified' },
-          { icon: Users, text: '10,000+ users', sub: 'Trusted across India' },
+          { icon: ShieldCheck, text: 'Zero Data Brokerage', sub: 'No ad trackers or lead sales' },
         ].map(badge => {
           const Icon = badge.icon;
           return (

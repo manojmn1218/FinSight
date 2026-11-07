@@ -215,7 +215,7 @@ export default function DashboardLayout() {
           gap: 12,
         }}>
           <div>
-            &copy; {new Date().getFullYear()} FinSight Technologies Inc. Bank-grade 256-bit AES encryption.
+            &copy; {new Date().getFullYear()} FinSight Technologies Inc. Client-side cryptographic processing &amp; zero data monetization.
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'none' }}>Terms &amp; ARL</Link>

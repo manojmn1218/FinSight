@@ -89,7 +89,7 @@ export default function ProfilePage() {
   const [occupation, setOccupation] = useState(data.occupation || 'Software Engineer / Technology');
   const [incomeBracket, setIncomeBracket] = useState('₹12 Lakhs – ₹25 Lakhs');
   const [panMasked, setPanMasked] = useState(data.panMasked || 'ABCDE••••F');
-  const [motto, setMotto] = useState('Building systematic, long-term generational wealth.');
+  const [motto, setMotto] = useState('Disciplined capital preservation, systematic investing, and cash flow control.');
 
   // Strategy & Risk
   const [riskTolerance, setRiskTolerance] = useState<'conservative' | 'moderate' | 'aggressive'>(data.riskTolerance || 'moderate');

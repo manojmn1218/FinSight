@@ -708,19 +708,19 @@ export default function PortfolioPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
             width: 40, height: 40, borderRadius: 12,
-            background: 'linear-gradient(135deg, rgba(129,140,248,0.15), rgba(244,114,182,0.15))',
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(14,165,233,0.15))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Brain size={20} color="#818cf8" />
+            <Brain size={20} color="#38bdf8" />
           </div>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
-              AI Investment Predictions
+              Algorithmic Market Intelligence
               <span style={{
                 fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 999,
-                background: 'linear-gradient(135deg, #818cf8, #f472b6)', color: '#fff',
+                background: 'linear-gradient(135deg, #2563eb, #0284c7)', color: '#fff',
                 letterSpacing: 0.6, textTransform: 'uppercase',
-              }}>Live Data</span>
+              }}>Live Feed</span>
             </h2>
             <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
               Real-time market analytics & personalized growth picks{lastFetchTime && <span style={{ color: 'var(--text3)' }}> • Updated {lastFetchTime}</span>}

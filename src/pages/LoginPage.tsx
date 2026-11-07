@@ -207,16 +207,16 @@ export default function LoginPage() {
             <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 46, height: 46 }} />
             <div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>FinSight</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1 }}>Smart AI Finance</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1 }}>Autonomous Wealth Engine</div>
             </div>
           </Link>
 
-          <h1 style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.15, marginBottom: 16 }}>
-            Take control of<br />
-            <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>your financial future</span>
+          <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.15, marginBottom: 16 }}>
+            Institutional precision for<br />
+            <span style={{ background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>personal net worth</span>
           </h1>
-          <p style={{ fontSize: 16, color: 'var(--text2)', lineHeight: 1.7, marginBottom: 40, maxWidth: 440 }}>
-            Track spending, set budgets, and get AI-powered insights — all in one beautiful dashboard.
+          <p style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.7, marginBottom: 40, maxWidth: 440 }}>
+            Audit statements locally in-browser, eliminate recurring burn, and monitor cash flow with complete data sovereignty.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

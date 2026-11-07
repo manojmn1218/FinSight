@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { FileText, Printer, BookOpen, Scale, Landmark } from 'lucide-react';
+import { FileText, Printer, BookOpen, Scale, Landmark, BarChart3, Calendar } from 'lucide-react';
 import { CATEGORY_CONFIG } from '../utils/types';
 import { computeMonthSummaries } from '../utils/transactionParser';
 import type { Category } from '../utils/types';
@@ -226,7 +226,9 @@ export default function ReportsPage() {
           {/* Budget Variance Table */}
           <motion.div className="panel" style={{ padding: 0, overflow: 'hidden' }} {...an(3)}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8 }}>📊 Category Budget Variance analysis</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <BarChart3 size={15} color="var(--purple)" /> Category Budget Variance Analysis
+              </h3>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table className="summary-table">
@@ -274,7 +276,9 @@ export default function ReportsPage() {
           {/* Detailed Monthly breakdown */}
           <motion.div className="panel" style={{ padding: 0, overflow: 'hidden' }} {...an(4)}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8 }}>📅 Monthly Breakdown history</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Calendar size={15} color="var(--purple)" /> Monthly Breakdown History
+              </h3>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table className="summary-table">

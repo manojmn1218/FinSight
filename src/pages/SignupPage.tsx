@@ -161,9 +161,9 @@ export default function SignupPage() {
             <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 48, height: 48, cursor: 'pointer' }} />
           </Link>
         </div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, textAlign: 'center' }}>Get started free</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, textAlign: 'center' }}>Secure Registration</div>
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>Create your account</h2>
-        <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 28, textAlign: 'center' }}>Join thousands managing their finances smarter.</p>
+        <p style={{ fontSize: 13.5, color: 'var(--text2)', marginBottom: 28, textAlign: 'center' }}>Private on-device statement analysis, automated ledger audits, and capital tracking.</p>
 
         {error && (
           <div style={{ padding: '12px 14px', background: 'rgba(248,113,113,0.12)', color: '#f87171', borderRadius: 8, fontSize: 13, fontWeight: 500, marginBottom: 16, border: '1px solid rgba(248,113,113,0.25)', display: 'flex', flexDirection: 'column', gap: 6 }}>

@@ -674,8 +674,8 @@ export default function DashboardPage() {
                 height: '100%',
                 width: `${Math.min(txnStats.totalIncome > 0 ? (txnStats.totalExpenses / txnStats.totalIncome) * 100 : 0, 100)}%`,
                 borderRadius: 6,
-                background: (txnStats.totalExpenses / (txnStats.totalIncome || 1)) > 0.8 ? 'linear-gradient(90deg, #f472b6, #f87171)' : 'var(--grad)',
-                boxShadow: '0 0 12px rgba(129,140,248,0.3)',
+                background: (txnStats.totalExpenses / (txnStats.totalIncome || 1)) > 0.8 ? 'linear-gradient(90deg, #f87171, #ef4444)' : 'var(--grad)',
+                boxShadow: '0 0 12px rgba(37,99,235,0.3)',
                 transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
             </div>

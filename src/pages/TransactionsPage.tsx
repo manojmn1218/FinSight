@@ -1038,10 +1038,10 @@ export default function TransactionsPage() {
               style={{
                 padding: '6px 14px', fontSize: 12, borderRadius: 20, border: '1px solid',
                 borderColor: catFilter === 'all' ? 'var(--purple)' : 'var(--border)',
-                background: catFilter === 'all' ? 'linear-gradient(135deg, #a855f7, #6366f1)' : 'transparent',
+                background: catFilter === 'all' ? 'linear-gradient(135deg, #2563eb, #0284c7)' : 'transparent',
                 color: catFilter === 'all' ? '#fff' : 'var(--text2)',
                 cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 650,
-                boxShadow: catFilter === 'all' ? '0 2px 10px rgba(168,85,247,0.3)' : 'none',
+                boxShadow: catFilter === 'all' ? '0 2px 10px rgba(37,99,235,0.3)' : 'none',
                 whiteSpace: 'nowrap',
               }}
             >

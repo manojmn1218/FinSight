@@ -171,12 +171,12 @@ export default function FinSightChatbot() {
               width: 58,
               height: 58,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
+              background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4), 0 2px 8px rgba(0,0,0,0.2)',
+              boxShadow: '0 8px 30px rgba(37, 99, 235, 0.4), 0 2px 8px rgba(0,0,0,0.2)',
               border: '2px solid rgba(255, 255, 255, 0.25)',
               cursor: 'pointer',
               position: 'relative',
@@ -256,12 +256,12 @@ export default function FinSightChatbot() {
                       width: 38,
                       height: 38,
                       borderRadius: 12,
-                      background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                      background: 'linear-gradient(135deg, #2563eb, #0284c7)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#fff',
-                      boxShadow: '0 2px 10px rgba(99, 102, 241, 0.4)',
+                      boxShadow: '0 2px 10px rgba(37, 99, 235, 0.4)',
                     }}
                   >
                     <Sparkles size={20} />
@@ -361,7 +361,7 @@ export default function FinSightChatbot() {
                         borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                         background:
                           msg.role === 'user'
-                            ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                            ? 'linear-gradient(135deg, #2563eb, #1d4ed8)'
                             : msg.isOutOfScope
                             ? 'rgba(239, 68, 68, 0.08)'
                             : 'var(--bg3, rgba(255,255,255,0.06))',
@@ -516,7 +516,7 @@ export default function FinSightChatbot() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                      background: 'linear-gradient(135deg, #2563eb, #0284c7)',
                       opacity: !input.trim() || loading ? 0.4 : 1,
                     }}
                   >
