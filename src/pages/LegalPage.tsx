@@ -97,30 +97,30 @@ export default function LegalPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       width: '100%',
-                      padding: '10px 12px',
+                      padding: '11px 14px',
                       borderRadius: 'var(--radius-sm)',
-                      background: active ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
-                      border: `1px solid ${active ? 'rgba(99, 102, 241, 0.35)' : 'transparent'}`,
+                      background: active ? 'rgba(99, 102, 241, 0.14)' : 'transparent',
+                      border: `1px solid ${active ? 'rgba(99, 102, 241, 0.4)' : 'transparent'}`,
                       color: active ? '#ffffff' : 'var(--text2)',
-                      fontWeight: active ? 600 : 500,
-                      fontSize: 13,
+                      fontWeight: active ? 650 : 500,
+                      fontSize: 14,
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Icon size={16} color={active ? 'var(--purple)' : 'var(--text3)'} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                      <Icon size={18} color={active ? 'var(--purple)' : 'var(--text3)'} />
                       <span>{item.label}</span>
                     </div>
                     {item.badge && (
                       <span style={{
-                        fontSize: 10,
-                        padding: '2px 6px',
+                        fontSize: 11,
+                        padding: '3px 8px',
                         borderRadius: 10,
                         background: active ? 'var(--purple)' : 'rgba(255,255,255,0.06)',
                         color: active ? '#ffffff' : 'var(--text3)',
-                        fontWeight: 600,
+                        fontWeight: 650,
                       }}>
                         {item.badge}
                       </span>

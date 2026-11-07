@@ -193,42 +193,46 @@ export default function AdminDatabasePage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', background: 'var(--bg2)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', background: 'var(--bg2)', borderRadius: 10, padding: 4, border: '1px solid var(--border)' }}>
               <button
                 onClick={() => setViewMode('table')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 6,
+                  gap: 7,
+                  padding: '8px 16px',
+                  borderRadius: 8,
                   border: 'none',
                   background: viewMode === 'table' ? 'var(--surface)' : 'transparent',
                   color: viewMode === 'table' ? 'var(--text)' : 'var(--text3)',
                   cursor: 'pointer',
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: 600,
+                  transition: 'all 0.15s ease',
+                  boxShadow: viewMode === 'table' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
                 }}
               >
-                <Table size={14} /> Table
+                <Table size={16} /> Table
               </button>
               <button
                 onClick={() => setViewMode('json')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 6,
+                  gap: 7,
+                  padding: '8px 16px',
+                  borderRadius: 8,
                   border: 'none',
                   background: viewMode === 'json' ? 'var(--surface)' : 'transparent',
                   color: viewMode === 'json' ? 'var(--text)' : 'var(--text3)',
                   cursor: 'pointer',
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: 600,
+                  transition: 'all 0.15s ease',
+                  boxShadow: viewMode === 'json' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
                 }}
               >
-                <Code size={14} /> JSON Documents
+                <Code size={16} /> JSON Documents
               </button>
             </div>
           </div>

@@ -573,7 +573,7 @@ export default function ManualEntryPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 24, overflowX: 'auto' }}>
+      <div className="tabs-container">
         {[
           { id: 'transactions', label: 'Detailed Transactions', icon: FileSpreadsheet, count: allManualTxns.length },
           { id: 'assets', label: 'Assets & Investments', icon: Coins, count: manualAssets.length },
@@ -587,35 +587,12 @@ export default function ManualEntryPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 18px',
-                borderRadius: 12,
-                border: 'none',
-                background: isActive ? 'var(--surface-hover)' : 'transparent',
-                color: isActive ? 'var(--purple)' : 'var(--text2)',
-                fontWeight: isActive ? 700 : 500,
-                fontSize: 14,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-                boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-              }}
+              className={`tab-btn${isActive ? ' active' : ''}`}
             >
-              <Icon size={16} />
+              <Icon size={18} className="tab-icon" />
               <span>{tab.label}</span>
               {typeof tab.count === 'number' && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    padding: '2px 7px',
-                    borderRadius: 10,
-                    background: isActive ? 'rgba(129, 140, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isActive ? 'var(--purple)' : 'var(--text3)',
-                  }}
-                >
+                <span className="tab-badge">
                   {tab.count}
                 </span>
               )}

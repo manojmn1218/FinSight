@@ -399,7 +399,7 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Profile Navigation Tabs */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 26, overflowX: 'auto' }}>
+      <div className="tabs-container">
         {[
           { id: 'identity', label: 'Personal & Identity', icon: User },
           { id: 'risk', label: 'Financial Persona & Strategy', icon: Target },
@@ -407,7 +407,7 @@ export default function ProfilePage() {
           { id: 'preferences', label: 'Preferences & Alerts', icon: Bell },
           { id: 'subscription', label: 'Plan & Governance', icon: Crown },
           { id: 'legal', label: 'Legal & DMCA Hub', icon: Scale },
-          { id: 'session', label: 'Session & Logout', icon: LogOut },
+          { id: 'session', label: 'Session & Logout', icon: LogOut, danger: true },
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -415,23 +415,10 @@ export default function ProfilePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 18px',
-                borderRadius: 12,
-                border: 'none',
-                background: isActive ? 'var(--surface-hover)' : 'transparent',
-                color: isActive ? 'var(--purple)' : 'var(--text2)',
-                fontWeight: isActive ? 700 : 500,
-                fontSize: 14,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-              }}
+              className={`tab-btn${isActive ? ' active' : ''}`}
+              style={tab.danger && isActive ? { borderColor: 'rgba(248, 113, 113, 0.4)', color: '#fca5a5' } : undefined}
             >
-              <Icon size={16} />
+              <Icon size={18} className="tab-icon" color={tab.danger && isActive ? 'var(--red)' : undefined} />
               <span>{tab.label}</span>
             </button>
           );
