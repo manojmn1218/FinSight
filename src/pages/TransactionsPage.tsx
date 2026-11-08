@@ -15,8 +15,7 @@ import BankConnect from '../components/BankConnect';
 import CategoryIcon from '../components/CategoryIcon';
 import type { BankDataResult } from '../utils/setuApi';
 import { api, type AiParseResponse, type AiStatusResponse } from '../services/api';
-
-const fmt = (n: number) => (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
+import { formatCurrency } from '../utils/format';
 
 interface AiStagedTransaction {
   id: string;
@@ -178,6 +177,7 @@ function formatTransactionDisplay(tx: Transaction) {
 
 export default function TransactionsPage() {
   const { data, addTransactions, updateTransaction, deleteTransaction, clearTransactions } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const [replaceExisting, setReplaceExisting] = useState(true);
 

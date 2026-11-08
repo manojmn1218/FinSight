@@ -111,7 +111,7 @@ FinSight parses bank statements and tracks personal finances. Upload a PDF state
 - **Sensitive Data Isolation** — All third-party secrets and keys are strictly decoupled from client-side UI components
 
 ### 👑 Premium Tiers
-| Feature | Basic (Free) | Pro (₹349/mo) | Enterprise (₹999/mo) |
+| Feature | Basic (Free) | Pro (₹99/mo) | Wealth (₹149/mo) |
 |---------|:---:|:---:|:---:|
 | Manual expense entry | ✅ | ✅ | ✅ |
 | Dashboard & charts | ✅ | ✅ | ✅ |

@@ -35,15 +35,16 @@ import {
   type MonteCarloResponse,
   type RetirementResponse
 } from '../services/api';
-
-const fmt = (n: number) =>
-  '₹' + Math.round(n).toLocaleString('en-IN');
+import { useFinance } from '../context/FinanceContext';
+import { formatCurrency } from '../utils/format';
 
 interface WealthSimulationsProps {
   initialNetWorth?: number;
 }
 
 export default function WealthSimulations({ initialNetWorth }: WealthSimulationsProps = {}) {
+  const { data } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const [activeTab, setActiveTab] = useState<'monte_carlo' | 'retirement'>('monte_carlo');
 
   // Engine status
@@ -448,7 +449,7 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
                       <YAxis
                         stroke="var(--text3)"
                         fontSize={12}
-                        tickFormatter={val => `₹${(val / 100000).toFixed(0)}L`}
+                        tickFormatter={val => data.stealthMode ? '••' : `₹${(val / 100000).toFixed(0)}L`}
                       />
                       <Tooltip
                         contentStyle={{

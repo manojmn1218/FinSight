@@ -7,11 +7,11 @@ import { computeMonthSummaries, detectRecurringGrouped } from '../utils/transact
 import { CATEGORY_CONFIG } from '../utils/types';
 import type { Category } from '../utils/types';
 import { Link } from 'react-router-dom';
-
-const fmt = (n: number) => '₹' + Math.abs(n).toLocaleString('en-IN');
+import { formatCurrency } from '../utils/format';
 
 export default function AnalyticsPage() {
   const { data } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
   const summaries = useMemo(() => computeMonthSummaries(txns), [txns]);
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
     if (recurringGroups.length > 0) {
       recs.push({
         title: `${recurringGroups.length} Recurring Payments (~${fmt(totalRecurringAnnual)}/yr)`,
-        desc: `You have ${recurringGroups.length} recurring charges totaling an estimated ₹${Math.round(totalRecurringAnnual).toLocaleString('en-IN')}/year.${highCostCount > 0 ? ` ${highCostCount} are flagged as high-cost — review them for potential savings.` : ' All seem reasonable.'}`,
+        desc: `You have ${recurringGroups.length} recurring charges totaling an estimated ${fmt(totalRecurringAnnual)}/year.${highCostCount > 0 ? ` ${highCostCount} are flagged as high-cost — review them for potential savings.` : ' All seem reasonable.'}`,
         color: highCostCount > 0 ? '#f0b429' : '#34d399',
         bg: highCostCount > 0 ? 'rgba(240,180,41,0.08)' : 'rgba(52,211,153,0.08)',
       });
@@ -125,8 +125,8 @@ export default function AnalyticsPage() {
               <BarChart data={summaries} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v || 0).toLocaleString('en-IN')}`, '']} />
+                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => data.stealthMode ? '••' : `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v || 0)), '']} />
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
                 <Bar dataKey="totalIncome" name="Income" fill="#34d399" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="totalExpenses" name="Expenses" fill="#f472b6" radius={[6, 6, 0, 0]} />
@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
                     <Pie data={catTotals} dataKey="value" innerRadius={46} outerRadius={72} paddingAngle={3} strokeWidth={0}>
                       {catTotals.map(e => <Cell key={e.name} fill={e.color} />)}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, '']} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v)), '']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -189,8 +189,8 @@ export default function AnalyticsPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Net Savings']} />
+                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => data.stealthMode ? '••' : `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v)), 'Net Savings']} />
                 <Area type="monotone" dataKey="savings" stroke="#34d399" strokeWidth={2.5} fill="url(#savGrad)" />
               </AreaChart>
             </ResponsiveContainer>

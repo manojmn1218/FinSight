@@ -7,7 +7,7 @@ import { useFinance } from '../context/FinanceContext';
 
 export default function AdminRevenuePage() {
   const { allUsers } = useFinance();
-  const appRevenue = allUsers.reduce((sum, u) => sum + (u.currentPlan === 'Pro' ? 349 : u.currentPlan === 'Wealth' ? 899 : 0), 0);
+  const appRevenue = allUsers.reduce((sum, u) => sum + (u.currentPlan === 'Pro' ? 99 : u.currentPlan === 'Wealth' ? 149 : 0), 0);
 
   const chartData = useMemo(() => {
     const today = new Date();
@@ -27,7 +27,7 @@ export default function AdminRevenuePage() {
     .map((u, i) => ({
       id: `tx_${i}`,
       user: u.userName || u.userEmail,
-      amount: `₹${u.currentPlan === 'Pro' ? '349' : '899'}`,
+      amount: `₹${u.currentPlan === 'Pro' ? '99' : '149'}`,
       date: 'Subscription Payment',
       status: 'Success'
     }));

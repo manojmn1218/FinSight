@@ -8,7 +8,7 @@ import { useFinance } from '../context/FinanceContext';
 
 export default function AdminDashboardPage() {
   const { allUsers, databaseStatus } = useFinance();
-  const appRevenue = allUsers.reduce((sum, u) => sum + (u.currentPlan === 'Pro' ? 349 : u.currentPlan === 'Wealth' ? 899 : 0), 0);
+  const appRevenue = allUsers.reduce((sum, u) => sum + (u.currentPlan === 'Pro' ? 99 : u.currentPlan === 'Wealth' ? 149 : 0), 0);
   const activeUsers = allUsers.filter(u => u.isOnboarded).length;
 
   const dbStatusText = databaseStatus?.connected

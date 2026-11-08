@@ -6,11 +6,11 @@ import { computeMonthSummaries } from '../utils/transactionParser';
 import type { Category } from '../utils/types';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-
-const fmt = (n: number) => '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
+import { formatCurrency } from '../utils/format';
 
 export default function ReportsPage() {
   const { data } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;
 

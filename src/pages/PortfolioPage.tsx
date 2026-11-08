@@ -10,8 +10,7 @@ import type { StockQuote } from '../utils/stockApi';
 import Tilt3DCard from '../components/3d/Tilt3DCard';
 import InteractiveCard3D from '../components/3d/InteractiveCard3D';
 import WealthSimulations from '../components/WealthSimulations';
-
-const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
+import { formatCurrency } from '../utils/format';
 
 interface Asset {
   id: string;
@@ -141,6 +140,7 @@ const RISK_STYLES: Record<string, { bg: string; color: string }> = {
 
 export default function PortfolioPage() {
   const { data } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const isWealth = data.currentPlan === 'Wealth';
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
@@ -552,7 +552,7 @@ export default function PortfolioPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => data.stealthMode ? '••' : `₹${(v / 1000).toFixed(0)}k`} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v)), 'Net Worth']} />
                 <Area type="monotone" dataKey="worth" stroke="#ea580c" strokeWidth={2.5} fill="url(#netWorthGrad)" />
               </AreaChart>
@@ -814,7 +814,7 @@ export default function PortfolioPage() {
                         if (!quote) return <span style={{ color: 'var(--text3)', fontSize: 11 }}>—</span>;
                         return (
                           <span style={{ fontWeight: 700, fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
-                            ₹{quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {fmt(quote.price)}
                           </span>
                         );
                       })()}
@@ -989,7 +989,7 @@ export default function PortfolioPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>Monthly SIP</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: sip.color }}>₹{sip.sipAmount.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: sip.color }}>{fmt(sip.sipAmount)}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>Expected CAGR</div>

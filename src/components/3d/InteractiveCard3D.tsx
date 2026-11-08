@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Wifi, ShieldCheck, Sparkles, RefreshCw } from 'lucide-react';
+import { useFinance } from '../../context/FinanceContext';
 
 interface InteractiveCard3DProps {
   balance: number;
@@ -7,6 +8,7 @@ interface InteractiveCard3DProps {
   isStatementBalance?: boolean;
   currency?: string;
   bankName?: string;
+  stealthMode?: boolean;
 }
 
 export default function InteractiveCard3D({
@@ -15,7 +17,9 @@ export default function InteractiveCard3D({
   isStatementBalance = false,
   currency = '₹',
   bankName = 'FinSight Obsidian',
+  stealthMode,
 }: InteractiveCard3DProps) {
+  const { data } = useFinance();
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -50,10 +54,13 @@ export default function InteractiveCard3D({
     setGlare(prev => ({ ...prev, opacity: 0 }));
   }, []);
 
-  const formattedBalance = `${currency}${Math.abs(balance).toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  const isStealth = stealthMode ?? data?.stealthMode;
+  const formattedBalance = isStealth
+    ? `${currency}••••••`
+    : `${currency}${Math.abs(balance).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
 
   const displayName = (userName || 'FINSIGHT MEMBER').toUpperCase();
 

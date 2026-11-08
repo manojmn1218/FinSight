@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORY_CONFIG } from '../utils/types';
 import { Link } from 'react-router-dom';
-
-const fmt = (n: number) => '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
+import { formatCurrency } from '../utils/format';
 
 export default function InsightsPage() {
   const { data, totalExpenses, budget } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const usedPct = data.monthlyIncome > 0 ? Math.round((totalExpenses / data.monthlyIncome) * 100) : 0;
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;

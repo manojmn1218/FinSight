@@ -4,13 +4,13 @@ import { Target, Plus, Trash2, X, DollarSign, Lock } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import type { FinancialGoal } from '../utils/types';
 import { Link } from 'react-router-dom';
+import { formatCurrency } from '../utils/format';
 
 const COLORS = ['#818cf8', '#f472b6', '#34d399', '#f0b429', '#60a5fa', '#c084fc', '#fb7185', '#38bdf8'];
 
-const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
-
 export default function GoalsPage() {
   const { data, addGoal, updateGoal, deleteGoal } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const goals = data.financialGoals || [];
   const [currentTime] = useState(() => Date.now());
 

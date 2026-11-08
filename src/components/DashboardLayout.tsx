@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Scale } from 'lucide-react';
+import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Scale, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
@@ -28,7 +28,7 @@ const ACCOUNT_NAV = [
 export default function DashboardLayout() {
   const loc = useLocation();
   const nav = useNavigate();
-  const { data, logoutUser, sessionTimeLeft } = useFinance();
+  const { data, setData, logoutUser, sessionTimeLeft } = useFinance();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Count recurring alerts for badge
@@ -121,26 +121,52 @@ export default function DashboardLayout() {
           </span>
         </Link>
 
-        {/* User Card */}
-        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px', marginBottom: 2, background: 'var(--surface)', borderRadius: 9, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit', boxShadow: '0 1px 3px rgba(28,25,23,0.04)' }}>
-          <div style={{
-            width: 45, height: 45, borderRadius: 10,
-            background: 'var(--grad)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#ffffff', fontWeight: 700, fontSize: 16,
-            flexShrink: 0,
-          }}>
-            {initials}
-          </div>
-          <div className="sidebar-user-info" style={{ overflow: 'hidden', lineHeight: 1.25 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {data.userName || 'User'}
+        {/* User Card & Quick Stealth Mode Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <Link to="/profile" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px', background: 'var(--surface)', borderRadius: 9, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit', boxShadow: '0 1px 3px rgba(28,25,23,0.04)', minWidth: 0 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: 'var(--grad)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#ffffff', fontWeight: 700, fontSize: 15,
+              flexShrink: 0,
+            }}>
+              {initials}
             </div>
-            <div style={{ fontSize: 10.5, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {data.userEmail || 'user@finsight.ai'}
+            <div className="sidebar-user-info" style={{ overflow: 'hidden', lineHeight: 1.25 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {data.userName || 'User'}
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {data.userEmail || 'user@finsight.ai'}
+              </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setData({ stealthMode: !data.stealthMode });
+            }}
+            title={data.stealthMode ? 'Stealth Mode Active (Click to reveal balances)' : 'Enable Stealth Shield (Mask balances)'}
+            style={{
+              width: 38,
+              height: 40,
+              borderRadius: 9,
+              border: `1px solid ${data.stealthMode ? 'var(--pop)' : 'var(--border)'}`,
+              background: data.stealthMode ? 'rgba(234, 88, 12, 0.12)' : 'var(--surface)',
+              color: data.stealthMode ? 'var(--pop)' : 'var(--text3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {data.stealthMode ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
 
         {/* Navigation Tabs Container — Fills sidebar with regular space without scrolling */}
         <div className="sidebar-nav-container">

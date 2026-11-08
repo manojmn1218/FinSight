@@ -18,6 +18,7 @@ import {
 import { useFinance } from '../context/FinanceContext';
 import { CATEGORIES, CATEGORY_CONFIG, type Category, type Transaction } from '../utils/types';
 import { api } from '../services/api';
+import { formatCurrency } from '../utils/format';
 
 // Payment mode options
 const PAYMENT_MODES = ['UPI', 'Credit Card', 'Debit Card', 'Net Banking', 'Cash', 'Cheque'] as const;
@@ -73,6 +74,7 @@ interface ManualLiability {
 
 export default function ManualEntryPage() {
   const { data, setData, addTransactions, deleteTransaction } = useFinance();
+  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
   const [activeTab, setActiveTab] = useState<'transactions' | 'assets' | 'liabilities' | 'budgets' | 'presets'>('transactions');
 
   // Notification toast state
@@ -540,7 +542,7 @@ export default function ManualEntryPage() {
             </div>
           </div>
           <p style={{ fontSize: 24, fontWeight: 800, color: 'var(--green)', margin: 0 }}>
-            +₹{totalManualInflow.toLocaleString('en-IN')}
+            +{fmt(totalManualInflow)}
           </p>
           <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Recorded earnings & credits</p>
         </motion.div>
@@ -553,7 +555,7 @@ export default function ManualEntryPage() {
             </div>
           </div>
           <p style={{ fontSize: 24, fontWeight: 800, color: 'var(--red)', margin: 0 }}>
-            -₹{totalManualOutflow.toLocaleString('en-IN')}
+            -{fmt(totalManualOutflow)}
           </p>
           <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Recorded expenses & debits</p>
         </motion.div>
@@ -566,7 +568,7 @@ export default function ManualEntryPage() {
             </div>
           </div>
           <p style={{ fontSize: 24, fontWeight: 800, color: 'var(--amber)', margin: 0 }}>
-            ₹{totalAssetValue.toLocaleString('en-IN')}
+            {fmt(totalAssetValue)}
           </p>
           <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>{manualAssets.length} asset holdings logged</p>
         </motion.div>
@@ -918,7 +920,7 @@ export default function ManualEntryPage() {
                             textAlign: 'right',
                           }}
                         >
-                          {isCredit ? '+' : '-'}₹{Math.abs(txn.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          {isCredit ? '+' : '-'}{fmt(Math.abs(txn.amount))}
                         </p>
                         <button
                           onClick={() => handleDeleteTxn(txn.id, txn.description)}
@@ -1055,19 +1057,19 @@ export default function ManualEntryPage() {
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text2)', margin: '0 0 4px 0' }}>Total Portfolio Worth</p>
                   <p style={{ fontSize: 22, fontWeight: 800, margin: 0, color: 'var(--amber)' }}>
-                    ₹{totalAssetValue.toLocaleString('en-IN')}
+                    {fmt(totalAssetValue)}
                   </p>
                 </div>
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text2)', margin: '0 0 4px 0' }}>Total Cost Basis</p>
                   <p style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>
-                    ₹{totalAssetCost.toLocaleString('en-IN')}
+                    {fmt(totalAssetCost)}
                   </p>
                 </div>
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text2)', margin: '0 0 4px 0' }}>Unrealized Gain / Loss</p>
                   <p style={{ fontSize: 22, fontWeight: 800, margin: 0, color: assetGain >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                    {assetGain >= 0 ? '+' : ''}₹{assetGain.toLocaleString('en-IN')} ({assetGainPercent.toFixed(1)}%)
+                    {assetGain >= 0 ? '+' : ''}{fmt(assetGain)} ({assetGainPercent.toFixed(1)}%)
                   </p>
                 </div>
               </div>
@@ -1115,17 +1117,17 @@ export default function ManualEntryPage() {
                         <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--text3)' }}>
                           {asset.institution && <span>Custodian: {asset.institution}</span>}
                           {asset.cagr && <span>Expected: {asset.cagr}% p.a.</span>}
-                          <span>Cost: ₹{asset.purchaseCost.toLocaleString('en-IN')}</span>
+                          <span>Cost: {fmt(asset.purchaseCost)}</span>
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <div style={{ textAlign: 'right' }}>
                           <p style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>
-                            ₹{asset.currentValue.toLocaleString('en-IN')}
+                            {fmt(asset.currentValue)}
                           </p>
                           <p style={{ fontSize: 12, fontWeight: 600, margin: '2px 0 0 0', color: gain >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                            {gain >= 0 ? '+' : ''}₹{gain.toLocaleString('en-IN')} ({pct.toFixed(1)}%)
+                            {gain >= 0 ? '+' : ''}{fmt(gain)} ({pct.toFixed(1)}%)
                           </p>
                         </div>
                         <button
@@ -1288,13 +1290,13 @@ export default function ManualEntryPage() {
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text2)', margin: '0 0 4px 0' }}>Total Outstanding Debt</p>
                   <p style={{ fontSize: 22, fontWeight: 800, margin: 0, color: 'var(--red)' }}>
-                    ₹{totalOutstandingDebt.toLocaleString('en-IN')}
+                    {fmt(totalOutstandingDebt)}
                   </p>
                 </div>
                 <div>
                   <p style={{ fontSize: 12, color: 'var(--text2)', margin: '0 0 4px 0' }}>Monthly EMI Burden</p>
-                  <p style={{ fontSize: 22, fontWeight: 800, margin: 0, color: 'var(--purple)' }}>
-                    ₹{totalMonthlyEmi.toLocaleString('en-IN')} / mo
+                  <p style={{ fontSize: 22, fontWeight: 800, margin: 0, color: 'var(--pop)' }}>
+                    {fmt(totalMonthlyEmi)} / mo
                   </p>
                 </div>
                 <div>
@@ -1353,10 +1355,10 @@ export default function ManualEntryPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: 16, fontWeight: 800, margin: 0, color: 'var(--red)' }}>
-                              ₹{liab.outstandingBalance.toLocaleString('en-IN')} left
+                              {fmt(liab.outstandingBalance)} left
                             </p>
                             <p style={{ fontSize: 12, color: 'var(--text2)', margin: '2px 0 0 0' }}>
-                              EMI: ₹{liab.monthlyEmi.toLocaleString('en-IN')}/mo
+                              EMI: {fmt(liab.monthlyEmi)}/mo
                             </p>
                           </div>
                           <button
@@ -1524,7 +1526,7 @@ export default function ManualEntryPage() {
                         color: isCredit ? 'var(--green)' : 'var(--red)',
                       }}
                     >
-                      {isCredit ? '+' : '-'}₹{preset.amount.toLocaleString('en-IN')}
+                      {isCredit ? '+' : '-'}{fmt(preset.amount)}
                     </span>
                   </div>
 

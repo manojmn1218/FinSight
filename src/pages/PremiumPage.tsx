@@ -30,9 +30,9 @@ const PLANS = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 349,
-    priceLabel: '₹349',
-    priceYearly: 3490,
+    price: 99,
+    priceLabel: '₹99',
+    priceYearly: 990,
     desc: 'Advanced AI analytics, unlimited uploads, and smart automation.',
     icon: Zap,
     color: 'var(--pop)',
@@ -53,9 +53,9 @@ const PLANS = [
   {
     id: 'wealth',
     name: 'Wealth',
-    price: 899,
-    priceLabel: '₹899',
-    priceYearly: 8990,
+    price: 149,
+    priceLabel: '₹149',
+    priceYearly: 1490,
     desc: 'For serious investors — portfolio tracking, crypto, and personal advisor.',
     icon: Crown,
     color: '#f0b429',
@@ -1127,7 +1127,7 @@ export default function PremiumPage() {
             {currentPlan.toLowerCase() === 'pro' ? (
               '✅ You\'re on Pro'
             ) : (
-              <><Zap size={18} /> Get Pro — {billing === 'yearly' ? `₹${Math.round(3490 / 12)}/mo` : '₹349/mo'}</>
+              <><Zap size={18} /> Get Pro — {billing === 'yearly' ? `₹${Math.round(990 / 12)}/mo` : '₹99/mo'}</>
             )}
           </button>
           <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 12 }}>

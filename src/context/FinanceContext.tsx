@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { Transaction, FinancialGoal } from '../utils/types';
 import { api, type UserProfile, type DatabaseStatus } from '../services/api';
+import { formatCurrency, type FormatOptions } from '../utils/format';
 
 interface ExpenseItem {
   name: string;
@@ -55,6 +56,7 @@ interface FinCtx {
   isLoading: boolean;
   databaseStatus: DatabaseStatus | null;
   checkDatabaseStatus: () => Promise<void>;
+  formatMoney: (amount: number, options?: FormatOptions) => string;
   loginAs: (email: string) => void;
   loginWithPassword: (email: string, password: string) => Promise<{
     success: boolean;
@@ -620,6 +622,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return currentUserEmail ? [data] : [];
   }, [adminUsersList, currentUserEmail, data]);
 
+  const formatMoney = useCallback((amount: number, options?: FormatOptions) => {
+    return formatCurrency(amount, !!data.stealthMode, options);
+  }, [data.stealthMode]);
+
   return (
     <Ctx.Provider
       value={{
@@ -635,6 +641,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         databaseStatus,
         checkDatabaseStatus,
+        formatMoney,
         loginAs,
         loginWithPassword,
         loginWithGoogle,

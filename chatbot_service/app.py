@@ -454,12 +454,12 @@ def fallback_rule_based_response(message: str, user_context: dict) -> str:
         )
 
     # Plans and pricing
-    if re.search(r"\b(plan|plans|pricing|upgrade|pro|enterprise|cost)\b", msg):
+    if re.search(r"\b(plan|plans|pricing|upgrade|pro|enterprise|wealth|cost)\b", msg):
         return (
             "FinSight offers three plans:\n"
             "• **Basic (Free)**: Dashboard, charts, manual entry, up to 3 PDF uploads/month.\n"
-            "• **Pro (₹349/mo)**: Unlimited PDF uploads, AI-powered Insights, recurring payment alerts, priority support.\n"
-            "• **Enterprise (₹999/mo)**: All Pro features + Multi-asset portfolio tracker, live stock quotes, AI stock picks & SIP planner."
+            "• **Pro (₹99/mo)**: Unlimited PDF uploads, AI-powered Insights, recurring payment alerts, priority support.\n"
+            "• **Wealth (₹149/mo)**: All Pro features + Multi-asset portfolio tracker, live stock quotes, AI stock picks & SIP planner."
         )
 
     # Features

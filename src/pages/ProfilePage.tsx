@@ -794,7 +794,7 @@ export default function ProfilePage() {
           <div className="panel" style={{ padding: 28, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
             <div style={{ maxWidth: 650 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                {stealthMode ? <EyeOff size={18} color="var(--purple)" /> : <Eye size={18} color="var(--text2)" />}
+                {stealthMode ? <EyeOff size={18} color="var(--pop)" /> : <Eye size={18} color="var(--text2)" />}
                 <h4 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Stealth / Privacy Shield Mode</h4>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text2)', margin: 0, lineHeight: 1.5 }}>
@@ -811,9 +811,9 @@ export default function ProfilePage() {
               className="btn-outline"
               style={{
                 padding: '10px 22px',
-                borderColor: stealthMode ? 'var(--purple)' : 'var(--border)',
-                background: stealthMode ? 'rgba(129, 140, 248, 0.15)' : 'transparent',
-                color: stealthMode ? 'var(--purple)' : 'var(--text)',
+                borderColor: stealthMode ? 'var(--pop)' : 'var(--border)',
+                background: stealthMode ? 'rgba(234, 88, 12, 0.12)' : 'transparent',
+                color: stealthMode ? 'var(--pop)' : 'var(--text)',
                 fontWeight: 700,
               }}
             >
@@ -1001,8 +1001,8 @@ export default function ProfilePage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
               {[
                 { name: 'Basic', price: 'Free Forever', active: data.currentPlan === 'Basic', perks: ['Statement PDF Extraction', 'Manual Entry Hub', '1 Financial Goal', 'Standard Analytics'] },
-                { name: 'Pro', price: '₹349 / month', active: data.currentPlan === 'Pro', perks: ['Unlimited Bank Statements', 'AI Expense Categorization', 'Unlimited Financial Goals', 'Full CSV & PDF Exports'] },
-                { name: 'Wealth', price: '₹899 / month', active: data.currentPlan === 'Wealth', perks: ['Everything in Pro', 'Setu Live Account Aggregator', 'Portfolio Deep Analytics', 'Certified CFP Financial Advisor'] },
+                { name: 'Pro', price: '₹99 / month', active: data.currentPlan === 'Pro', perks: ['Unlimited Bank Statements', 'AI Expense Categorization', 'Unlimited Financial Goals', 'Full CSV & PDF Exports'] },
+                { name: 'Wealth', price: '₹149 / month', active: data.currentPlan === 'Wealth', perks: ['Everything in Pro', 'Setu Live Account Aggregator', 'Portfolio Deep Analytics', 'Certified CFP Financial Advisor'] },
               ].map(tier => (
                 <div
                   key={tier.name}

@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Phone, ArrowRight, Loader2, CheckCircle2, AlertCircle, Shield, X, Landmark, RefreshCw, ExternalLink, Wifi } from 'lucide-react';
+import { useFinance } from '../context/FinanceContext';
 import { createConsent, fetchBankData } from '../utils/setuApi';
 import type { BankDataResult } from '../utils/setuApi';
 
@@ -20,6 +21,7 @@ interface BankConnectProps {
 type Step = 'input' | 'consent' | 'fetching' | 'success' | 'error';
 
 export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectProps) {
+  const { data } = useFinance();
   const [step, setStep] = useState<Step>(() => {
     if (typeof window === 'undefined') return 'input';
     const params = new URLSearchParams(window.location.search);
@@ -407,7 +409,7 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <p style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>
-                            ₹{fetchResult.accountInfo.balance.toLocaleString('en-IN')}
+                            {data.stealthMode ? '₹••••••' : `₹${fetchResult.accountInfo.balance.toLocaleString('en-IN')}`}
                           </p>
                           <p style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase' }}>Balance</p>
                         </div>
