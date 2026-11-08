@@ -115,14 +115,14 @@ export default function DashboardLayout() {
       }}>
         {/* Clickable Brand Logo Header */}
         <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '3px 8px 6px', textDecoration: 'none', color: 'inherit' }}>
-          <FinSightLogo size={30} className="app-logo" />
-          <span className="sidebar-session-text" style={{ fontWeight: 800, fontSize: 16.5, letterSpacing: -0.4, background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <FinSightLogo size={40} className="app-logo" />
+          <span className="sidebar-session-text" style={{ fontWeight: 900, fontSize: 19.5, letterSpacing: -0.4, background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             FinSight
           </span>
         </Link>
 
         {/* User Card */}
-        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px', marginBottom: 2, background: 'rgba(255,255,255,0.02)', borderRadius: 9, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
+        <Link to="/profile" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 8px', marginBottom: 2, background: 'var(--surface)', borderRadius: 9, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit', boxShadow: '0 1px 3px rgba(28,25,23,0.04)' }}>
           <div style={{
             width: 45, height: 45, borderRadius: 10,
             background: 'var(--grad)',

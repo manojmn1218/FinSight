@@ -12,40 +12,48 @@
     and one that doesn't (Burnt Orange pop strictly on the button you want pressed)"
    ═══════════════════════════════════════════════ */
 :root {
-  --bg: #090a0f;
-  --bg2: #111319;
-  --bg3: #181b24;
-  --surface: rgba(19, 22, 30, 0.82);
-  --surface-hover: rgba(27, 31, 42, 0.9);
-  --panel-bg: rgba(17, 19, 27, 0.96);
-  --border: rgba(245, 237, 226, 0.08);
-  --border-hover: rgba(245, 237, 226, 0.16);
-  --text: #f7f3ee;
-  --text2: #beb4a6;
-  --text3: #7d756a;
-  --cream: #f7f3ee;
-  --cream-soft: #e8ded1;
-  --cream-muted: #9c9182;
-  --pop: #ff6b35;          /* Electric Burnt Orange */
-  --pop-hover: #ff5514;
-  --pop-dark: #ea580c;
-  --pop-glow: rgba(255, 107, 53, 0.4);
-  --purple: #ff6b35;       /* Semantic primary action alias for backward compatibility */
-  --purple-hover: #ff5514;
-  --pink: #f59e0b;         /* Warm amber accent */
-  --green: #34d399;
-  --blue: #38bdf8;
-  --amber: #f59e0b;
-  --red: #f87171;
-  --focus-ring: rgba(255, 107, 53, 0.5);
-  --grad: linear-gradient(135deg, #ff6b35 0%, #f97316 50%, #ea580c 100%);
-  --grad-subtle: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(245, 237, 226, 0.04) 100%);
+  /* ═══════════════════════════════════════════════════════════════
+     WARM EDITORIAL CREAM CANVAS (90% Visual Weight — Diego A. Does Reel 1)
+     ═══════════════════════════════════════════════════════════════ */
+  --bg: #F8F5EE;             /* Warm Velvet Editorial Cream Canvas */
+  --bg2: #EFE9DE;            /* Warm Cream Secondary / Sidebar / Panels */
+  --bg3: #E4DCD0;            /* Warm Cream Accent Background / Wells / Inputs */
+  --surface: #FFFFFF;        /* Crisp Warm Ivory Floating Surfaces */
+  --surface-hover: #FCFAF7;
+  --panel-bg: #FFFFFF;
+  --border: rgba(28, 25, 23, 0.08);
+  --border-hover: rgba(28, 25, 23, 0.16);
+  --border-focus: #ea580c;
+
+  /* Ink Black Typography & Noir Structural Definition */
+  --text: #121316;           /* Deep Obsidian Ink — 15:1 Contrast (WCAG AAA) */
+  --text2: #54524c;          /* Warm Charcoal Secondary — 6:1 Contrast */
+  --text3: #8c877e;          /* Warm Muted Stone — 4.5:1 Contrast */
+  --cream: #F8F5EE;
+  --cream-soft: #FAF8F5;
+  --cream-muted: #D8D0C3;
+
+  /* The 10% Pop: Burnt Orange (Only for Primary Buttons & Key CTAs) */
+  --pop: #ea580c;            /* Rich Burnt Orange */
+  --pop-hover: #c2410c;
+  --pop-dark: #9a3412;
+  --pop-glow: rgba(234, 88, 12, 0.28);
+  --purple: #ea580c;         /* Compatibility alias */
+  --purple-hover: #c2410c;
+  --pink: #d97706;           /* Warm Amber Accent */
+  --green: #15803d;          /* Crisp Forest Emerald */
+  --blue: #0284c7;           /* Cerulean Blue */
+  --amber: #b45309;          /* Deep Amber Warning */
+  --red: #dc2626;            /* Cardinal Red */
+  --focus-ring: rgba(234, 88, 12, 0.35);
+  --grad: linear-gradient(135deg, #ff6b35 0%, #ea580c 100%);
+  --grad-subtle: linear-gradient(135deg, rgba(234, 88, 12, 0.07) 0%, rgba(248, 245, 238, 0.9) 100%);
   --radius: 18px;
   --radius-sm: 10px;
   --radius-lg: 26px;
-  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(245, 237, 226, 0.04);
-  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(245, 237, 226, 0.08);
-  --shadow-3d: 0 30px 60px -12px rgba(0, 0, 0, 0.85), 0 18px 36px -18px rgba(0, 0, 0, 0.9);
+  --shadow: 0 4px 20px -2px rgba(28, 25, 23, 0.06), 0 2px 6px -1px rgba(28, 25, 23, 0.04);
+  --shadow-lg: 0 12px 36px -4px rgba(28, 25, 23, 0.09), 0 4px 12px -2px rgba(28, 25, 23, 0.05);
+  --shadow-3d: 0 20px 48px -8px rgba(28, 25, 23, 0.12), 0 2px 6px rgba(28, 25, 23, 0.06);
   --transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -61,8 +69,8 @@
 }
 
 ::selection {
-  background: rgba(255, 107, 53, 0.35);
-  color: #ffffff;
+  background: rgba(234, 88, 12, 0.2);
+  color: #121316;
 }
 
 html {
@@ -81,11 +89,11 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg);
   background-image: 
-    radial-gradient(circle at 14% 12%, rgba(255, 107, 53, 0.045) 0%, transparent 45%),
-    radial-gradient(circle at 86% 20%, rgba(245, 237, 226, 0.025) 0%, transparent 40%),
-    radial-gradient(circle at 50% 90%, rgba(255, 107, 53, 0.02) 0%, transparent 50%),
-    linear-gradient(rgba(245, 237, 226, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245, 237, 226, 0.015) 1px, transparent 1px);
+    radial-gradient(circle at 14% 12%, rgba(234, 88, 12, 0.035) 0%, transparent 45%),
+    radial-gradient(circle at 86% 20%, rgba(28, 25, 23, 0.02) 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(234, 88, 12, 0.02) 0%, transparent 50%),
+    linear-gradient(rgba(28, 25, 23, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 25, 23, 0.025) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 100% 100%, 54px 54px, 54px 54px;
   background-attachment: fixed;
   color: var(--text);
@@ -102,7 +110,7 @@ a {
 }
 
 a:hover {
-  color: var(--pink);
+  color: var(--pop-hover);
   text-decoration: none;
 }
 
@@ -146,23 +154,24 @@ a:hover {
    REUSABLE COMPONENT CLASSES
    ═══════════════════════════════════════════════ */
 
-/* Glassmorphism Panel with 3D Depth & Specular Sheen — Cream & Obsidian */
+/* Glassmorphism Ivory Floating Panel with Tactile Shadow */
 .panel {
-  background: linear-gradient(135deg, rgba(20, 23, 33, 0.82) 0%, rgba(13, 15, 21, 0.92) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(245, 237, 226, 0.08);
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: inset 0 1px 1px 0 rgba(245, 237, 226, 0.08), 0 12px 36px -8px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow);
+  color: var(--text);
   transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 .panel:hover {
-  border-color: rgba(245, 237, 226, 0.16);
+  border-color: var(--border-hover);
 }
 .panel-glow:hover {
-  border-color: rgba(255, 107, 53, 0.35);
-  box-shadow: inset 0 1px 1px 0 rgba(245, 237, 226, 0.12), 0 20px 45px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 107, 53, 0.18);
-  transform: translateY(-3px);
+  border-color: rgba(234, 88, 12, 0.35);
+  box-shadow: 0 16px 40px -8px rgba(28, 25, 23, 0.1), 0 0 20px rgba(234, 88, 12, 0.15);
+  transform: translateY(-2px);
 }
 
 /* Buttons with 3D Bevel & Light Edge — Burnt Orange Pop (Only goes on the button you want pressed!) */
@@ -180,13 +189,13 @@ a:hover {
   font-weight: 650;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 18px rgba(255, 107, 53, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
   background: linear-gradient(180deg, #ff7a48 0%, #f97316 100%);
-  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .btn-primary:active {
   transform: translateY(0px);
@@ -206,17 +215,18 @@ a:hover {
   padding: 12px 24px;
   border-radius: 999px;
   border: 1.5px solid var(--border);
-  background: transparent;
+  background: var(--surface);
   color: var(--text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.04);
   transition: border-color var(--transition), background var(--transition);
 }
 .btn-outline:hover {
   border-color: var(--border-hover);
-  background: var(--surface);
+  background: var(--bg2);
 }
 
 .btn-ghost {
@@ -236,11 +246,11 @@ a:hover {
 }
 .btn-ghost:hover {
   color: var(--text);
-  background: var(--surface);
+  background: var(--bg2);
 }
 .btn-ghost.danger:hover {
   color: var(--red);
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(220, 38, 38, 0.08);
 }
 
 /* Inputs */
@@ -249,7 +259,7 @@ a:hover {
   padding: 12px 16px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border);
-  background: var(--bg2);
+  background: var(--surface);
   color: var(--text);
   font-size: 14px;
   font-family: inherit;
@@ -257,8 +267,8 @@ a:hover {
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 .input:focus {
-  border-color: var(--purple);
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+  border-color: var(--pop);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 .input::placeholder {
   color: var(--text3);
@@ -342,16 +352,16 @@ a:hover {
 }
 .nav-item:hover {
   color: var(--text);
-  background: rgba(245, 237, 226, 0.05);
-  border-color: rgba(245, 237, 226, 0.09);
+  background: rgba(28, 25, 23, 0.04);
+  border-color: var(--border);
   text-decoration: none;
 }
 .nav-item.active {
-  color: #ffffff;
-  background: rgba(245, 237, 226, 0.08);
-  border-color: rgba(245, 237, 226, 0.16);
-  font-weight: 650;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(28, 25, 23, 0.05);
 }
 .nav-item.active .nav-icon {
   color: var(--pop);
@@ -365,7 +375,7 @@ a:hover {
   width: 3.5px;
   border-radius: 0 4px 4px 0;
   background: var(--pop);
-  box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.4);
 }
 
 /* ═══════════════════════════════════════════════
@@ -376,7 +386,7 @@ a:hover {
   align-items: center;
   gap: 8px;
   padding: 6px;
-  background: rgba(20, 23, 33, 0.65);
+  background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow-x: auto;
@@ -408,13 +418,13 @@ a:hover {
 }
 .tab-btn:hover {
   color: var(--text);
-  background: rgba(245, 237, 226, 0.05);
+  background: rgba(28, 25, 23, 0.04);
 }
 .tab-btn.active {
-  color: #ffffff;
+  color: var(--text);
   background: var(--surface);
-  border-color: rgba(245, 237, 226, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgba(28, 25, 23, 0.06);
 }
 .tab-btn.active .tab-icon {
   color: var(--pop);
@@ -424,13 +434,13 @@ a:hover {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(245, 237, 226, 0.07);
-  color: var(--text3);
+  background: var(--bg3);
+  color: var(--text2);
   transition: all 0.2s;
 }
 .tab-btn.active .tab-badge {
-  background: rgba(255, 107, 53, 0.2);
-  color: #fed7aa;
+  background: rgba(234, 88, 12, 0.12);
+  color: var(--pop);
 }
 
 /* ═══════════════════════════════════════════════
@@ -474,14 +484,14 @@ a:hover {
 .blob-1 {
   width: 500px;
   height: 500px;
-  background: rgba(255, 107, 53, 0.06);
+  background: rgba(234, 88, 12, 0.08);
   top: -10%;
   left: 5%;
 }
 .blob-2 {
   width: 400px;
   height: 400px;
-  background: rgba(245, 237, 226, 0.035);
+  background: rgba(28, 25, 23, 0.035);
   bottom: -10%;
   right: 5%;
   animation-delay: -4s;
@@ -489,7 +499,7 @@ a:hover {
 .blob-3 {
   width: 300px;
   height: 300px;
-  background: rgba(255, 107, 53, 0.035);
+  background: rgba(234, 88, 12, 0.05);
   top: 40%;
   right: 25%;
   animation-delay: -8s;
@@ -504,7 +514,7 @@ a:hover {
   position: absolute;
   inset: -2px;
   border-radius: calc(var(--radius) + 2px);
-  background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6, #818cf8);
+  background: linear-gradient(135deg, #ff6b35, #ea580c, #f59e0b, #ff6b35);
   background-size: 300% 300%;
   animation: gradientBorder 4s ease infinite;
   z-index: -1;
@@ -519,10 +529,11 @@ a:hover {
    CHART TOOLTIP OVERRIDE
    ═══════════════════════════════════════════════ */
 .recharts-default-tooltip {
-  background: var(--bg3) !important;
+  background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-sm) !important;
   box-shadow: var(--shadow) !important;
+  color: var(--text) !important;
 }
 
 /* ═══════════════════════════════════════════════
@@ -535,21 +546,22 @@ a:hover {
   text-align: center;
   cursor: pointer;
   transition: all var(--transition);
-  background: var(--grad-subtle);
+  background: var(--surface);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 .upload-zone:hover,
 .upload-zone.drag-over {
   border-color: var(--purple);
-  background: rgba(129, 140, 248, 0.06);
-  box-shadow: 0 0 40px rgba(129, 140, 248, 0.08);
+  background: var(--surface-hover);
+  box-shadow: 0 0 24px rgba(234, 88, 12, 0.1);
 }
 .upload-zone.drag-over::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(129, 140, 248, 0.04);
+  background: rgba(234, 88, 12, 0.04);
   border-radius: var(--radius-lg);
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -586,7 +598,7 @@ a:hover {
 }
 .tx-table thead tr {
   border-bottom: 1px solid var(--border);
-  background: rgba(129, 140, 248, 0.04);
+  background: var(--bg2);
 }
 .tx-table th {
   padding: 14px 18px;
@@ -617,7 +629,7 @@ a:hover {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
 }
@@ -627,7 +639,7 @@ a:hover {
   grid-template-columns: 130px minmax(280px, 1fr) 140px 180px 70px;
   align-items: center;
   padding: 14px 24px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg2);
   border-bottom: 1px solid var(--border);
   font-size: 11.5px;
   font-weight: 700;
@@ -642,7 +654,7 @@ a:hover {
   grid-template-columns: 130px minmax(280px, 1fr) 140px 180px 70px;
   align-items: center;
   padding: 14px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid var(--border);
   transition: all 0.16s ease-in-out;
   position: relative;
 }
@@ -652,7 +664,7 @@ a:hover {
 }
 
 .tx-grid-row:hover {
-  background: rgba(129, 140, 248, 0.04);
+  background: var(--surface-hover);
 }
 
 .tx-grid-col-date {

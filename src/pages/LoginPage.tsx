@@ -201,7 +201,7 @@ export default function LoginPage() {
       <div className="panel auth-split-panel" style={{ display: 'flex', width: '100%', maxWidth: 1080, minHeight: 600, overflow: 'hidden', padding: 0, zIndex: 1, border: '1px solid var(--border)', background: 'var(--surface)' }}>
         {/* Left — Brand */}
         <motion.div
-          style={{ flex: 1.2, padding: '60px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}
+          style={{ flex: 1.2, padding: '60px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: '1px solid var(--border)', background: 'var(--bg2)' }}
           initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         >
           <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 14, marginBottom: 48, textDecoration: 'none', color: 'inherit' }}>
@@ -224,7 +224,7 @@ export default function LoginPage() {
             {FEATURES.map((f, i) => (
               <motion.div
                 key={f.label}
-                style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(28,25,23,0.03)' }}
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.1 }}
               >
                 <div style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${f.bg}20`, color: f.bg, flexShrink: 0 }}>

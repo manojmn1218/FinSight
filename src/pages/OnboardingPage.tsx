@@ -72,8 +72,8 @@ export default function OnboardingPage() {
   return (
     <div className="onboarding-container" style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Blobs */}
-      <div style={{ position: 'absolute', width: 400, height: 400, background: '#a78bfa', filter: 'blur(180px)', opacity: 0.08, top: -60, left: -60, borderRadius: '50%' }} />
-      <div style={{ position: 'absolute', width: 300, height: 300, background: '#f472b6', filter: 'blur(160px)', opacity: 0.06, bottom: -40, right: -40, borderRadius: '50%' }} />
+      <div style={{ position: 'absolute', width: 400, height: 400, background: '#ea580c', filter: 'blur(180px)', opacity: 0.05, top: -60, left: -60, borderRadius: '50%' }} />
+      <div style={{ position: 'absolute', width: 300, height: 300, background: '#ff6b35', filter: 'blur(160px)', opacity: 0.04, bottom: -40, right: -40, borderRadius: '50%' }} />
 
       {/* Sidebar progress */}
       <div className="onboarding-sidebar" style={{ width: 250, padding: '32px 24px', background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
@@ -87,11 +87,11 @@ export default function OnboardingPage() {
             const done = i < step; const active = i === step;
             const Icon = done ? Check : s.icon;
             return (
-              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 10, background: active ? 'rgba(167,139,250,0.08)' : 'transparent' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: done ? 'rgba(52,211,153,0.15)' : active ? '#a78bfa' : 'rgba(255,255,255,0.05)', color: done ? '#34d399' : active ? '#fff' : '#475569', fontSize: 14, flexShrink: 0 }}>
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 10, background: active ? 'rgba(234,88,12,0.08)' : 'transparent' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: done ? 'rgba(21,128,61,0.15)' : active ? 'var(--pop)' : 'var(--bg3)', color: done ? '#15803d' : active ? '#fff' : 'var(--text3)', fontSize: 14, flexShrink: 0 }}>
                   <Icon size={14} />
                 </div>
-                <span style={{ fontSize: 14, fontWeight: active ? 600 : 400, color: done ? '#34d399' : active ? 'var(--text)' : '#475569' }}>{s.label}</span>
+                <span style={{ fontSize: 14, fontWeight: active ? 600 : 400, color: done ? '#15803d' : active ? 'var(--text)' : 'var(--text3)' }}>{s.label}</span>
               </div>
             );
           })}

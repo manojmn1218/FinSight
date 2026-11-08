@@ -43,11 +43,12 @@ export default function LegalPage() {
       {/* Top Header */}
       <header style={{
         borderBottom: '1px solid var(--border)',
-        background: 'rgba(6, 8, 15, 0.85)',
+        background: 'var(--surface)',
         backdropFilter: 'blur(16px)',
         position: 'sticky',
         top: 0,
         zIndex: 40,
+        boxShadow: 'var(--shadow)',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

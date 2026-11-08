@@ -243,7 +243,7 @@ export default function FinSightChatbot() {
               <div
                 style={{
                   padding: '14px 18px',
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.12))',
+                  background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(248, 245, 238, 0.95))',
                   borderBottom: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',

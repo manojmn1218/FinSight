@@ -38,7 +38,7 @@ export default function NotFoundPage() {
       >
         <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 28 }}>
           <FinSightLogo size={40} className="app-logo" />
-          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, color: '#ffffff' }}>FinSight</span>
+          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, color: 'var(--text)' }}>FinSight</span>
         </Link>
 
         <div style={{
