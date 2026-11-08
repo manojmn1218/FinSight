@@ -363,15 +363,15 @@ export default function FinSightChatbot() {
                           msg.role === 'user'
                             ? 'linear-gradient(135deg, #ff6b35, #ea580c)'
                             : msg.isOutOfScope
-                            ? 'rgba(239, 68, 68, 0.08)'
-                            : 'var(--bg3, rgba(255,255,255,0.06))',
+                              ? 'rgba(239, 68, 68, 0.08)'
+                              : 'var(--bg3, rgba(255,255,255,0.06))',
                         color: msg.role === 'user' ? '#ffffff' : 'var(--text)',
                         border:
                           msg.role === 'user'
                             ? 'none'
                             : msg.isOutOfScope
-                            ? '1px solid rgba(239, 68, 68, 0.25)'
-                            : '1px solid var(--border)',
+                              ? '1px solid rgba(239, 68, 68, 0.25)'
+                              : '1px solid var(--border)',
                         fontSize: 12.5,
                         lineHeight: 1.5,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -427,7 +427,7 @@ export default function FinSightChatbot() {
                       <Loader2 size={14} className="spin-icon" color="#818cf8" />
                     </div>
                     <span style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>
-                      FinSight Python AI is analyzing...
+                      FinSight AI is analyzing...
                     </span>
                   </div>
                 )}

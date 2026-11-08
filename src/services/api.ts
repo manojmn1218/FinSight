@@ -434,10 +434,152 @@ class ApiService {
       body: JSON.stringify({ message, conversationHistory }),
     });
   }
+
+  // --- Python Data Science & Simulation Suite (Pandas / NumPy) ---
+  async getSimulationStatus() {
+    return this.request<{
+      status: string;
+      service: string;
+      libraries?: { numpy: string; pandas: string; openpyxl: string };
+      capabilities: string[];
+    }>('/api/simulations/status', { method: 'GET' });
+  }
+
+  async runMonteCarloSimulation(params: MonteCarloParams) {
+    return this.request<MonteCarloResponse>('/api/simulations/monte-carlo', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  async calculateRetirementProjection(params: RetirementParams) {
+    return this.request<RetirementResponse>('/api/simulations/retirement', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  async parseStatementWithPandas(content: string, filename: string) {
+    return this.request<PandasParseResponse>('/api/simulations/parse-statement', {
+      method: 'POST',
+      body: JSON.stringify({ content, filename }),
+    });
+  }
+}
+
+export interface MonteCarloParams {
+  initialInvestment: number;
+  monthlyContribution: number;
+  timeHorizonYears: number;
+  expectedAnnualReturn?: number;
+  annualVolatility?: number;
+  numSimulations?: number;
+  targetGoal?: number;
+}
+
+export interface MonteCarloResponse {
+  summary: {
+    initialInvestment: number;
+    monthlyContribution: number;
+    timeHorizonYears: number;
+    expectedAnnualReturnPct: number;
+    annualVolatilityPct: number;
+    totalPrincipalInvested: number;
+    medianFinalWealth: number;
+    expectedGainMedian: number;
+    bearMarketP10: number;
+    bullMarketP90: number;
+    targetGoal?: number;
+    probabilityOfSuccessPct: number;
+    var95Pct: number;
+    cvar95Pct: number;
+    simulationRuns: number;
+  };
+  trajectory: Array<{
+    year: number;
+    month: number;
+    contributed: number;
+    p10: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    p90: number;
+  }>;
+}
+
+export interface RetirementParams {
+  currentAge: number;
+  retirementAge: number;
+  lifeExpectancy?: number;
+  currentSavings: number;
+  monthlySavings: number;
+  currentMonthlyExpenses: number;
+  preRetirementReturn?: number;
+  postRetirementReturn?: number;
+  inflationRate?: number;
+  safeWithdrawalRate?: number;
+}
+
+export interface RetirementResponse {
+  summary: {
+    currentAge: number;
+    retirementAge: number;
+    lifeExpectancy: number;
+    accumulationYears: number;
+    decumulationYears: number;
+    currentMonthlyExpenses: number;
+    futureMonthlyExpenseAtRetirement: number;
+    targetCorpusNeeded: number;
+    projectedCorpusAtRetirement: number;
+    surplusOrShortfall: number;
+    fireReadinessScore: number;
+    isFullyFunded: boolean;
+    capitalDepletionAge: number | string;
+    currentMonthlySavings: number;
+    recommendedMonthlySavings: number;
+    inflationRatePct: number;
+    preRetirementReturnPct: number;
+    postRetirementReturnPct: number;
+  };
+  schedule: Array<{
+    year: number;
+    age: number;
+    isRetired: boolean;
+    portfolioValue: number;
+    annualContribution: number;
+    annualWithdrawal: number;
+    annualLivingExpense: number;
+    annualGrowth: number;
+  }>;
+}
+
+export interface PandasParseResponse {
+  status: string;
+  filename: string;
+  totalTransactions: number;
+  summary: {
+    totalIncome: number;
+    totalExpenses: number;
+    netCashFlow: number;
+    savingsRatePct: number;
+    averageTransaction: number;
+    largestExpense: number;
+    categoryBreakdown: Record<string, number>;
+  };
+  transactions: Array<{
+    id: string;
+    date: string;
+    description: string;
+    originalNarration: string;
+    amount: number;
+    type: 'income' | 'expense';
+    category: import('../utils/types').Category;
+    balance?: number;
+  }>;
 }
 
 export interface AiParseResponse {
-  provider: 'gemini' | 'heuristic_fallback';
+  provider: 'gemini' | 'heuristic_fallback' | 'pandas' | string;
   model: string;
   summary: {
     totalTransactions: number;

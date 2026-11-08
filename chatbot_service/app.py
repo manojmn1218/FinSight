@@ -11,6 +11,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import dotenv
 
+from chatbot_service.engine.monte_carlo import run_monte_carlo_simulation
+from chatbot_service.engine.retirement import calculate_retirement_projection
+from chatbot_service.engine.statement_parser import parse_statement_file
+
 # Load environment variables from the project root .env
 ROOT_DIR = Path(__file__).resolve().parent.parent
 dotenv.load_dotenv(dotenv_path=ROOT_DIR / ".env")
@@ -248,6 +252,57 @@ def fallback_rule_based_response(message: str, user_context: dict) -> str:
     # Out-of-scope check
     if is_obviously_out_of_scope(msg):
         return generate_dynamic_refusal(message)
+
+    # Monte Carlo simulation trigger: "monte carlo", "forecast portfolio", "simulate wealth", "10 year projection"
+    if re.search(r"\b(monte\s*carlo|forecast\s*portfolio|simulate\s*(?:wealth|portfolio|growth)|wealth\s*projection)\b", msg):
+        bal = max(50000.0, float(user_context.get("totalBalance", 100000.0)))
+        inc = float(user_context.get("monthlyIncome", 50000.0))
+        monthly_inv = max(5000.0, inc * 0.2)
+        mc = run_monte_carlo_simulation(
+            initial_investment=bal,
+            monthly_contribution=monthly_inv,
+            time_horizon_years=15,
+            expected_annual_return=0.12,
+            annual_volatility=0.16,
+            num_simulations=500
+        )
+        s = mc["summary"]
+        return (
+            f"🎲 **Monte Carlo 15-Year Wealth Forecast (500 Stochastic Paths)**\n\n"
+            f"Based on your starting balance of **₹{s['initialInvestment']:,.2f}** and an estimated monthly contribution of **₹{s['monthlyContribution']:,.2f}** at 12% expected return (16% volatility):\n\n"
+            f"• **Median Projected Wealth (50th percentile)**: **₹{s['medianFinalWealth']:,.2f}**\n"
+            f"• **Total Capital Invested**: ₹{s['totalPrincipalInvested']:,.2f}\n"
+            f"• **Median Compounded Gains**: +₹{s['expectedGainMedian']:,.2f}\n"
+            f"• **Bear Market Scenario (10th percentile)**: ₹{s['bearMarketP10']:,.2f}\n"
+            f"• **Bull Market Scenario (90th percentile)**: ₹{s['bullMarketP90']:,.2f}\n\n"
+            f"💡 *Simulated via FinSight Python NumPy Engine using Geometric Brownian Motion.*"
+        )
+
+    # Retirement & FIRE Readiness trigger: "retire", "retirement", "fire score", "pension"
+    if re.search(r"\b(retire|retirement|fire\s*(?:score|readiness)|can\s*i\s*retire|when\s*can\s*i\s*retire)\b", msg):
+        bal = max(50000.0, float(user_context.get("totalBalance", 500000.0)))
+        exp = max(20000.0, float(user_context.get("monthlyExpenses", 40000.0)))
+        inc = float(user_context.get("monthlyIncome", 60000.0))
+        savings = max(5000.0, inc - exp if inc > exp else 20000.0)
+        ret = calculate_retirement_projection(
+            current_age=28,
+            retirement_age=58,
+            life_expectancy=85,
+            current_savings=bal,
+            monthly_savings=savings,
+            current_monthly_expenses=exp
+        )
+        s = ret["summary"]
+        return (
+            f"🏖️ **Inflation-Adjusted Retirement Analysis (Target Age: {s['retirementAge']})**\n\n"
+            f"• **FIRE Readiness Score**: **{s['fireReadinessScore']}%** ({'Fully Funded' if s['isFullyFunded'] else 'Needs Boost'})\n"
+            f"• **Target Corpus Needed (at age {s['retirementAge']})**: ₹{s['targetCorpusNeeded']:,.2f}\n"
+            f"• **Projected Corpus at Retirement**: ₹{s['projectedCorpusAtRetirement']:,.2f}\n"
+            f"• **Future Monthly Expenses (at 6% inflation)**: ₹{s['futureMonthlyExpenseAtRetirement']:,.2f}/mo\n"
+            f"• **Capital Longevity**: {s['capitalDepletionAge']}\n"
+            f"• **Recommended Monthly SIP**: **₹{s['recommendedMonthlySavings']:,.2f}** (Current: ₹{s['currentMonthlySavings']:,.2f})\n\n"
+            f"💡 *Calculated using the 4% Safe Withdrawal Rule & compounding inflation models.*"
+        )
 
     # Affordability analysis: "can I afford 5000 / buy phone for 10000"
     afford_match = re.search(r"(?:can\s+i\s+afford|should\s+i\s+buy|can\s+i\s+buy).*?(\d[\d,]*(?:\.\d+)?)", msg)
@@ -518,6 +573,110 @@ USER'S QUESTION:
         "provider": "python-knowledge-engine",
         "isOutOfScope": is_fallback_out
     })
+
+
+# ═════════════════════════════════════════════════════════════════════
+# PANDAS & NUMPY FINANCIAL SIMULATION SUITE
+# ═════════════════════════════════════════════════════════════════════
+
+@app.route("/api/simulations/status", methods=["GET"])
+def simulation_status():
+    import numpy as np
+    import pandas as pd
+    import openpyxl
+    return jsonify({
+        "status": "healthy",
+        "service": "FinSight Python Analytics Engine",
+        "libraries": {
+            "numpy": np.__version__,
+            "pandas": pd.__version__,
+            "openpyxl": openpyxl.__version__,
+        },
+        "capabilities": [
+            "monte_carlo_simulation",
+            "inflation_adjusted_retirement_projection",
+            "automated_csv_excel_bank_statement_parsing"
+        ]
+    })
+
+
+@app.route("/api/simulations/monte-carlo", methods=["POST"])
+def monte_carlo_api():
+    data = request.get_json(silent=True) or {}
+    try:
+        initial_investment = float(data.get("initialInvestment", 100000.0))
+        monthly_contribution = float(data.get("monthlyContribution", 15000.0))
+        time_horizon_years = int(data.get("timeHorizonYears", 15))
+        expected_annual_return = float(data.get("expectedAnnualReturn", 0.12))
+        annual_volatility = float(data.get("annualVolatility", 0.16))
+        num_simulations = int(data.get("numSimulations", 500))
+        target_goal = float(data.get("targetGoal", 5000000.0))
+        
+        result = run_monte_carlo_simulation(
+            initial_investment=initial_investment,
+            monthly_contribution=monthly_contribution,
+            time_horizon_years=time_horizon_years,
+            expected_annual_return=expected_annual_return,
+            annual_volatility=annual_volatility,
+            num_simulations=num_simulations,
+            target_goal=target_goal
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"Monte Carlo simulation failed: {str(e)}"}), 400
+
+
+@app.route("/api/simulations/retirement", methods=["POST"])
+def retirement_api():
+    data = request.get_json(silent=True) or {}
+    try:
+        current_age = int(data.get("currentAge", 28))
+        retirement_age = int(data.get("retirementAge", 58))
+        life_expectancy = int(data.get("lifeExpectancy", 85))
+        current_savings = float(data.get("currentSavings", 500000.0))
+        monthly_savings = float(data.get("monthlySavings", 25000.0))
+        current_monthly_expenses = float(data.get("currentMonthlyExpenses", 40000.0))
+        pre_retirement_return = float(data.get("preRetirementReturn", 0.11))
+        post_retirement_return = float(data.get("postRetirementReturn", 0.08))
+        inflation_rate = float(data.get("inflationRate", 0.06))
+        safe_withdrawal_rate = float(data.get("safeWithdrawalRate", 0.04))
+        
+        result = calculate_retirement_projection(
+            current_age=current_age,
+            retirement_age=retirement_age,
+            life_expectancy=life_expectancy,
+            current_savings=current_savings,
+            monthly_savings=monthly_savings,
+            current_monthly_expenses=current_monthly_expenses,
+            pre_retirement_return=pre_retirement_return,
+            post_retirement_return=post_retirement_return,
+            inflation_rate=inflation_rate,
+            safe_withdrawal_rate=safe_withdrawal_rate
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"Retirement calculation failed: {str(e)}"}), 400
+
+
+@app.route("/api/simulations/parse-statement", methods=["POST"])
+def parse_statement_api():
+    file = request.files.get("statement") or request.files.get("file")
+    if file:
+        filename = file.filename or "statement.csv"
+        file_bytes = file.read()
+    else:
+        data = request.get_json(silent=True) or {}
+        raw_content = data.get("content", "")
+        filename = data.get("filename", "statement.csv")
+        if not raw_content:
+            return jsonify({"error": "No statement file or content provided"}), 400
+        file_bytes = raw_content.encode("utf-8")
+        
+    try:
+        result = parse_statement_file(file_bytes=file_bytes, filename=filename)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"Statement parsing failed: {str(e)}"}), 400
 
 
 if __name__ == "__main__":

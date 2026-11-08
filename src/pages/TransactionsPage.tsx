@@ -429,7 +429,11 @@ export default function TransactionsPage() {
     setParseResult({
       count: txnsToImport.length,
       range: from === to ? from : `${from} – ${to}`,
-      provider: aiReviewMeta?.provider === 'gemini' ? 'Google Gemini 2.5 Flash' : 'Smart Neural Engine',
+      provider: aiReviewMeta?.provider === 'gemini'
+        ? 'Google Gemini 2.5 Flash'
+        : aiReviewMeta?.provider === 'pandas'
+        ? 'Python Pandas Engine'
+        : 'Smart Neural Engine',
       model: aiReviewMeta?.model,
       closingBalanceApplied: balToApply,
     });
@@ -439,15 +443,100 @@ export default function TransactionsPage() {
     setAiReviewMeta(null);
   };
 
+  const doParseTabular = async (file: File) => {
+    setParsing(true);
+    setParsingStage('Reading spreadsheet statement with Python Pandas…');
+    setParseError('');
+    setParseResult(null);
+
+    try {
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const resStr = (reader.result as string) || '';
+          const commaIdx = resStr.indexOf(',');
+          resolve(commaIdx !== -1 ? resStr.slice(commaIdx + 1) : resStr);
+        };
+        reader.onerror = () => reject(new Error('Failed to read file from disk.'));
+      });
+      reader.readAsDataURL(file);
+      const base64Content = await base64Promise;
+
+      setParsingStage('Pandas & NumPy engine auto-discovering columns & categorizing…');
+      const res = await api.parseStatementWithPandas(base64Content, file.name);
+
+      if (!res.transactions || res.transactions.length === 0) {
+        setParseError('No valid transaction rows found in this spreadsheet.');
+        setParsing(false);
+        return;
+      }
+
+      const staged: AiStagedTransaction[] = res.transactions.map((t, idx) => ({
+        id: 'tb_' + Date.now().toString(36) + '_' + idx,
+        selected: true,
+        date: t.date,
+        cleanMerchant: t.description,
+        rawDescription: t.originalNarration || t.description,
+        amount: t.amount,
+        category: t.category,
+        isRecurring: false,
+        confidence: 0.95,
+        balance: t.balance,
+      }));
+
+      // Auto-extract closing balance if any transaction has balance
+      const lastWithBal = [...res.transactions].reverse().find(t => t.balance !== undefined && t.balance !== null);
+      const detectedBal = lastWithBal ? lastWithBal.balance : undefined;
+      setDetectedClosingBalance(detectedBal);
+      setSyncClosingBalance(detectedBal !== undefined);
+
+      setStagedTransactions(staged);
+      setAiReviewMeta({
+        provider: 'pandas',
+        model: 'pandas-vectorized-engine',
+        summary: {
+          totalTransactions: res.totalTransactions,
+          totalDebits: res.summary.totalExpenses,
+          totalCredits: res.summary.totalIncome,
+          closingBalance: detectedBal,
+          bankDetected: res.filename,
+          categoriesFound: res.summary.categoryBreakdown,
+        },
+        transactions: staged as any,
+      });
+
+      setShowAiReview(true);
+      setNeedsPassword(false);
+      setPdfPassword('');
+      setPendingFile(null);
+      setPasswordError('');
+    } catch (err: any) {
+      console.error('[TransactionsPage] Pandas parsing error:', err);
+      setParseError(err.message || 'Failed to process statement with Pandas service.');
+    } finally {
+      setParsing(false);
+    }
+  };
+
   const handleFile = async (file: File) => {
     if (data.currentPlan === 'Basic' && (data.statementUploadsCount || 0) >= 3) {
-      setParseError('Statement upload limit reached: Basic accounts are limited to 3 PDF uploads. Upgrade to Pro for unlimited statements.');
+      setParseError('Statement upload limit reached: Basic accounts are limited to 3 statement uploads. Upgrade to Pro for unlimited statements.');
       return;
     }
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      setParseError('Please upload a PDF file.');
+    const ext = file.name.toLowerCase();
+    const isPdf = ext.endsWith('.pdf');
+    const isTabular = ext.endsWith('.csv') || ext.endsWith('.xlsx') || ext.endsWith('.xls');
+
+    if (!isPdf && !isTabular) {
+      setParseError('Please upload a valid PDF, CSV, or Excel (.xlsx/.xls) statement.');
       return;
     }
+
+    if (isTabular) {
+      await doParseTabular(file);
+      return;
+    }
+
     await doParse(file);
   };
 
@@ -578,7 +667,7 @@ export default function TransactionsPage() {
             onClick={() => fileRef.current?.click()}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', fontSize: 13 }}
           >
-            <Upload size={15} /> Upload Statement (PDF)
+            <Upload size={15} /> Upload Statement (PDF, CSV, Excel)
           </button>
         </div>
       </div>
@@ -740,7 +829,7 @@ export default function TransactionsPage() {
             overflow: 'hidden',
           }}
         >
-          <input ref={fileRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          <input ref={fileRef} type="file" accept=".pdf,.csv,.xlsx,.xls" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
           <div style={{
             position: 'absolute', top: 12, right: 14, display: 'flex', alignItems: 'center',
@@ -770,14 +859,17 @@ export default function TransactionsPage() {
                 <Upload size={22} color="var(--purple)" />
               </div>
               <p style={{ fontSize: 15, fontWeight: 650, marginBottom: 4 }}>
-                {dragOver ? 'Drop PDF statement here' : 'Upload Bank Statement (PDF)'}
+                {dragOver ? 'Drop Statement Here' : 'Upload Bank Statement (PDF, CSV, Excel)'}
               </p>
               <p style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 12, textAlign: 'center', maxWidth: 380 }}>
-                Drop e-statement. Gemini AI normalizes cryptic merchant codes and auto-matches to 12 categories.
+                Drop e-statement. Gemini AI & Pandas normalize merchant codes and auto-match to 12 categories.
               </p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>
                   <FileText size={11} /> PDF Statements
+                </span>
+                <span className="badge" style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa' }}>
+                  <Sparkles size={11} /> CSV / Excel (Pandas)
                 </span>
                 <span className="badge" style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399' }}>
                   <ShieldCheck size={11} /> Password Encrypted OK
@@ -1394,11 +1486,23 @@ export default function TransactionsPage() {
                       <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>AI Statement Classification Review</h2>
                       <span style={{
                         fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12,
-                        background: aiReviewMeta?.provider === 'gemini' ? 'rgba(168,85,247,0.2)' : 'rgba(52,211,153,0.2)',
-                        color: aiReviewMeta?.provider === 'gemini' ? '#c084fc' : '#34d399',
+                        background: aiReviewMeta?.provider === 'gemini'
+                          ? 'rgba(168,85,247,0.2)'
+                          : aiReviewMeta?.provider === 'pandas'
+                          ? 'rgba(59,130,246,0.2)'
+                          : 'rgba(52,211,153,0.2)',
+                        color: aiReviewMeta?.provider === 'gemini'
+                          ? '#c084fc'
+                          : aiReviewMeta?.provider === 'pandas'
+                          ? '#60a5fa'
+                          : '#34d399',
                         border: '1px solid currentColor',
                       }}>
-                        {aiReviewMeta?.provider === 'gemini' ? 'Google Gemini 2.5 Flash' : 'Smart Neural Fallback'}
+                        {aiReviewMeta?.provider === 'gemini'
+                          ? 'Google Gemini 2.5 Flash'
+                          : aiReviewMeta?.provider === 'pandas'
+                          ? 'Python Pandas Engine'
+                          : 'Smart Neural Fallback'}
                       </span>
                     </div>
                     <p style={{ fontSize: 13, color: 'var(--text2)', margin: '2px 0 0' }}>

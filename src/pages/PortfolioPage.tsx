@@ -9,6 +9,7 @@ import { fetchQuotesWithCache } from '../utils/stockApi';
 import type { StockQuote } from '../utils/stockApi';
 import Tilt3DCard from '../components/3d/Tilt3DCard';
 import InteractiveCard3D from '../components/3d/InteractiveCard3D';
+import WealthSimulations from '../components/WealthSimulations';
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 
@@ -999,6 +1000,9 @@ export default function PortfolioPage() {
           ))}
         </div>
       </motion.div>
+
+      {/* Quantitative Wealth Simulations (Python NumPy / Pandas Engine) */}
+      <WealthSimulations initialNetWorth={totalPortfolioValue} />
 
       {/* Disclaimer */}
       <motion.div

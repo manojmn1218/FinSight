@@ -227,9 +227,6 @@ export default function FinancialCore3D({
           right: 14,
           padding: '4px 10px',
           borderRadius: 999,
-          background: 'rgba(0, 0, 0, 0.45)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
           fontSize: 10,
           fontWeight: 600,
           color: 'var(--text2)',
@@ -241,18 +238,7 @@ export default function FinancialCore3D({
           transition: 'opacity 0.2s ease',
         }}
       >
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: healthScore >= 75 ? '#34d399' : '#818cf8',
-            boxShadow: `0 0 8px ${healthScore >= 75 ? '#34d399' : '#818cf8'}`,
-          }}
-        />
-        <span>3D Pulse Engine</span>
       </div>
     </div>
   );
 }
-
