@@ -155,17 +155,6 @@ export default function SupportPage() {
           </AnimatePresence>
         </motion.div>
       </div>
-
-      <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--text3)', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          &copy; {new Date().getFullYear()} FinSight Technologies Inc. All rights reserved.
-        </div>
-        <div style={{ display: 'flex', gap: 16 }}>
-          <Link to="/legal" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>Terms of Service</Link>
-          <Link to="/legal#privacy" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>Privacy Statement</Link>
-          <Link to="/legal#dmca" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>DMCA Notice</Link>
-        </div>
-      </div>
     </div>
   );
 }
