@@ -35,7 +35,7 @@ const PLANS = [
     priceYearly: 3490,
     desc: 'Advanced AI analytics, unlimited uploads, and smart automation.',
     icon: Zap,
-    color: '#818cf8',
+    color: 'var(--pop)',
     popular: true,
     features: [
       { text: 'Everything in Basic', included: true },
@@ -717,10 +717,11 @@ export default function PremiumPage() {
       <motion.div {...an(0)} style={{ textAlign: 'center', paddingTop: 12 }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px',
-          borderRadius: 999, background: 'rgba(129,140,248,0.1)', color: 'var(--purple)',
+          borderRadius: 999, background: 'var(--bg2)', color: 'var(--text2)',
+          border: '1px solid var(--border)',
           fontSize: 12, fontWeight: 600, marginBottom: 20, letterSpacing: 0.5,
         }}>
-          <Sparkles size={14} /> PREMIUM PLANS
+          <Crown size={14} color="var(--pop)" /> FinSight Membership
         </div>
         <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, lineHeight: 1.2 }}>
           FinSight <br />
@@ -1111,16 +1112,8 @@ export default function PremiumPage() {
           position: 'relative', overflow: 'hidden',
         }}
       >
-        <div style={{
-          position: 'absolute', top: -80, right: -80, width: 200, height: 200,
-          borderRadius: '50%', background: 'rgba(129,140,248,0.08)', filter: 'blur(60px)',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: -60, left: -60, width: 180, height: 180,
-          borderRadius: '50%', background: 'rgba(244,114,182,0.06)', filter: 'blur(60px)',
-        }} />
         <div style={{ position: 'relative' }}>
-          <Sparkles size={32} color="var(--purple)" style={{ marginBottom: 16, opacity: 0.8 }} />
+          <Crown size={32} color="var(--pop)" style={{ marginBottom: 16, opacity: 0.9 }} />
           <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Upgrade to Pro</h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', maxWidth: 460, margin: '0 auto 24px', lineHeight: 1.6 }}>
             Automate recurring payment detection, catch spending spikes, and export reports in multiple formats.

@@ -166,12 +166,12 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
             >
               <Cpu size={18} />
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>
-              Python Financial Intelligence Engine
+            <h2 style={{ fontSize: 22, fontWeight: 750, margin: 0, letterSpacing: '-0.4px', color: 'var(--text)' }}>
+              Quantitative Wealth Forecasting
             </h2>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text2)', margin: 0 }}>
-            Stochastic Monte Carlo modeling, Brownian motion, and inflation-indexed actuarial projections.
+            Stochastic multi-path simulation and actuarial retirement models calibrated to your current portfolio.
           </p>
         </div>
 
@@ -202,7 +202,7 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
           <span style={{ color: 'var(--text)' }}>
             {engineStatus?.status === 'healthy' || engineStatus?.status === 'ok'
               ? `NumPy ${engineStatus?.libraries?.numpy || '2.5'} • Pandas ${engineStatus?.libraries?.pandas || '3.1'}`
-              : 'Standalone Math Engine'}
+              : 'Mathematical Engine'}
           </span>
           <span
             style={{
@@ -214,7 +214,7 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
               fontWeight: 700,
             }}
           >
-            {engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? 'ONLINE' : 'FALLBACK'}
+            {engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? 'ONLINE' : 'STANDALONE'}
           </span>
         </div>
       </div>
@@ -338,7 +338,7 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
                 <>Simulating 500 Stochastic Paths...</>
               ) : (
                 <>
-                  <Zap size={16} /> Run Monte Carlo Simulation
+                  <TrendingUp size={16} /> Run Simulation
                 </>
               )}
             </button>
@@ -603,7 +603,7 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
                 <>Calculating Actuarial Projections...</>
               ) : (
                 <>
-                  <Zap size={16} /> Compute Retirement Strategy
+                  <Calendar size={16} /> Calculate Retirement Plan
                 </>
               )}
             </button>

@@ -546,15 +546,15 @@ export default function PortfolioPage() {
               <AreaChart data={netWorthTimeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#ea580c" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#ea580c" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [fmt(Number(v)), 'Net Worth']} />
-                <Area type="monotone" dataKey="worth" stroke="#818cf8" strokeWidth={2.5} fill="url(#netWorthGrad)" />
+                <Area type="monotone" dataKey="worth" stroke="#ea580c" strokeWidth={2.5} fill="url(#netWorthGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -966,7 +966,7 @@ export default function PortfolioPage() {
       {/* SIP Recommendations */}
       <motion.div {...an(11)}>
         <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Sparkles size={16} color="#fbbf24" /> Suggested SIP Plans
+          <TrendingUp size={16} color="var(--pop)" /> Suggested Systematic Investment Allocation
           <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 400 }}>• auto-calculated from your savings</span>
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sipRecs.length}, 1fr)`, gap: 14 }}>

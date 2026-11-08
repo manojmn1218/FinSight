@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, FileText, Search, Trash2, ChevronDown, ArrowUpDown,
   CheckCircle2, AlertCircle, Loader2, Lock, Eye, EyeOff, Landmark,
-  Sparkles, Check, X, ArrowUpRight, ArrowDownLeft,
-  ShieldCheck, RefreshCw, Layers, ChevronLeft, ChevronRight
+  Check, X, ArrowUpRight, ArrowDownLeft, Sliders,
+  ShieldCheck, RefreshCw, Layers, ChevronLeft, ChevronRight, FolderCheck
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { parsePdfFile, extractTransactions, extractClosingBalance, PasswordRequiredError } from '../utils/transactionParser';
@@ -606,24 +606,20 @@ export default function TransactionsPage() {
             </h1>
             <span
               style={{
-                fontSize: 12,
-                fontWeight: 650,
-                padding: '4px 12px',
-                borderRadius: 20,
-                background: aiStatus?.activeProvider === 'gemini'
-                  ? 'linear-gradient(135deg, rgba(168,85,247,0.18), rgba(59,130,246,0.18))'
-                  : 'linear-gradient(135deg, rgba(52,211,153,0.18), rgba(99,102,241,0.18))',
-                border: aiStatus?.activeProvider === 'gemini'
-                  ? '1px solid rgba(168,85,247,0.35)'
-                  : '1px solid rgba(52,211,153,0.35)',
-                color: aiStatus?.activeProvider === 'gemini' ? '#c084fc' : '#34d399',
+                fontSize: 11.5,
+                fontWeight: 600,
+                padding: '3px 10px',
+                borderRadius: 999,
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text2)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
               }}
             >
-              <Sparkles size={13} />
-              {aiStatus?.activeProvider === 'gemini' ? 'Google Gemini 2.5 Flash' : 'AI Neural Engine'}
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} />
+              {aiStatus?.activeProvider === 'gemini' ? 'Gemini 2.5 Active' : 'Auto-Categorization'}
             </span>
           </div>
           <p style={{ color: 'var(--text2)', fontSize: 14, margin: 0 }}>
@@ -636,16 +632,11 @@ export default function TransactionsPage() {
           {/* Gemini AI Connect / Status Button */}
           <button
             onClick={() => setShowAiKeyModal(true)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, padding: '9px 15px', fontSize: 12.5, fontWeight: 650,
-              borderRadius: 10, cursor: 'pointer',
-              background: aiStatus?.hasGeminiKey ? 'rgba(168,85,247,0.12)' : 'linear-gradient(135deg, rgba(234,179,8,0.15), rgba(249,115,22,0.15))',
-              border: aiStatus?.hasGeminiKey ? '1px solid rgba(168,85,247,0.35)' : '1px solid rgba(234,179,8,0.35)',
-              color: aiStatus?.hasGeminiKey ? '#c084fc' : '#fbbf24',
-            }}
+            className="btn-outline"
+            style={{ padding: '8px 14px', fontSize: 12.5, borderRadius: 10 }}
           >
-            <Sparkles size={14} color={aiStatus?.hasGeminiKey ? '#a855f7' : '#fbbf24'} />
-            {aiStatus?.hasGeminiKey ? 'Gemini 2.5 Flash Active' : 'Connect Gemini AI'}
+            <Sliders size={13} color="var(--text2)" />
+            {aiStatus?.hasGeminiKey ? 'Model Configured' : 'Configure API Key'}
           </button>
 
           {/* Re-classify with AI Button */}
@@ -679,13 +670,14 @@ export default function TransactionsPage() {
           animate={{ opacity: 1, y: 0 }}
           style={{
             display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px',
-            background: 'linear-gradient(135deg, rgba(168,85,247,0.15), rgba(99,102,241,0.15))',
-            border: '1px solid rgba(168,85,247,0.35)', borderRadius: 12, fontSize: 13, color: '#e0e7ff',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)', borderRadius: 12, fontSize: 13, color: 'var(--text)',
+            boxShadow: 'var(--shadow)',
           }}
         >
-          <Loader2 size={20} color="#c084fc" style={{ animation: 'spin 1s linear infinite' }} />
+          <Loader2 size={18} color="var(--pop)" style={{ animation: 'spin 1s linear infinite' }} />
           <div>
-            <div style={{ fontWeight: 650, color: '#fff' }}>Google Gemini AI Processing</div>
+            <div style={{ fontWeight: 650, color: 'var(--text)' }}>Reclassifying Transactions</div>
             <div style={{ fontSize: 12, color: 'var(--text2)' }}>{reclassifyMsg}</div>
           </div>
         </motion.div>
@@ -698,15 +690,15 @@ export default function TransactionsPage() {
           animate={{ opacity: 1, y: 0 }}
           style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '14px 20px', background: 'rgba(129,140,248,0.06)',
+            padding: '14px 20px', background: 'var(--bg2)',
             border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13,
           }}
         >
           <span style={{ color: 'var(--text2)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <FileText size={15} color="var(--purple)" /> Statement Uploads: <strong>{data.statementUploadsCount || 0}/3</strong> processed on free plan.
+            <FileText size={15} color="var(--pop)" /> Statement Uploads: <strong>{data.statementUploadsCount || 0}/3</strong> processed on free plan.
           </span>
           {(data.statementUploadsCount || 0) >= 3 ? (
-            <Link to="/premium" style={{ color: 'var(--purple)', fontWeight: 650, textDecoration: 'none' }}>
+            <Link to="/premium" style={{ color: 'var(--pop)', fontWeight: 650, textDecoration: 'none' }}>
               Upgrade to Pro for Unlimited Uploads →
             </Link>
           ) : (
@@ -721,11 +713,11 @@ export default function TransactionsPage() {
       {txns.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           {/* Card 1: Total Transactions */}
-          <div className="panel panel-glow" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="panel" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
               width: 48, height: 48, borderRadius: 14,
-              background: 'rgba(129,140,248,0.12)', border: '1px solid rgba(129,140,248,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8', flexShrink: 0,
+              background: 'var(--bg2)', border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', flexShrink: 0,
             }}>
               <Layers size={22} />
             </div>
@@ -790,17 +782,17 @@ export default function TransactionsPage() {
           <div className="panel panel-glow" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
               width: 48, height: 48, borderRadius: 14,
-              background: 'linear-gradient(135deg, rgba(168,85,247,0.15), rgba(59,130,246,0.15))',
-              border: '1px solid rgba(168,85,247,0.3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc', flexShrink: 0,
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pop)', flexShrink: 0,
             }}>
-              <Sparkles size={22} />
+              <FolderCheck size={22} />
             </div>
             <div>
               <p style={{ fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', margin: 0 }}>
                 Active Categories
               </p>
-              <p style={{ fontSize: 24, fontWeight: 750, color: 'var(--purple)', margin: '2px 0 0', letterSpacing: '-0.3px' }}>
+              <p style={{ fontSize: 24, fontWeight: 750, color: 'var(--text)', margin: '2px 0 0', letterSpacing: '-0.3px' }}>
                 {new Set(txns.map(t => t.category)).size} / 12
               </p>
               <p style={{ fontSize: 11, color: 'var(--text2)', margin: '2px 0 0' }}>
@@ -833,18 +825,17 @@ export default function TransactionsPage() {
 
           <div style={{
             position: 'absolute', top: 12, right: 14, display: 'flex', alignItems: 'center',
-            gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--purple)',
-            background: 'rgba(129,140,248,0.12)', padding: '3px 9px', borderRadius: 12,
-            border: '1px solid rgba(129,140,248,0.25)',
+            gap: 5, fontSize: 11, fontWeight: 600, color: 'var(--text2)',
+            background: 'var(--bg2)', padding: '3px 10px', borderRadius: 999,
+            border: '1px solid var(--border)',
           }}>
-            <Sparkles size={11} /> AI Auto-Categorizer
+            <CheckCircle2 size={11} color="var(--green)" /> Auto-Classification
           </div>
 
           {parsing ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '16px 0' }}>
               <div style={{ position: 'relative' }}>
-                <Loader2 size={38} color="var(--purple)" style={{ animation: 'spin 1s linear infinite' }} />
-                <Sparkles size={16} color="#c084fc" style={{ position: 'absolute', top: -4, right: -4 }} />
+                <Loader2 size={36} color="var(--pop)" style={{ animation: 'spin 1s linear infinite' }} />
               </div>
               <p style={{ fontSize: 15, fontWeight: 650, margin: 0 }}>Analyzing Bank Statement…</p>
               <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', maxWidth: 360, margin: 0 }}>{parsingStage}</p>
@@ -853,26 +844,26 @@ export default function TransactionsPage() {
             <>
               <div style={{
                 width: 48, height: 48, borderRadius: 14, marginBottom: 10,
-                background: 'linear-gradient(135deg, rgba(168,85,247,0.14), rgba(59,130,246,0.14))',
+                background: 'rgba(234, 88, 12, 0.08)', border: '1px solid rgba(234, 88, 12, 0.15)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Upload size={22} color="var(--purple)" />
+                <Upload size={20} color="var(--pop)" />
               </div>
               <p style={{ fontSize: 15, fontWeight: 650, marginBottom: 4 }}>
-                {dragOver ? 'Drop Statement Here' : 'Upload Bank Statement (PDF, CSV, Excel)'}
+                {dragOver ? 'Drop Statement Here' : 'Upload Bank Statement'}
               </p>
               <p style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 12, textAlign: 'center', maxWidth: 380 }}>
-                Drop e-statement. Gemini AI & Pandas normalize merchant codes and auto-match to 12 categories.
+                Drop e-statement. Automated OCR & Pandas normalize merchant codes and match to your 12 ledger categories.
               </p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: 'var(--purple)' }}>
+                <span className="badge" style={{ background: 'var(--bg2)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
                   <FileText size={11} /> PDF Statements
                 </span>
-                <span className="badge" style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa' }}>
-                  <Sparkles size={11} /> CSV / Excel (Pandas)
+                <span className="badge" style={{ background: 'var(--bg2)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
+                  <Layers size={11} /> CSV / Excel Spreadsheets
                 </span>
-                <span className="badge" style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399' }}>
-                  <ShieldCheck size={11} /> Password Encrypted OK
+                <span className="badge" style={{ background: 'var(--bg2)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
+                  <ShieldCheck size={11} color="var(--green)" /> Encrypted PDF OK
                 </span>
               </div>
             </>
@@ -885,27 +876,29 @@ export default function TransactionsPage() {
           onClick={() => setShowBankConnect(true)}
           style={{
             margin: 0, cursor: 'pointer',
-            background: 'linear-gradient(135deg, rgba(96,165,250,0.04), rgba(129,140,248,0.06))',
-            borderColor: 'rgba(129,140,248,0.18)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
           }}
         >
           <div style={{
             width: 48, height: 48, borderRadius: 14, marginBottom: 10,
-            background: 'linear-gradient(135deg, rgba(96,165,250,0.14), rgba(129,140,248,0.14))',
+            background: 'rgba(28, 25, 23, 0.04)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Landmark size={22} color="#818cf8" />
+            <Landmark size={20} color="var(--text)" />
           </div>
-          <p style={{ fontSize: 15, fontWeight: 650, marginBottom: 4 }}>Connect Bank Account</p>
+          <p style={{ fontSize: 15, fontWeight: 650, marginBottom: 4 }}>
+            Direct Bank Aggregator Sync
+          </p>
           <p style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 12, textAlign: 'center', maxWidth: 380 }}>
-            Securely sync live transactions via RBI-regulated Account Aggregator network.
+            Connect via RBI-regulated Account Aggregator (Setu) for instant, read-only transaction feeds.
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <span className="badge" style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399' }}>
-              🔒 RBI Regulated
+            <span className="badge" style={{ background: 'var(--bg2)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
+              <ShieldCheck size={11} color="var(--green)" /> RBI Account Aggregator
             </span>
-            <span className="badge" style={{ background: 'rgba(96,165,250,0.08)', color: '#60a5fa' }}>
-              ⚡ Instant Sync
+            <span className="badge" style={{ background: 'var(--bg2)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
+              <Lock size={11} /> 256-Bit Encrypted
             </span>
           </div>
         </div>
@@ -971,8 +964,8 @@ export default function TransactionsPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 20px',
-            background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.08))',
-            border: '1px solid rgba(168,85,247,0.25)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
             borderRadius: 'var(--radius)',
             fontSize: 13,
             color: 'var(--text)',
@@ -982,23 +975,24 @@ export default function TransactionsPage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{
-              width: 38, height: 38, borderRadius: 12,
-              background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0,
+              width: 38, height: 38, borderRadius: 10,
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)', flexShrink: 0,
             }}>
-              <Sparkles size={18} />
+              <CheckCircle2 size={18} />
             </div>
             <div>
-              <strong style={{ color: 'var(--purple)', fontSize: 13.5 }}>AI Statement Neural Parser is Active</strong>
+              <strong style={{ color: 'var(--text)', fontSize: 13.5 }}>Automated Statement Categorization Active</strong>
               <p style={{ margin: '3px 0 0', color: 'var(--text2)', fontSize: 12.5, lineHeight: 1.4 }}>
-                We've enhanced your display with contextual category descriptions! You can also re-upload your PDF statement above anytime to let Google Gemini 2.5 Flash extract all specific merchant names (Swiggy, Zepto, individual recipients) with 100% precision.
+                Ledger records have been matched against standard merchant descriptors. You can re-upload or import additional spreadsheets anytime.
               </p>
             </div>
           </div>
           <button
-            className="btn-primary"
+            className="btn-outline"
             onClick={() => fileRef.current?.click()}
-            style={{ padding: '8px 18px', fontSize: 12.5, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            style={{ padding: '8px 18px', fontSize: 12.5, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 10 }}
           >
             <Upload size={13} /> Re-upload Statement
           </button>
@@ -1461,52 +1455,45 @@ export default function TransactionsPage() {
               style={{
                 maxWidth: 960, width: '100%', maxHeight: '90vh',
                 display: 'flex', flexDirection: 'column', padding: 0,
-                border: '1px solid rgba(168,85,247,0.3)',
-                boxShadow: '0 25px 60px -15px rgba(0,0,0,0.7), 0 0 30px rgba(168,85,247,0.15)',
+                border: '1px solid var(--border)',
+                boxShadow: '0 25px 60px -15px rgba(28, 25, 23, 0.18)',
                 overflow: 'hidden',
+                background: 'var(--surface)',
               }}
             >
               {/* Modal Header */}
               <div style={{
                 padding: '20px 24px',
                 borderBottom: '1px solid var(--border)',
-                background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.05))',
+                background: 'var(--bg2)',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
-                    width: 44, height: 44, borderRadius: 12,
-                    background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                    width: 40, height: 40, borderRadius: 10,
+                    background: 'var(--surface)', border: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)',
                   }}>
-                    <Sparkles size={22} />
+                    <FileText size={20} />
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>AI Statement Classification Review</h2>
+                      <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: 'var(--text)' }}>Statement Review & Ledger Staging</h2>
                       <span style={{
-                        fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12,
-                        background: aiReviewMeta?.provider === 'gemini'
-                          ? 'rgba(168,85,247,0.2)'
-                          : aiReviewMeta?.provider === 'pandas'
-                          ? 'rgba(59,130,246,0.2)'
-                          : 'rgba(52,211,153,0.2)',
-                        color: aiReviewMeta?.provider === 'gemini'
-                          ? '#c084fc'
-                          : aiReviewMeta?.provider === 'pandas'
-                          ? '#60a5fa'
-                          : '#34d399',
-                        border: '1px solid currentColor',
+                        fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
+                        background: 'var(--surface)',
+                        color: 'var(--text2)',
+                        border: '1px solid var(--border)',
                       }}>
                         {aiReviewMeta?.provider === 'gemini'
-                          ? 'Google Gemini 2.5 Flash'
+                          ? 'Gemini 2.5 Categorized'
                           : aiReviewMeta?.provider === 'pandas'
-                          ? 'Python Pandas Engine'
-                          : 'Smart Neural Fallback'}
+                          ? 'Spreadsheet Parsed'
+                          : 'Rules Engine'}
                       </span>
                     </div>
-                    <p style={{ fontSize: 13, color: 'var(--text2)', margin: '2px 0 0' }}>
-                      Review normalized merchant names and category matches before importing to your ledger.
+                    <p style={{ fontSize: 12.5, color: 'var(--text2)', margin: '2px 0 0' }}>
+                      Review normalized merchant names and category allocations before importing to your ledger.
                     </p>
                   </div>
                 </div>
@@ -1774,12 +1761,12 @@ export default function TransactionsPage() {
                     Selected <strong>{stagedTransactions.filter(t => t.selected).length}</strong> of {stagedTransactions.length} transactions
                   </div>
                   {txns.length > 0 && (
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text)', cursor: 'pointer', background: 'rgba(168,85,247,0.1)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(168,85,247,0.2)' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text)', cursor: 'pointer', background: 'var(--bg2)', padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border)' }}>
                       <input
                         type="checkbox"
                         checked={replaceExisting}
                         onChange={e => setReplaceExisting(e.target.checked)}
-                        style={{ cursor: 'pointer', accentColor: '#a855f7' }}
+                        style={{ cursor: 'pointer', accentColor: 'var(--pop)' }}
                       />
                       <span style={{ fontWeight: 600 }}>Clean-replace old records ({txns.length} previous)</span>
                     </label>
@@ -1802,10 +1789,8 @@ export default function TransactionsPage() {
                     onClick={handleApproveAiTransactions}
                     disabled={stagedTransactions.filter(t => t.selected).length === 0}
                     style={{
-                      padding: '8px 22px', fontSize: 13,
+                      padding: '10px 24px', fontSize: 13,
                       display: 'flex', alignItems: 'center', gap: 8,
-                      background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
-                      boxShadow: '0 4px 14px rgba(168,85,247,0.3)',
                     }}
                   >
                     <CheckCircle2 size={16} />
@@ -1916,24 +1901,24 @@ export default function TransactionsPage() {
               onClick={e => e.stopPropagation()}
               style={{
                 width: 520, maxWidth: '95vw', padding: 28,
-                background: 'var(--surface)', border: '1px solid rgba(168,85,247,0.3)',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                boxShadow: '0 20px 50px rgba(28, 25, 23, 0.16)',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: 12,
-                    background: 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(99,102,241,0.2))',
-                    border: '1px solid rgba(168,85,247,0.4)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc',
+                    background: 'var(--bg2)',
+                    border: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)',
                   }}>
-                    <Sparkles size={22} />
+                    <Sliders size={20} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Google Gemini 2.5 Flash AI</h3>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Google Gemini 2.5 Configuration</h3>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text3)' }}>
-                      Deep neural bank statement reader & 12-category classifier
+                      Automated statement OCR and 12-category transaction classifier
                     </p>
                   </div>
                 </div>
@@ -2022,8 +2007,8 @@ export default function TransactionsPage() {
                   disabled={testingKey || !inputApiKey.trim()}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', fontSize: 13 }}
                 >
-                  {testingKey ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={15} />}
-                  {testingKey ? 'Verifying with Google…' : 'Verify & Connect AI'}
+                  {testingKey ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <CheckCircle2 size={15} />}
+                  {testingKey ? 'Validating API Key…' : 'Save & Validate Key'}
                 </button>
               </div>
             </motion.div>

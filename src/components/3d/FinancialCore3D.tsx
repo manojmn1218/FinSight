@@ -219,26 +219,6 @@ export default function FinancialCore3D({
           inset: 0,
         }}
       />
-      {/* Subtle indicator pill overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 10,
-          right: 14,
-          padding: '4px 10px',
-          borderRadius: 999,
-          fontSize: 10,
-          fontWeight: 600,
-          color: 'var(--text2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          pointerEvents: 'none',
-          opacity: isHovered ? 1 : 0.65,
-          transition: 'opacity 0.2s ease',
-        }}
-      >
-      </div>
     </div>
   );
 }

@@ -322,7 +322,7 @@ export default function FinSightChatbot() {
                 style={{
                   padding: '6px 14px',
                   background: 'rgba(99, 102, 241, 0.08)',
-                  borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
+                  borderBottom: '1px solid var(--border)',
                   fontSize: 10.5,
                   color: 'var(--text2)',
                   display: 'flex',
@@ -330,7 +330,7 @@ export default function FinSightChatbot() {
                   gap: 6,
                 }}
               >
-                <ShieldCheck size={13} color="#818cf8" />
+                <ShieldCheck size={13} color="var(--green)" />
                 <span>Exclusively answers FinSight & your account data.</span>
               </div>
 
@@ -418,16 +418,16 @@ export default function FinSightChatbot() {
                         width: 24,
                         height: 24,
                         borderRadius: '50%',
-                        background: 'rgba(129, 140, 248, 0.15)',
+                        background: 'rgba(234, 88, 12, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <Loader2 size={14} className="spin-icon" color="#818cf8" />
+                      <Loader2 size={14} className="spin-icon" color="var(--pop)" />
                     </div>
                     <span style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>
-                      FinSight AI is analyzing...
+                      Assistant is analyzing...
                     </span>
                   </div>
                 )}

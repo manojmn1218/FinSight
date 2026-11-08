@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Sparkles, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2, BarChart3, Activity } from 'lucide-react';
+import { Wallet, CreditCard, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Compass, FolderCheck, Edit2, Upload, ArrowRight, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Landmark, Lock, Trash2, BarChart3, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
@@ -487,10 +487,10 @@ export default function DashboardPage() {
       },
       {
         label: 'Current Balance', value: fmt(txnStats.currentBalance), icon: Wallet,
-        clr: '#818cf8', bg: 'rgba(129,140,248,0.1)',
+        clr: 'var(--pop)', bg: 'rgba(234, 88, 12, 0.08)',
         badge: txnStats.isStatementBalance ? 'Statement Balance' : `${txnStats.txnCount} txns`,
-        badgeBg: txnStats.isStatementBalance ? 'rgba(52,211,153,0.14)' : 'rgba(129,140,248,0.1)',
-        badgeClr: txnStats.isStatementBalance ? '#34d399' : '#818cf8',
+        badgeBg: txnStats.isStatementBalance ? 'rgba(21,128,61,0.1)' : 'var(--bg2)',
+        badgeClr: txnStats.isStatementBalance ? '#15803d' : 'var(--text2)',
       },
     ];
 
@@ -762,7 +762,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--text3)', fontSize: 13 }}>
-                <Sparkles size={28} />
+                <FolderCheck size={28} />
                 <p>No expense transactions found.</p>
               </div>
             )}
@@ -778,15 +778,15 @@ export default function DashboardPage() {
                 <AreaChart data={txnStats.monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gNet" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#ea580c" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#ea580c" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Net Savings']} />
-                  <Area type="monotone" dataKey="net" stroke="#818cf8" strokeWidth={2} fill="url(#gNet)" />
+                  <Area type="monotone" dataKey="net" stroke="#ea580c" strokeWidth={2} fill="url(#gNet)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -795,19 +795,19 @@ export default function DashboardPage() {
 
         {/* AI Insight */}
         {data.currentPlan === 'Basic' ? (
-          <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '16px 20px', borderLeft: '3px solid var(--purple)' }} {...an(9)}>
-            <Lock size={18} color="var(--purple)" style={{ flexShrink: 0 }} />
+          <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '16px 20px', borderLeft: '3px solid var(--pop)' }} {...an(9)}>
+            <Lock size={18} color="var(--pop)" style={{ flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--purple)', marginBottom: 2 }}>AI Spending Insights</h4>
+              <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--pop)', marginBottom: 2 }}>Spending Intelligence</h4>
               <p style={{ fontSize: 13, color: 'var(--text2)' }}>Get automated spending insights and anomaly detection with the Pro plan.</p>
             </div>
             <Link to="/premium" className="btn-primary" style={{ padding: '6px 14px', fontSize: 12 }}>Unlock</Link>
           </motion.div>
         ) : (
-          <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 20px', borderLeft: '3px solid var(--amber)' }} {...an(9)}>
-            <Sparkles size={18} color="var(--amber)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <motion.div className="panel" style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 20px', borderLeft: '3px solid var(--pop)' }} {...an(9)}>
+            <Compass size={18} color="var(--pop)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: 'var(--amber)' }}>AI Insight</h4>
+              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}>Spending Intelligence</h4>
               <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }}>
                 {(() => {
                   const topCat = txnStats.categoryBreakdown[0];
@@ -1006,7 +1006,7 @@ export default function DashboardPage() {
   const usedPct = data.monthlyIncome > 0 ? Math.round((totalExpensesFallback / data.monthlyIncome) * 100) : 0;
 
   const fallbackStats = [
-    { label: 'Total Balance', value: fmt(data.totalBalance), icon: Wallet, clr: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+    { label: 'Total Balance', value: fmt(data.totalBalance), icon: Wallet, clr: 'var(--pop)', bg: 'rgba(234, 88, 12, 0.08)' },
     { label: 'Monthly Income', value: fmt(data.monthlyIncome), icon: TrendingUp, clr: '#34d399', bg: 'rgba(52,211,153,0.1)', badge: 'Income', badgeBg: 'rgba(52,211,153,0.1)', badgeClr: '#34d399' },
     { label: 'Total Expenses', value: fmt(totalExpensesFallback), icon: CreditCard, clr: '#f472b6', bg: 'rgba(244,114,182,0.1)', badge: `${usedPct}%`, badgeBg: 'rgba(244,114,182,0.1)', badgeClr: '#f472b6' },
     { label: 'Savings Target', value: fmt(savingsAmountFallback), icon: TrendingUp, clr: '#34d399', bg: 'rgba(52,211,153,0.1)', badge: `${data.savingsPercent}%`, badgeBg: 'rgba(52,211,153,0.1)', badgeClr: '#34d399' },

@@ -280,7 +280,9 @@ export default function ProfilePage() {
         style={{
           padding: '32px 36px',
           marginBottom: 28,
-          background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.12) 0%, rgba(192, 132, 252, 0.08) 50%, rgba(244, 114, 182, 0.05) 100%)',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -302,8 +304,8 @@ export default function ProfilePage() {
                 fontSize: 28,
                 fontWeight: 800,
                 color: '#ffffff',
-                boxShadow: '0 8px 24px rgba(129, 140, 248, 0.35)',
-                border: '3px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 24px rgba(234, 88, 12, 0.25)',
+                border: '3px solid rgba(255, 255, 255, 0.4)',
               }}
             >
               {initials}

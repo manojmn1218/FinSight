@@ -42,7 +42,7 @@ export default function InsightsPage() {
         desc: data.totalBalance > 0
           ? `You have ${fmt(data.totalBalance)} in savings. Consider investing a portion in a high-yield savings account or mutual fund for better returns.`
           : 'Start building your emergency fund — aim for at least 3 months of expenses.',
-        color: '#818cf8', bg: 'rgba(129,140,248,0.08)',
+        color: 'var(--pop)', bg: 'rgba(234, 88, 12, 0.08)',
       });
       return results;
     }
@@ -74,7 +74,7 @@ export default function InsightsPage() {
       icon: Wallet,
       title: 'Financial Overview',
       desc: `From ${txns.length} transactions: Total income ${fmt(income)}, total expenses ${fmt(expenses)}, net ${net >= 0 ? 'surplus' : 'deficit'} of ${fmt(net)}. ${months.length > 1 ? `Avg monthly spend: ${fmt(avgMonthlyExpense)}.` : ''}`,
-      color: '#818cf8', bg: 'rgba(129,140,248,0.08)',
+      color: 'var(--pop)', bg: 'rgba(234, 88, 12, 0.08)',
       link: '/reports',
     });
 
@@ -87,8 +87,8 @@ export default function InsightsPage() {
         icon: ShoppingBag,
         title: `Top Spend: ${topCat} (${topPct}%)`,
         desc: `${fmt(topAmt)} spent on ${topCat}, making up ${topPct}% of all expenses.${sortedCats.length > 1 ? ` Runner-up: ${sortedCats[1][0]} at ${fmt(sortedCats[1][1])}.` : ''} ${topPct > 40 ? 'This category accounts for over 40% of your total spend.' : ''}`,
-        color: cfg?.color || '#818cf8',
-        bg: cfg?.bg || 'rgba(129,140,248,0.08)',
+        color: cfg?.color || 'var(--pop)',
+        bg: cfg?.bg || 'rgba(234, 88, 12, 0.08)',
         link: '/analytics',
       });
     }

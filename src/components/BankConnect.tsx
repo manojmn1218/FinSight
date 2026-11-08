@@ -169,9 +169,9 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
           }}
           onClick={e => e.stopPropagation()}
         >
-          {/* Header gradient */}
+          {/* Header */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.12), rgba(167,139,250,0.08))',
+            background: 'var(--bg2)',
             padding: '28px 28px 20px',
             borderBottom: '1px solid var(--border)',
           }}>
@@ -179,7 +179,7 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
               onClick={onClose}
               style={{
                 position: 'absolute', top: 16, right: 16,
-                background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)',
+                background: 'var(--surface)', border: '1px solid var(--border)',
                 borderRadius: 8, width: 32, height: 32,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--text2)', cursor: 'pointer',
@@ -190,15 +190,15 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{
-                width: 48, height: 48, borderRadius: 14,
-                background: 'linear-gradient(135deg, #60a5fa, #818cf8)',
+                width: 44, height: 44, borderRadius: 12,
+                background: 'var(--surface)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(96,165,250,0.25)',
+                boxShadow: 'var(--shadow)',
               }}>
-                <Landmark size={24} color="#fff" />
+                <Landmark size={22} color="var(--text)" />
               </div>
               <div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 2 }}>Connect Bank Account</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 2 }}>Connect Bank Account</h2>
                 <p style={{ fontSize: 13, color: 'var(--text2)', margin: 0 }}>
                   Securely fetch transactions via RBI Account Aggregator
                 </p>
@@ -216,12 +216,12 @@ export default function BankConnect({ isOpen, onClose, onSuccess }: BankConnectP
                   <div key={label} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{
                       height: 3, borderRadius: 2,
-                      background: done ? '#34d399' : active ? '#818cf8' : 'rgba(255,255,255,0.06)',
+                      background: done ? 'var(--green)' : active ? 'var(--pop)' : 'var(--border)',
                       transition: 'background 0.3s',
                     }} />
                     <span style={{
                       fontSize: 10, fontWeight: 600,
-                      color: done ? '#34d399' : active ? '#818cf8' : 'var(--text3)',
+                      color: done ? 'var(--green)' : active ? 'var(--pop)' : 'var(--text3)',
                       textTransform: 'uppercase', letterSpacing: 0.5,
                     }}>{label}</span>
                   </div>
