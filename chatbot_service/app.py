@@ -11,12 +11,24 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import dotenv
 
-from chatbot_service.engine.monte_carlo import run_monte_carlo_simulation
-from chatbot_service.engine.retirement import calculate_retirement_projection
-from chatbot_service.engine.statement_parser import parse_statement_file
-
-# Load environment variables from the project root .env
+# Load environment variables from the project root .env and add to sys.path
 ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+CURRENT_DIR = Path(__file__).resolve().parent
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
+
+try:
+    from chatbot_service.engine.monte_carlo import run_monte_carlo_simulation
+    from chatbot_service.engine.retirement import calculate_retirement_projection
+    from chatbot_service.engine.statement_parser import parse_statement_file
+except ImportError:
+    from engine.monte_carlo import run_monte_carlo_simulation
+    from engine.retirement import calculate_retirement_projection
+    from engine.statement_parser import parse_statement_file
+
 dotenv.load_dotenv(dotenv_path=ROOT_DIR / ".env")
 
 app = Flask(__name__)

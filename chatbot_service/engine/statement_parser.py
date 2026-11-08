@@ -244,3 +244,4 @@ def parse_statement_file(file_bytes: bytes, filename: str) -> Dict[str, Any]:
         },
         "transactions": records
     }
+

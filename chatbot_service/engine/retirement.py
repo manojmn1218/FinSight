@@ -125,3 +125,4 @@ def calculate_retirement_projection(
         },
         "schedule": yearly_schedule
     }
+

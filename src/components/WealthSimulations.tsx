@@ -195,24 +195,26 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: 'var(--green)',
-              boxShadow: '0 0 8px var(--green)',
+              background: engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? 'var(--green)' : '#f59e0b',
+              boxShadow: `0 0 8px ${engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? 'var(--green)' : '#f59e0b'}`,
             }}
           />
           <span style={{ color: 'var(--text)' }}>
-            NumPy {engineStatus?.libraries?.numpy || '2.5'} • Pandas {engineStatus?.libraries?.pandas || '3.1'}
+            {engineStatus?.status === 'healthy' || engineStatus?.status === 'ok'
+              ? `NumPy ${engineStatus?.libraries?.numpy || '2.5'} • Pandas ${engineStatus?.libraries?.pandas || '3.1'}`
+              : 'Standalone Math Engine'}
           </span>
           <span
             style={{
               padding: '2px 6px',
               borderRadius: 6,
-              background: 'rgba(234, 88, 12, 0.1)',
-              color: 'var(--pop)',
+              background: engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+              color: engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? '#10b981' : '#f59e0b',
               fontSize: 10.5,
               fontWeight: 700,
             }}
           >
-            ONLINE
+            {engineStatus?.status === 'healthy' || engineStatus?.status === 'ok' ? 'ONLINE' : 'FALLBACK'}
           </span>
         </div>
       </div>

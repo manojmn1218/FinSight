@@ -109,3 +109,4 @@ def run_monte_carlo_simulation(
         },
         "trajectory": trajectory_points
     }
+
