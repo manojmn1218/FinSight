@@ -1014,10 +1014,10 @@ export default function PremiumPage() {
               <motion.div key={p.title} className="panel" style={{ padding: 26, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} {...an(i + 12)}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple)' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pop)' }}>
                       <Icon size={20} />
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', background: 'rgba(37,99,235,0.1)', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(37,99,235,0.2)' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pop)', background: 'rgba(255,107,53,0.1)', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(255,107,53,0.25)' }}>
                       {p.badge}
                     </span>
                   </div>

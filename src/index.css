@@ -6,37 +6,47 @@
 @import '@fontsource/inter/800.css';
 
 /* ═══════════════════════════════════════════════
-   DESIGN TOKENS — Dark Theme (Default)
+   DESIGN TOKENS — Luxury Editorial
+   Theme: Cream & Black + Burnt Orange Pop
+   "Two colors that get along (Cream & Black do 90% of the work),
+    and one that doesn't (Burnt Orange pop strictly on the button you want pressed)"
    ═══════════════════════════════════════════════ */
 :root {
-  --bg: #06080f;
-  --bg2: #0d1117;
-  --bg3: #161b22;
-  --surface: rgba(14, 18, 28, 0.75);
-  --surface-hover: rgba(20, 26, 40, 0.85);
-  --panel-bg: rgba(13, 17, 26, 0.95);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
-  --text: #f0f6fc;
-  --text2: #8b949e;
-  --text3: #6e7681;
-  --purple: #3b82f6; /* Modern authoritative fintech sapphire (replaces generic AI purple) */
-  --purple-hover: #2563eb;
-  --pink: #0ea5e9;   /* Precision cyan-sky accent (replaces generic AI pink) */
+  --bg: #090a0f;
+  --bg2: #111319;
+  --bg3: #181b24;
+  --surface: rgba(19, 22, 30, 0.82);
+  --surface-hover: rgba(27, 31, 42, 0.9);
+  --panel-bg: rgba(17, 19, 27, 0.96);
+  --border: rgba(245, 237, 226, 0.08);
+  --border-hover: rgba(245, 237, 226, 0.16);
+  --text: #f7f3ee;
+  --text2: #beb4a6;
+  --text3: #7d756a;
+  --cream: #f7f3ee;
+  --cream-soft: #e8ded1;
+  --cream-muted: #9c9182;
+  --pop: #ff6b35;          /* Electric Burnt Orange */
+  --pop-hover: #ff5514;
+  --pop-dark: #ea580c;
+  --pop-glow: rgba(255, 107, 53, 0.4);
+  --purple: #ff6b35;       /* Semantic primary action alias for backward compatibility */
+  --purple-hover: #ff5514;
+  --pink: #f59e0b;         /* Warm amber accent */
   --green: #34d399;
-  --blue: #58a6ff;
-  --amber: #f0b429;
+  --blue: #38bdf8;
+  --amber: #f59e0b;
   --red: #f87171;
-  --focus-ring: rgba(59, 130, 246, 0.5);
-  --grad: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #0ea5e9 100%);
-  --grad-subtle: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(14, 165, 233, 0.04) 100%);
+  --focus-ring: rgba(255, 107, 53, 0.5);
+  --grad: linear-gradient(135deg, #ff6b35 0%, #f97316 50%, #ea580c 100%);
+  --grad-subtle: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(245, 237, 226, 0.04) 100%);
   --radius: 18px;
   --radius-sm: 10px;
   --radius-lg: 26px;
-  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), 0 0 1px 1px rgba(255, 255, 255, 0.04);
-  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.08);
-  --shadow-3d: 0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 18px 36px -18px rgba(0, 0, 0, 0.8);
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(245, 237, 226, 0.04);
+  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(245, 237, 226, 0.08);
+  --shadow-3d: 0 30px 60px -12px rgba(0, 0, 0, 0.85), 0 18px 36px -18px rgba(0, 0, 0, 0.9);
+  --transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ═══════════════════════════════════════════════
@@ -51,8 +61,8 @@
 }
 
 ::selection {
-  background: rgba(129, 140, 248, 0.3);
-  color: var(--text);
+  background: rgba(255, 107, 53, 0.35);
+  color: #ffffff;
 }
 
 html {
@@ -71,11 +81,11 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg);
   background-image: 
-    radial-gradient(circle at 12% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 88% 18%, rgba(217, 70, 239, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 50% 85%, rgba(52, 211, 153, 0.04) 0%, transparent 50%),
-    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+    radial-gradient(circle at 14% 12%, rgba(255, 107, 53, 0.045) 0%, transparent 45%),
+    radial-gradient(circle at 86% 20%, rgba(245, 237, 226, 0.025) 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(255, 107, 53, 0.02) 0%, transparent 50%),
+    linear-gradient(rgba(245, 237, 226, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 237, 226, 0.015) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 100% 100%, 54px 54px, 54px 54px;
   background-attachment: fixed;
   color: var(--text);
@@ -142,26 +152,26 @@ body.light .app-logo.auth-blend {
    REUSABLE COMPONENT CLASSES
    ═══════════════════════════════════════════════ */
 
-/* Glassmorphism Panel with 3D Depth & Specular Sheen */
+/* Glassmorphism Panel with 3D Depth & Specular Sheen — Cream & Obsidian */
 .panel {
-  background: linear-gradient(135deg, rgba(22, 27, 40, 0.72) 0%, rgba(13, 17, 26, 0.84) 100%);
+  background: linear-gradient(135deg, rgba(20, 23, 33, 0.82) 0%, rgba(13, 15, 21, 0.92) 100%);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(245, 237, 226, 0.08);
   border-radius: var(--radius);
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.09), 0 12px 36px -8px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 1px 0 rgba(245, 237, 226, 0.08), 0 12px 36px -8px rgba(0, 0, 0, 0.6);
   transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 .panel:hover {
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(245, 237, 226, 0.16);
 }
 .panel-glow:hover {
-  border-color: rgba(59, 130, 246, 0.35);
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.14), 0 20px 45px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.18);
+  border-color: rgba(255, 107, 53, 0.35);
+  box-shadow: inset 0 1px 1px 0 rgba(245, 237, 226, 0.12), 0 20px 45px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 107, 53, 0.18);
   transform: translateY(-3px);
 }
 
-/* Buttons with 3D Bevel & Light Edge — High Precision Fintech */
+/* Buttons with 3D Bevel & Light Edge — Burnt Orange Pop (Only goes on the button you want pressed!) */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -169,20 +179,20 @@ body.light .app-logo.auth-blend {
   gap: 8px;
   padding: 12px 24px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, #ff6b35 0%, #ea580c 100%);
   color: #fff;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 18px rgba(255, 107, 53, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 8px 26px rgba(37, 99, 235, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, #ff7a48 0%, #f97316 100%);
+  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .btn-primary:active {
   transform: translateY(0px);
@@ -338,19 +348,19 @@ body.light .app-logo.auth-blend {
 }
 .nav-item:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(245, 237, 226, 0.05);
+  border-color: rgba(245, 237, 226, 0.09);
   text-decoration: none;
 }
 .nav-item.active {
   color: #ffffff;
-  background: rgba(37, 99, 235, 0.14);
-  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(245, 237, 226, 0.08);
+  border-color: rgba(245, 237, 226, 0.16);
   font-weight: 650;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 .nav-item.active .nav-icon {
-  color: #38bdf8;
+  color: var(--pop);
 }
 .nav-item.active::before {
   content: '';
@@ -360,8 +370,8 @@ body.light .app-logo.auth-blend {
   bottom: 7px;
   width: 3.5px;
   border-radius: 0 4px 4px 0;
-  background: var(--grad);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+  background: var(--pop);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
 }
 
 /* ═══════════════════════════════════════════════
@@ -372,7 +382,7 @@ body.light .app-logo.auth-blend {
   align-items: center;
   gap: 8px;
   padding: 6px;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(20, 23, 33, 0.65);
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow-x: auto;
@@ -404,29 +414,29 @@ body.light .app-logo.auth-blend {
 }
 .tab-btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(245, 237, 226, 0.05);
 }
 .tab-btn.active {
   color: #ffffff;
   background: var(--surface);
-  border-color: rgba(129, 140, 248, 0.35);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-color: rgba(245, 237, 226, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 .tab-btn.active .tab-icon {
-  color: var(--purple);
+  color: var(--pop);
 }
 .tab-btn .tab-badge {
   font-size: 11.5px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(245, 237, 226, 0.07);
   color: var(--text3);
   transition: all 0.2s;
 }
 .tab-btn.active .tab-badge {
-  background: rgba(129, 140, 248, 0.25);
-  color: #c7d2fe;
+  background: rgba(255, 107, 53, 0.2);
+  color: #fed7aa;
 }
 
 /* ═══════════════════════════════════════════════
@@ -470,14 +480,14 @@ body.light .app-logo.auth-blend {
 .blob-1 {
   width: 500px;
   height: 500px;
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(255, 107, 53, 0.06);
   top: -10%;
   left: 5%;
 }
 .blob-2 {
   width: 400px;
   height: 400px;
-  background: rgba(14, 165, 233, 0.06);
+  background: rgba(245, 237, 226, 0.035);
   bottom: -10%;
   right: 5%;
   animation-delay: -4s;
@@ -485,7 +495,7 @@ body.light .app-logo.auth-blend {
 .blob-3 {
   width: 300px;
   height: 300px;
-  background: rgba(16, 185, 129, 0.04);
+  background: rgba(255, 107, 53, 0.035);
   top: 40%;
   right: 25%;
   animation-delay: -8s;

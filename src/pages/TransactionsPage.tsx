@@ -1037,11 +1037,11 @@ export default function TransactionsPage() {
               onClick={() => { setCatFilter('all'); setPage(0); }}
               style={{
                 padding: '6px 14px', fontSize: 12, borderRadius: 20, border: '1px solid',
-                borderColor: catFilter === 'all' ? 'var(--purple)' : 'var(--border)',
-                background: catFilter === 'all' ? 'linear-gradient(135deg, #2563eb, #0284c7)' : 'transparent',
+                borderColor: catFilter === 'all' ? 'var(--pop)' : 'var(--border)',
+                background: catFilter === 'all' ? 'linear-gradient(135deg, #ff6b35, #ea580c)' : 'transparent',
                 color: catFilter === 'all' ? '#fff' : 'var(--text2)',
                 cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 650,
-                boxShadow: catFilter === 'all' ? '0 2px 10px rgba(37,99,235,0.3)' : 'none',
+                boxShadow: catFilter === 'all' ? '0 2px 10px rgba(255,107,53,0.35)' : 'none',
                 whiteSpace: 'nowrap',
               }}
             >

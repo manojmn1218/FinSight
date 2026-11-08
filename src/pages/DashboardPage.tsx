@@ -675,7 +675,7 @@ export default function DashboardPage() {
                 width: `${Math.min(txnStats.totalIncome > 0 ? (txnStats.totalExpenses / txnStats.totalIncome) * 100 : 0, 100)}%`,
                 borderRadius: 6,
                 background: (txnStats.totalExpenses / (txnStats.totalIncome || 1)) > 0.8 ? 'linear-gradient(90deg, #f87171, #ef4444)' : 'var(--grad)',
-                boxShadow: '0 0 12px rgba(37,99,235,0.3)',
+                boxShadow: '0 0 12px rgba(255, 107, 53, 0.35)',
                 transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
             </div>
