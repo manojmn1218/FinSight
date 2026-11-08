@@ -5,6 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useFinance } from '../context/FinanceContext';
 import { Eye, EyeOff, TrendingUp, Shield, Zap, AlertCircle, Info } from 'lucide-react';
 import OtpModal from '../components/OtpModal';
+import FinSightLogo from '../components/FinSightLogo';
 
 function GoogleIcon() {
   return (
@@ -155,7 +156,7 @@ export default function LoginPage() {
         >
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <Link to="/dashboard" aria-label="Go to Dashboard">
-              <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 56, height: 56, cursor: 'pointer' }} />
+              <FinSightLogo size={56} className="app-logo auth-blend" style={{ cursor: 'pointer' }} />
             </Link>
           </div>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Active Session Found</h2>
@@ -204,7 +205,7 @@ export default function LoginPage() {
           initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         >
           <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 14, marginBottom: 48, textDecoration: 'none', color: 'inherit' }}>
-            <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 46, height: 46 }} />
+            <FinSightLogo size={46} className="app-logo auth-blend" />
             <div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>FinSight</div>
               <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1 }}>Autonomous Wealth Engine</div>

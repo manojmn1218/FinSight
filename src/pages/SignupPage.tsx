@@ -5,6 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Check, X as XIcon, AlertCircle, Info } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import OtpModal from '../components/OtpModal';
+import FinSightLogo from '../components/FinSightLogo';
 
 function GoogleIcon() {
   return (
@@ -158,7 +159,7 @@ export default function SignupPage() {
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <Link to="/login" aria-label="FinSight Home">
-            <img src="/ft.jpeg" alt="FinSight" className="app-logo auth-blend" style={{ width: 48, height: 48, cursor: 'pointer' }} />
+            <FinSightLogo size={48} className="app-logo auth-blend" style={{ cursor: 'pointer' }} />
           </Link>
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, textAlign: 'center' }}>Secure Registration</div>

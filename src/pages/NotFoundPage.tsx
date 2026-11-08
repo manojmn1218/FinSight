@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Compass, ArrowLeft, Home, HelpCircle } from 'lucide-react';
+import FinSightLogo from '../components/FinSightLogo';
 
 export default function NotFoundPage() {
   return (
@@ -36,7 +37,7 @@ export default function NotFoundPage() {
         }}
       >
         <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 28 }}>
-          <img src="/ft.jpeg" alt="FinSight" className="app-logo" style={{ width: 40, height: 40, borderRadius: 10 }} />
+          <FinSightLogo size={40} className="app-logo" />
           <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, color: '#ffffff' }}>FinSight</span>
         </Link>
 

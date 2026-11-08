@@ -129,22 +129,16 @@ a:hover {
 }
 
 /* ═══════════════════════════════════════════════
-   LOGO STYLES
+   LOGO STYLES (SVG Vector Brand Mark)
    ═══════════════════════════════════════════════ */
 .app-logo {
-  border-radius: 12px;
-  object-fit: contain;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease;
 }
-body.light .app-logo {
-  filter: none;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+.app-logo:hover {
+  transform: scale(1.04);
 }
 .app-logo.auth-blend {
-  opacity: 0.95;
-  filter: none;
-}
-body.light .app-logo.auth-blend {
-  filter: none;
   opacity: 1;
 }
 

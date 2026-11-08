@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   ChevronRight
 } from 'lucide-react';
+import FinSightLogo from '../components/FinSightLogo';
 
 type SectionId = 'dmca' | 'privacy' | 'terms' | 'coppa' | 'gdpr' | 'canspam';
 
@@ -55,7 +56,7 @@ export default function LegalPage() {
             </Link>
             <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 28, height: 28 }} />
+              <FinSightLogo size={28} className="app-logo" />
               <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: -0.3 }}>FinSight Legal &amp; Compliance Hub</span>
             </div>
           </div>

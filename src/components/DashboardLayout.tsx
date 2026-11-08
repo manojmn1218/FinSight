@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
 import FinSightChatbot from './FinSightChatbot';
+import FinSightLogo from './FinSightLogo';
 
 const MAIN_NAV = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -114,7 +115,7 @@ export default function DashboardLayout() {
       }}>
         {/* Clickable Brand Logo Header */}
         <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '3px 8px 6px', textDecoration: 'none', color: 'inherit' }}>
-          <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'cover' }} />
+          <FinSightLogo size={30} className="app-logo" />
           <span className="sidebar-session-text" style={{ fontWeight: 800, fontSize: 16.5, letterSpacing: -0.4, background: 'var(--grad)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             FinSight
           </span>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { User, DollarSign, CreditCard, Target, ArrowRight, ArrowLeft, Check, Sparkles, AlertCircle } from 'lucide-react';
+import FinSightLogo from '../components/FinSightLogo';
 
 const STEPS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -77,7 +78,7 @@ export default function OnboardingPage() {
       {/* Sidebar progress */}
       <div className="onboarding-sidebar" style={{ width: 250, padding: '32px 24px', background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
         <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48, textDecoration: 'none', color: 'inherit' }}>
-          <img src="/ft.jpeg" alt="FinSight Logo" className="app-logo" style={{ width: 34, height: 34, borderRadius: 8 }} />
+          <FinSightLogo size={34} className="app-logo" />
           <span style={{ fontSize: 18, fontWeight: 700 }}>FinSight</span>
         </Link>
 
