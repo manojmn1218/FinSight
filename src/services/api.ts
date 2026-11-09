@@ -465,6 +465,58 @@ class ApiService {
       body: JSON.stringify({ content, filename }),
     });
   }
+
+  // --- Razorpay Payment Gateway ---
+  async getPaymentConfig() {
+    return this.request<{
+      isConfigured: boolean;
+      keyId: string;
+      currency: string;
+      plans: {
+        pro: { monthly: number; yearly: number };
+        wealth: { monthly: number; yearly: number };
+      };
+    }>('/api/payment/config', { method: 'GET' });
+  }
+
+  async createPaymentOrder(planId: string, billingCycle: 'monthly' | 'yearly') {
+    return this.request<{
+      orderId: string;
+      amount: number;
+      currency: string;
+      keyId: string;
+      planId: string;
+      planName: string;
+      billingCycle: string;
+      amountInRupees: number;
+    }>('/api/payment/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ planId, billingCycle }),
+    });
+  }
+
+  async verifyPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    planId: string;
+    billingCycle: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      plan: string;
+      payment: any;
+      user: UserProfile;
+    }>('/api/payment/verify-payment', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getPaymentHistory() {
+    return this.request<{ payments: any[] }>('/api/payment/history', { method: 'GET' });
+  }
 }
 
 export interface MonteCarloParams {

@@ -1,7 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Check, X, Crown, Sparkles, Zap, Shield, ShieldCheck, Star, ArrowRight, ChevronDown, CreditCard, BarChart3, Download, Bell, Lock, Cpu, Users, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
+import { api } from '../services/api';
+import { launchRazorpayCheckout } from '../utils/razorpay';
 
 // ─── Plan data ───
 const PLANS = [
@@ -124,7 +126,7 @@ function formatExpiry(val: string) {
 }
 
 // ═══════════════════════════════════════════════
-// PAYMENT CHECKOUT MODAL
+// PAYMENT CHECKOUT MODAL (RAZORPAY INTEGRATED)
 // ═══════════════════════════════════════════════
 function CheckoutModal({
   plan,
@@ -135,8 +137,9 @@ function CheckoutModal({
   plan: typeof PLANS[0];
   billing: 'monthly' | 'yearly';
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (planName?: string) => void;
 }) {
+  const { data, setData } = useFinance();
   const price = billing === 'yearly' ? plan.priceYearly : plan.price;
   const monthlyPrice = billing === 'yearly' ? Math.round(plan.priceYearly / 12) : plan.price;
   const total = price;
@@ -145,6 +148,9 @@ function CheckoutModal({
   const [method, setMethod] = useState<PaymentMethod>('upi');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<{ paymentId?: string; orderId?: string } | null>(null);
 
   // UPI state
   const [upiId, setUpiId] = useState('');
@@ -167,8 +173,15 @@ function CheckoutModal({
     { id: 'bob', name: 'Bank of Baroda', icon: '🏫' },
   ];
 
-  // ── Validate & Pay ──
-  const handlePay = useCallback(() => {
+  // Fetch Razorpay configuration status from server
+  useEffect(() => {
+    api.getPaymentConfig()
+      .then(cfg => setIsConfigured(cfg.isConfigured))
+      .catch(() => setIsConfigured(false));
+  }, []);
+
+  // ── Authorize & Launch Razorpay Checkout ──
+  const handlePay = useCallback(async () => {
     setError('');
 
     if (!termsAccepted) {
@@ -176,59 +189,98 @@ function CheckoutModal({
       return;
     }
 
-    if (method === 'upi') {
-      if (!upiId.trim() || !upiId.includes('@')) {
-        setError('Please enter a valid UPI ID (e.g., name@upi)');
-        return;
+    setIsInitializing(true);
+
+    try {
+      // 1. Create order on backend via Razorpay Orders API
+      const orderRes = await api.createPaymentOrder(plan.id, billing);
+
+      if (!orderRes.orderId || !orderRes.keyId) {
+        throw new Error('Order creation failed to return order credentials.');
       }
-    } else if (method === 'card') {
-      const cleanCard = cardNumber.replace(/\s/g, '');
-      if (cleanCard.length < 15) {
-        setError('Please enter a valid card number');
-        return;
-      }
-      if (!cardName.trim()) {
-        setError('Please enter the cardholder name');
-        return;
-      }
-      const expiryParts = cardExpiry.split('/');
-      if (expiryParts.length !== 2 || expiryParts[0].length !== 2 || expiryParts[1].length !== 2) {
-        setError('Please enter a valid expiry date (MM/YY)');
-        return;
-      }
-      const month = parseInt(expiryParts[0]);
-      if (month < 1 || month > 12) {
-        setError('Invalid expiry month');
-        return;
-      }
-      if (cardCvv.length < 3) {
-        setError('Please enter a valid CVV');
-        return;
-      }
-    } else if (method === 'netbanking') {
-      if (!selectedBank) {
-        setError('Please select a bank');
-        return;
+
+      // 2. Launch native Razorpay checkout modal
+      await launchRazorpayCheckout({
+        keyId: orderRes.keyId,
+        orderId: orderRes.orderId,
+        amount: orderRes.amount,
+        currency: orderRes.currency || 'INR',
+        planName: plan.name,
+        billingCycle: billing,
+        userProfile: {
+          name: data.userName,
+          email: data.userEmail,
+          phone: data.phone,
+        },
+        themeColor: '#ea580c', // Diego A. luxury editorial burnt orange
+        onSuccess: async (rzpRes) => {
+          setStep('processing');
+          try {
+            // 3. Verify HMAC SHA256 signature on backend
+            const verifyRes = await api.verifyPayment({
+              razorpay_order_id: rzpRes.razorpay_order_id,
+              razorpay_payment_id: rzpRes.razorpay_payment_id,
+              razorpay_signature: rzpRes.razorpay_signature,
+              planId: plan.id,
+              billingCycle: billing,
+            });
+
+            if (verifyRes.success) {
+              setPaymentResult({
+                paymentId: rzpRes.razorpay_payment_id,
+                orderId: rzpRes.razorpay_order_id,
+              });
+              setStep('success');
+              await setData({ currentPlan: plan.name });
+              setTimeout(() => {
+                onSuccess(plan.name);
+              }, 2500);
+            } else {
+              setError(verifyRes.message || 'Payment signature verification failed.');
+              setStep('failed');
+            }
+          } catch (err: any) {
+            setError(err.message || 'Payment verification failed on server.');
+            setStep('failed');
+          }
+        },
+        onDismiss: () => {
+          setIsInitializing(false);
+        },
+        onError: (err) => {
+          setIsInitializing(false);
+          setError(err?.description || 'Payment was cancelled or declined.');
+        },
+      });
+    } catch (err: any) {
+      setIsInitializing(false);
+      const msg = err.message || err.error || '';
+      if (msg.includes('RAZORPAY_KEY') || !isConfigured) {
+        setError(
+          'Razorpay API keys not yet configured in your .env file. Please paste RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET directly into .env to process real transactions.'
+        );
+      } else {
+        setError(msg || 'Failed to initialize payment gateway.');
       }
     }
+  }, [termsAccepted, plan, billing, data, isConfigured, onSuccess, setData]);
 
-    // Start processing
+  // Demo Sandbox Fallback Simulation (Used when testing before .env keys are added)
+  const handleSimulateSandbox = useCallback(async () => {
+    setError('');
     setStep('processing');
-
-    // Simulate payment processing with stages
-    setTimeout(() => {
-      // 95% success rate simulation
-      const success = Math.random() > 0.05;
-      if (success) {
-        setStep('success');
-        setTimeout(() => {
-          onSuccess();
-        }, 2500);
-      } else {
-        setStep('failed');
-      }
-    }, 3000);
-  }, [method, upiId, cardNumber, cardName, cardExpiry, cardCvv, selectedBank, onSuccess]);
+    setTimeout(async () => {
+      setPaymentResult({
+        paymentId: `pay_sandbox_${Date.now().toString().slice(-6)}`,
+        orderId: `order_sandbox_${Date.now().toString().slice(-6)}`,
+      });
+      setStep('success');
+      await setData({ currentPlan: plan.name });
+      setTimeout(() => {
+        onSuccess(plan.name);
+      }, 2500);
+    }, 2000);
+  }, [plan, setData, onSuccess]);
 
   const PlanIcon = plan.icon;
 
@@ -287,6 +339,43 @@ function CheckoutModal({
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700 }}>
                 <span>Total</span>
                 <span style={{ color: plan.color }}>{fmt(total)}</span>
+              </div>
+            </div>
+
+            {/* Razorpay Gateway Status Pill */}
+            <div style={{
+              margin: '0 28px 16px',
+              padding: '12px 16px',
+              borderRadius: 10,
+              background: 'rgba(234, 88, 12, 0.06)',
+              border: '1px solid rgba(234, 88, 12, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 6, background: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 13 }}>
+                  R
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>Razorpay Payment Gateway</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text3)' }}>UPI • Cards • Net Banking • Wallets</p>
+                </div>
+              </div>
+              <div style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                padding: '3px 8px',
+                borderRadius: 999,
+                background: isConfigured ? 'rgba(52, 211, 153, 0.15)' : 'rgba(240, 180, 41, 0.15)',
+                color: isConfigured ? 'var(--green)' : 'var(--amber)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: isConfigured ? 'var(--green)' : 'var(--amber)' }} />
+                {isConfigured ? 'Gateway Active' : 'Awaiting .env Keys'}
               </div>
             </div>
 
@@ -483,18 +572,51 @@ function CheckoutModal({
             <div style={{ padding: '0 28px 28px' }}>
               <button
                 onClick={handlePay}
-                disabled={!termsAccepted}
+                disabled={!termsAccepted || isInitializing}
                 className="btn-primary"
                 style={{
                   width: '100%',
                   padding: '14px 0',
                   fontSize: 15,
-                  opacity: termsAccepted ? 1 : 0.5,
-                  cursor: termsAccepted ? 'pointer' : 'not-allowed',
+                  opacity: termsAccepted && !isInitializing ? 1 : 0.5,
+                  cursor: termsAccepted && !isInitializing ? 'pointer' : 'not-allowed',
+                  background: '#ea580c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
                 }}
               >
-                <Lock size={15} /> Authorize &amp; Pay {fmt(total)}
+                {isInitializing ? (
+                  <>Initializing Razorpay Gateway…</>
+                ) : (
+                  <>
+                    <Lock size={15} /> Pay with Razorpay {fmt(total)}
+                  </>
+                )}
               </button>
+
+              {!isConfigured && (
+                <button
+                  type="button"
+                  onClick={handleSimulateSandbox}
+                  disabled={!termsAccepted}
+                  style={{
+                    width: '100%',
+                    marginTop: 8,
+                    padding: '9px 0',
+                    fontSize: 12,
+                    borderRadius: 8,
+                    background: 'transparent',
+                    border: '1px dashed var(--border)',
+                    color: 'var(--text2)',
+                    cursor: termsAccepted ? 'pointer' : 'not-allowed',
+                    opacity: termsAccepted ? 1 : 0.5,
+                  }}
+                >
+                  ⚡ Simulate Sandbox Approval (Demo Mode)
+                </button>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 14 }}>
                 <span style={{ fontSize: 10, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Shield size={10} /> 256-bit SSL
@@ -568,9 +690,28 @@ function CheckoutModal({
             <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 8 }}>
               Welcome to FinSight <span style={{ color: plan.color, fontWeight: 700 }}>{plan.name}</span>
             </p>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 28 }}>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: paymentResult?.paymentId ? 16 : 28 }}>
               Amount paid: <strong>{fmt(total)}</strong> · Receipt sent to your email
             </p>
+
+            {paymentResult?.paymentId && (
+              <div style={{
+                margin: '0 auto 24px',
+                padding: '10px 18px',
+                borderRadius: 8,
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12,
+                color: 'var(--text2)',
+              }}>
+                <ShieldCheck size={14} color="var(--green)" />
+                <span>Razorpay Txn:</span>
+                <code style={{ color: 'var(--pop)', fontWeight: 700 }}>{paymentResult.paymentId}</code>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 300, margin: '0 auto' }}>
               {[
@@ -681,10 +822,9 @@ export default function PremiumPage() {
     setCheckoutPlan(plan);
   };
 
-  const handlePaymentSuccess = () => {
-    if (checkoutPlan) {
-      setData({ currentPlan: checkoutPlan.name });
-    }
+  const handlePaymentSuccess = (planName?: string) => {
+    const target = planName || checkoutPlan?.name || 'Pro';
+    setData({ currentPlan: target });
     setCheckoutPlan(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 5000);

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import type { DatabaseState, UserDocument, TransactionDocument, GoalDocument, PortfolioAssetDocument } from '../types';
+import type { DatabaseState, UserDocument, TransactionDocument, GoalDocument, PortfolioAssetDocument, PaymentDocument } from '../types';
 
 const DATA_DIR = path.resolve(process.cwd(), 'server', 'data');
 const DB_FILE = path.join(DATA_DIR, 'finsight_db.json');
@@ -44,6 +44,7 @@ function getInitialState(): DatabaseState {
     transactions: {},
     goals: {},
     portfolio: {},
+    payments: {},
   };
 }
 
@@ -69,6 +70,7 @@ class LocalDatabase {
           transactions: parsed.transactions || {},
           goals: parsed.goals || {},
           portfolio: parsed.portfolio || {},
+          payments: parsed.payments || {},
         };
       }
     } catch (err) {
@@ -290,6 +292,22 @@ class LocalDatabase {
     delete this.state.goals[key];
     delete this.state.portfolio[key];
     await this.save();
+  }
+
+  // --- Payments ---
+  async recordPayment(payment: PaymentDocument): Promise<PaymentDocument> {
+    const key = payment.userEmail.trim().toLowerCase();
+    if (!this.state.payments) this.state.payments = {};
+    if (!this.state.payments[key]) this.state.payments[key] = [];
+    this.state.payments[key].unshift(payment);
+    await this.save();
+    return { ...payment };
+  }
+
+  async getPayments(userEmail: string): Promise<PaymentDocument[]> {
+    const key = userEmail.trim().toLowerCase();
+    if (!this.state.payments) return [];
+    return (this.state.payments[key] || []).map(p => ({ ...p }));
   }
 
   getState(): DatabaseState {

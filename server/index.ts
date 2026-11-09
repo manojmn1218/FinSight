@@ -23,6 +23,7 @@ import setuRoutes from './routes/setuRoutes';
 import aiRoutes from './routes/aiRoutes';
 import chatbotRoutes from './routes/chatbotRoutes';
 import simulationRoutes from './routes/simulationRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -170,6 +171,7 @@ app.use('/api/setu', setuRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/simulations', simulationRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

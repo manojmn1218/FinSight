@@ -17,7 +17,7 @@ export interface UserDocument {
   savingsPercent: number;
   isOnboarded: boolean;
   isAdmin: boolean;
-  currentPlan: 'Basic' | 'Pro' | 'Elite';
+  currentPlan: 'Basic' | 'Pro' | 'Wealth' | 'Elite';
   statementUploaded: boolean;
   statementUploadsCount: number;
   failedLoginAttempts: number;
@@ -80,9 +80,25 @@ export interface PortfolioAssetDocument {
   updatedAt: string;
 }
 
+export interface PaymentDocument {
+  id: string;
+  orderId: string;
+  paymentId: string;
+  signature: string;
+  userEmail: string;
+  planId: 'pro' | 'wealth';
+  billingCycle: 'monthly' | 'yearly';
+  amount: number;
+  currency: string;
+  status: 'paid' | 'failed';
+  receipt?: string;
+  createdAt: string;
+}
+
 export interface DatabaseState {
   users: Record<string, UserDocument>;
   transactions: Record<string, TransactionDocument[]>;
   goals: Record<string, GoalDocument[]>;
   portfolio: Record<string, PortfolioAssetDocument[]>;
+  payments?: Record<string, PaymentDocument[]>;
 }

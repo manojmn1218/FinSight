@@ -37,7 +37,7 @@ const UserSchema = new Schema<IUser>(
     savingsPercent: { type: Number, default: 20 },
     isOnboarded: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
-    currentPlan: { type: String, enum: ['Basic', 'Pro', 'Elite'], default: 'Basic' },
+    currentPlan: { type: String, enum: ['Basic', 'Pro', 'Wealth', 'Elite'], default: 'Basic' },
     statementUploaded: { type: Boolean, default: false },
     statementUploadsCount: { type: Number, default: 0 },
     failedLoginAttempts: { type: Number, default: 0 },

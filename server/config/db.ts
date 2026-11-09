@@ -3,8 +3,9 @@ import { UserModel } from '../models/User';
 import { TransactionModel } from '../models/Transaction';
 import { GoalModel } from '../models/Goal';
 import { AssetModel } from '../models/Asset';
+import { PaymentModel } from '../models/Payment';
 import { localDb } from '../storage/localDb';
-import type { UserDocument, TransactionDocument, GoalDocument, PortfolioAssetDocument } from '../types';
+import type { UserDocument, TransactionDocument, GoalDocument, PortfolioAssetDocument, PaymentDocument } from '../types';
 
 let isMongoConnected = false;
 let mongoConnectionError: string | null = null;
@@ -333,5 +334,25 @@ export const db = {
       ]);
     }
     await localDb.clearAllUserData(cleanEmail);
+  },
+
+  // --- Payments & Invoicing ---
+  async recordPayment(payment: PaymentDocument): Promise<PaymentDocument> {
+    const cleanEmail = payment.userEmail.trim().toLowerCase();
+    const dataToSave = { ...payment, userEmail: cleanEmail };
+    if (isMongoConnected) {
+      const created = await PaymentModel.create(dataToSave);
+      return created.toJSON();
+    }
+    return localDb.recordPayment(dataToSave);
+  },
+
+  async getPayments(userEmail: string): Promise<PaymentDocument[]> {
+    const cleanEmail = userEmail.trim().toLowerCase();
+    if (isMongoConnected) {
+      const docs = await PaymentModel.find({ userEmail: cleanEmail }).sort({ createdAt: -1 });
+      return docs.map(d => d.toJSON());
+    }
+    return localDb.getPayments(cleanEmail);
   },
 };
