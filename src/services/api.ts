@@ -479,7 +479,7 @@ class ApiService {
     }>('/api/payment/config', { method: 'GET' });
   }
 
-  async createPaymentOrder(planId: string, billingCycle: 'monthly' | 'yearly') {
+  async createPaymentOrder(planId: string, billingCycle: 'monthly' | 'yearly', userEmail?: string) {
     return this.request<{
       orderId: string;
       amount: number;
@@ -491,7 +491,7 @@ class ApiService {
       amountInRupees: number;
     }>('/api/payment/create-order', {
       method: 'POST',
-      body: JSON.stringify({ planId, billingCycle }),
+      body: JSON.stringify({ planId, billingCycle, userEmail }),
     });
   }
 
@@ -501,6 +501,7 @@ class ApiService {
     razorpay_signature: string;
     planId: string;
     billingCycle: string;
+    userEmail?: string;
   }) {
     return this.request<{
       success: boolean;

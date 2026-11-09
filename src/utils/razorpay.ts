@@ -70,7 +70,6 @@ export async function launchRazorpayCheckout(options: RazorpayCheckoutOptions): 
     currency: options.currency || 'INR',
     name: 'FinSight Technologies Inc.',
     description: `FinSight ${options.planName} Plan (${options.billingCycle})`,
-    image: '/favicon.svg',
     order_id: options.orderId,
     handler: function (response: RazorpaySuccessResponse) {
       options.onSuccess(response);
@@ -111,3 +110,4 @@ export async function launchRazorpayCheckout(options: RazorpayCheckoutOptions): 
 
   instance.open();
 }
+

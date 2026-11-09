@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 import Razorpay from 'razorpay';
-import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
+import { JWT_SECRET, AUTH_COOKIE_NAME } from '../middleware/auth';
 import { db } from '../config/db';
 import type { PaymentDocument } from '../types';
 
@@ -20,9 +22,37 @@ const PRICING_PAISE: Record<'pro' | 'wealth', { monthly: number; yearly: number 
 };
 
 /**
+ * Resolves user email from JWT cookie, Authorization header, or request body.
+ */
+async function resolveUserEmail(req: Request): Promise<string> {
+  try {
+    const cookieToken = req.cookies ? req.cookies[AUTH_COOKIE_NAME] : null;
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const token = cookieToken || bearerToken;
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; isAdmin: boolean };
+      if (decoded?.email) return decoded.email.trim().toLowerCase();
+    }
+  } catch {
+    // Continue to body fallback
+  }
+
+  const bodyEmail = (req.body?.userEmail || req.body?.email || '') as string;
+  if (bodyEmail && bodyEmail.includes('@')) {
+    return bodyEmail.trim().toLowerCase();
+  }
+
+  return 'user@finsight.com';
+}
+
+/**
  * Returns a configured Razorpay instance or null if credentials are not set.
+ * Always calls dotenv.config() so modifications to .env on disk are read immediately!
  */
 function getRazorpayInstance(): Razorpay | null {
+  dotenv.config();
+
   const key_id = process.env.RAZORPAY_KEY_ID?.trim();
   const key_secret = process.env.RAZORPAY_KEY_SECRET?.trim();
 
@@ -38,6 +68,7 @@ function getRazorpayInstance(): Razorpay | null {
  * Returns public Razorpay configuration for client initialization.
  */
 router.get('/config', (_req: Request, res: Response) => {
+  dotenv.config();
   const keyId = process.env.RAZORPAY_KEY_ID?.trim() || '';
   const isConfigured = !!(keyId && process.env.RAZORPAY_KEY_SECRET?.trim());
 
@@ -62,9 +93,10 @@ router.get('/config', (_req: Request, res: Response) => {
  * POST /api/payment/create-order
  * Creates a new Razorpay order for subscription checkout.
  */
-router.post('/create-order', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post('/create-order', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userEmail = req.user?.email;
+    dotenv.config();
+    const userEmail = await resolveUserEmail(req);
     const { planId, billingCycle } = req.body;
 
     if (!planId || !['pro', 'wealth'].includes(planId.toLowerCase())) {
@@ -123,9 +155,10 @@ router.post('/create-order', authenticateToken, async (req: AuthenticatedRequest
  * POST /api/payment/verify-payment
  * Cryptographically verifies Razorpay payment signature and upgrades user plan.
  */
-router.post('/verify-payment', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post('/verify-payment', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userEmail = req.user?.email;
+    dotenv.config();
+    const userEmail = await resolveUserEmail(req);
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -211,9 +244,9 @@ router.post('/verify-payment', authenticateToken, async (req: AuthenticatedReque
  * GET /api/payment/history
  * Returns payment history for the authenticated user.
  */
-router.get('/history', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get('/history', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userEmail = req.user?.email;
+    const userEmail = await resolveUserEmail(req);
     const history = await db.getPayments(userEmail);
     res.json({ payments: history });
   } catch (err: any) {

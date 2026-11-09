@@ -193,7 +193,7 @@ function CheckoutModal({
 
     try {
       // 1. Create order on backend via Razorpay Orders API
-      const orderRes = await api.createPaymentOrder(plan.id, billing);
+      const orderRes = await api.createPaymentOrder(plan.id, billing, data.userEmail);
 
       if (!orderRes.orderId || !orderRes.keyId) {
         throw new Error('Order creation failed to return order credentials.');
@@ -223,6 +223,7 @@ function CheckoutModal({
               razorpay_signature: rzpRes.razorpay_signature,
               planId: plan.id,
               billingCycle: billing,
+              userEmail: data.userEmail,
             });
 
             if (verifyRes.success) {

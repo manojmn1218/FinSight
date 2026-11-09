@@ -44,3 +44,4 @@ declare module 'razorpay' {
 
   export default Razorpay;
 }
+
