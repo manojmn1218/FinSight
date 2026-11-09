@@ -18,12 +18,13 @@ const INITIAL_EXPENSES = [
 function getInitialState(): DatabaseState {
   const adminHash = bcrypt.hashSync('Admin@123', 10);
   const now = new Date().toISOString();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
 
   return {
     users: {
-      'admin@finsight.com': {
+      [adminEmail]: {
         id: 'usr_admin',
-        email: 'admin@finsight.com',
+        email: adminEmail,
         name: 'System Administrator',
         passwordHash: adminHash,
         monthlyIncome: 0,
@@ -65,8 +66,20 @@ class LocalDatabase {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
+        const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+        const users = parsed.users || {};
+
+        // Enforce sole admin: demote all other users and ensure adminEmail has isAdmin = true
+        for (const email of Object.keys(users)) {
+          if (email.toLowerCase() === adminEmail) {
+            users[email].isAdmin = true;
+          } else if (users[email].isAdmin) {
+            users[email].isAdmin = false;
+          }
+        }
+
         return {
-          users: parsed.users || {},
+          users,
           transactions: parsed.transactions || {},
           goals: parsed.goals || {},
           portfolio: parsed.portfolio || {},

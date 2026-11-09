@@ -53,7 +53,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!data.isAdmin) return <Navigate to="/dashboard" replace />;
+  const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
+  const isAuthorized = (data.isAdmin || data.userEmail.toLowerCase() === adminEmail);
+  if (!isAuthorized) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 

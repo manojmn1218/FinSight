@@ -80,6 +80,11 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
       return;
     }
 
+    // Enforce exclusive admin privileges dynamically
+    const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+    const isSoleAdmin = user.email.trim().toLowerCase() === adminEmail;
+    user.isAdmin = isSoleAdmin;
+
     req.user = user;
     next();
   } catch (err: any) {
@@ -88,8 +93,11 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
 }
 
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-  if (!req.user || !req.user.isAdmin) {
-    res.status(403).json({ error: 'Access denied. Administrator privileges required.' });
+  const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+  const userEmail = req.user?.email?.trim().toLowerCase();
+
+  if (!req.user || !req.user.isAdmin || userEmail !== adminEmail) {
+    res.status(403).json({ error: 'Access denied. Exclusive administrator privileges required.' });
     return;
   }
   next();

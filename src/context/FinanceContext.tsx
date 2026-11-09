@@ -140,7 +140,7 @@ function profileToFinData(profile: UserProfile, txns: Transaction[] = [], goals:
     expenses: profile.expenses && profile.expenses.length > 0 ? profile.expenses : INIT.expenses,
     savingsPercent: profile.savingsPercent || 20,
     isOnboarded: !!profile.isOnboarded,
-    isAdmin: !!profile.isAdmin,
+    isAdmin: (profile.email || '').trim().toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase(),
     transactions: txns || [],
     financialGoals: goals || [],
     statementUploaded: !!profile.statementUploaded,

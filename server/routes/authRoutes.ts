@@ -281,6 +281,7 @@ router.post('/verify-otp', async (req, res: Response) => {
 
     // Verification succeeded! Complete authentication based on purpose
     let user: any = null;
+    const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
 
     if (purpose === 'signup') {
       const { name, passwordHash } = verification.userData || {};
@@ -300,10 +301,10 @@ router.post('/verify-otp', async (req, res: Response) => {
           monthlyIncome: 0,
           totalBalance: 0,
           savingsPercent: 20,
-          currentPlan: 'Basic',
+          currentPlan: cleanEmail === adminEmail ? 'Elite' : 'Basic',
           expenses: DEFAULT_EXPENSES,
           isOnboarded: false,
-          isAdmin: cleanEmail === 'admin@finsight.com',
+          isAdmin: cleanEmail === adminEmail,
           statementUploaded: false,
           statementUploadsCount: 0,
           failedLoginAttempts: 0,
@@ -336,10 +337,10 @@ router.post('/verify-otp', async (req, res: Response) => {
           monthlyIncome: 0,
           totalBalance: 0,
           savingsPercent: 20,
-          currentPlan: 'Basic',
+          currentPlan: cleanEmail === adminEmail ? 'Elite' : 'Basic',
           expenses: DEFAULT_EXPENSES,
           isOnboarded: false,
-          isAdmin: cleanEmail === 'admin@finsight.com',
+          isAdmin: cleanEmail === adminEmail,
           statementUploaded: false,
           statementUploadsCount: 0,
           failedLoginAttempts: 0,
@@ -355,6 +356,13 @@ router.post('/verify-otp', async (req, res: Response) => {
           user = await db.findUserByEmail(cleanEmail);
         }
       }
+    }
+
+    // Enforce exclusive administrator privileges
+    const isSoleAdmin = cleanEmail === adminEmail;
+    if (user && user.isAdmin !== isSoleAdmin) {
+      await db.updateUser(cleanEmail, { isAdmin: isSoleAdmin });
+      user.isAdmin = isSoleAdmin;
     }
 
     const token = generateToken(user);

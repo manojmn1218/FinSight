@@ -72,11 +72,20 @@ router.get('/stats', async (_req: AuthenticatedRequest, res: Response) => {
 router.put('/users/:email', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const targetEmail = req.params.email.trim().toLowerCase();
+    const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
     const { currentPlan, isAdmin, unlock } = req.body;
 
     const updates: Record<string, any> = {};
     if (currentPlan) updates.currentPlan = currentPlan;
-    if (typeof isAdmin === 'boolean') updates.isAdmin = isAdmin;
+    if (typeof isAdmin === 'boolean') {
+      if (isAdmin && targetEmail !== adminEmail) {
+        return res.status(400).json({ error: 'Administrative privileges can only be held by the designated administrator (finsight27@gmail.com).' });
+      }
+      if (!isAdmin && targetEmail === adminEmail) {
+        return res.status(400).json({ error: 'Cannot revoke administrator status from the primary administrator account.' });
+      }
+      updates.isAdmin = targetEmail === adminEmail;
+    }
     if (unlock) {
       updates.failedLoginAttempts = 0;
       updates.lockedUntil = null;

@@ -46,9 +46,10 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
 router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
+    const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
 
     // Do not allow demo admin account to mutate profile if protected
-    if (userEmail === 'admin@finsight.com' && req.body.isProtectedAdmin) {
+    if (userEmail.toLowerCase() === adminEmail && req.body.isProtectedAdmin) {
       return res.status(403).json({ error: 'System administrator profile cannot be modified.' });
     }
 

@@ -82,7 +82,8 @@ export default function LoginPage() {
         return;
       }
 
-      if (cleanEmail === 'admin@finsight.com') {
+      const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
+      if (cleanEmail === adminEmail) {
         nav('/admin');
       } else {
         nav('/dashboard');
@@ -121,7 +122,8 @@ export default function LoginPage() {
     const res = await verifyOtpAndLogin(otpState.email, code, otpState.purpose);
     if (res.success) {
       setOtpState(prev => ({ ...prev, isOpen: false }));
-      if (res.isAdmin || otpState.email.toLowerCase() === 'admin@finsight.com') {
+      const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
+      if (res.isAdmin || otpState.email.toLowerCase() === adminEmail) {
         nav('/admin');
       } else {
         nav('/dashboard');

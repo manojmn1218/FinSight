@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Scale, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Scale, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
@@ -45,6 +45,17 @@ export default function DashboardLayout() {
   const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
   const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
   const sessionLow = sessionHours === 0 && sessionMins < 5;
+
+  const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
+  const isUserAdmin = data.isAdmin || data.userEmail.toLowerCase() === adminEmail;
+
+  const accountNavItems = useMemo(() => {
+    const items = [...ACCOUNT_NAV];
+    if (isUserAdmin) {
+      items.push({ path: '/admin/dashboard', label: 'Admin Console', icon: ShieldCheck });
+    }
+    return items;
+  }, [isUserAdmin]);
 
   const initials = (data.userName || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
@@ -180,7 +191,7 @@ export default function DashboardLayout() {
           <div className="sidebar-nav-section">
             <div className="section-label" style={{ fontSize: 10, padding: '0 8px', marginBottom: 3, fontWeight: 700, letterSpacing: 0.8 }}>Tools &amp; Account</div>
             <nav className="sidebar-nav-group">
-              {renderNav(ACCOUNT_NAV)}
+              {renderNav(accountNavItems)}
             </nav>
           </div>
         </div>

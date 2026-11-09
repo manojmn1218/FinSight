@@ -39,49 +39,46 @@ export async function initDatabase(): Promise<void> {
     mongoConnectionError = null;
     console.log('✅ [Database] Successfully connected to MongoDB!');
 
-    // Sync any pre-seeded admin user if MongoDB collection is empty
-    const adminCount = await UserModel.countDocuments({ email: 'admin@finsight.com' });
-    if (adminCount === 0) {
-      const localAdmin = await localDb.findUserByEmail('admin@finsight.com');
-      if (localAdmin) {
-        await UserModel.create({
-          email: localAdmin.email,
-          name: localAdmin.name,
-          passwordHash: localAdmin.passwordHash,
-          monthlyIncome: 0,
-          totalBalance: 0,
-          expenses: localAdmin.expenses,
-          savingsPercent: 20,
-          isOnboarded: false,
-          isAdmin: localAdmin.isAdmin,
-          currentPlan: localAdmin.currentPlan,
-          statementUploaded: false,
-          statementUploadsCount: 0,
-        });
-        console.log('👑 [Database] Seeded default administrator into MongoDB Atlas');
+    // Enforce sole administrator (finsight27@gmail.com)
+    const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+
+    // 1. Demote any other accounts who might have had isAdmin = true
+    await UserModel.updateMany(
+      { email: { $ne: adminEmail }, isAdmin: true },
+      { $set: { isAdmin: false } }
+    );
+
+    // 2. Ensure finsight27@gmail.com has isAdmin = true
+    const adminUser = await UserModel.findOne({ email: adminEmail });
+    if (adminUser) {
+      if (!adminUser.isAdmin) {
+        await UserModel.updateOne({ email: adminEmail }, { $set: { isAdmin: true } });
+        console.log(`👑 [Database] Assigned exclusive administrator status to ${adminEmail}`);
       }
     } else {
-      // Ensure admin does not retain old template balances
-      await UserModel.updateOne(
-        { email: 'admin@finsight.com', totalBalance: 450000 },
-        {
-          $set: {
-            monthlyIncome: 0,
-            totalBalance: 0,
-            isOnboarded: false,
-            statementUploaded: false,
-            statementUploadsCount: 0,
-            expenses: [
-              { name: 'Rent', amount: 0, color: '#a78bfa' },
-              { name: 'Food', amount: 0, color: '#f472b6' },
-              { name: 'Transport', amount: 0, color: '#60a5fa' },
-              { name: 'Utilities', amount: 0, color: '#34d399' },
-              { name: 'Entertainment', amount: 0, color: '#fbbf24' },
-              { name: 'Other', amount: 0, color: '#94a3b8' },
-            ],
-          },
-        }
-      );
+      // Seed admin if not yet registered
+      await UserModel.create({
+        email: adminEmail,
+        name: 'System Administrator',
+        passwordHash: '',
+        monthlyIncome: 0,
+        totalBalance: 0,
+        expenses: [
+          { name: 'Rent', amount: 0, color: '#a78bfa' },
+          { name: 'Food', amount: 0, color: '#f472b6' },
+          { name: 'Transport', amount: 0, color: '#60a5fa' },
+          { name: 'Utilities', amount: 0, color: '#34d399' },
+          { name: 'Entertainment', amount: 0, color: '#fbbf24' },
+          { name: 'Other', amount: 0, color: '#94a3b8' },
+        ],
+        savingsPercent: 20,
+        isOnboarded: false,
+        isAdmin: true,
+        currentPlan: 'Elite',
+        statementUploaded: false,
+        statementUploadsCount: 0,
+      });
+      console.log(`👑 [Database] Seeded exclusive administrator (${adminEmail}) into MongoDB`);
     }
   } catch (error: any) {
     isMongoConnected = false;
