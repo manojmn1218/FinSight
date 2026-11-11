@@ -45,3 +45,23 @@ export function getErrorMessage(err: unknown, fallback = 'An error occurred.'): 
   return fallback;
 }
 
+/**
+ * Formats remaining session milliseconds into human-readable day/hour/minute/second text.
+ */
+export function formatSessionDuration(ms: number, compact = false): string {
+  const safeMs = Math.max(0, ms);
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  if (days > 0) {
+    return compact ? `${days}d ${hours}h` : `${days}d ${hours}h ${mins}m`;
+  }
+  if (compact) {
+    return `${hours > 0 ? `${hours}h ` : ''}${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${hours > 0 ? `${hours}h ` : ''}${mins}m ${secs.toString().padStart(2, '0')}s`;
+}
+

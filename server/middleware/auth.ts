@@ -8,27 +8,33 @@ import type { UserDocument } from '../types';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'finsight_super_secret_jwt_key_2026_secured!';
 export const AUTH_COOKIE_NAME = 'fs_auth_token';
+export const DEFAULT_SESSION_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const REMEMBER_SESSION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export interface AuthenticatedRequest extends Request {
   user?: UserDocument;
+  sessionRememberMe?: boolean;
+  sessionExpiresAt?: number;
 }
 
-export function generateToken(user: UserDocument): string {
+export function generateToken(user: UserDocument, rememberMe = false): string {
   return jwt.sign(
     {
       id: user.id,
       email: user.email,
       isAdmin: user.isAdmin,
+      rememberMe: Boolean(rememberMe),
     },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: rememberMe ? '30d' : '24h' }
   );
 }
 
 /**
- * Sets HttpOnly, Secure, SameSite JWT Cookie
+ * Sets HttpOnly, Secure, SameSite JWT Cookie.
+ * Persists for 30 days when rememberMe is enabled, or expires with the browser session otherwise.
  */
-export function setAuthCookie(res: Response, token: string): void {
+export function setAuthCookie(res: Response, token: string, rememberMe = false): void {
   const isProduction = process.env.NODE_ENV === 'production';
   const isSecure = isProduction || process.env.ENFORCE_HTTPS === 'true';
 
@@ -36,7 +42,7 @@ export function setAuthCookie(res: Response, token: string): void {
     httpOnly: true,
     secure: isSecure,
     sameSite: isProduction ? 'strict' : 'lax', // 'lax' for local cross-origin Vite dev, 'strict' in production
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    ...(rememberMe ? { maxAge: REMEMBER_SESSION_MS } : {}),
     path: '/',
   });
 }
@@ -72,7 +78,13 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; isAdmin: boolean };
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      id: string;
+      email: string;
+      isAdmin: boolean;
+      rememberMe?: boolean;
+      exp?: number;
+    };
     const user = await db.findUserByEmail(decoded.email);
 
     if (!user) {
@@ -86,6 +98,8 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
     user.isAdmin = isSoleAdmin;
 
     req.user = user;
+    req.sessionRememberMe = Boolean(decoded.rememberMe);
+    req.sessionExpiresAt = typeof decoded.exp === 'number' ? decoded.exp * 1000 : undefined;
     next();
   } catch {
     res.status(403).json({ error: 'Invalid or expired token. Please log in again.' });

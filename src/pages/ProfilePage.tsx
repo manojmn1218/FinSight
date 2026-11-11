@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
+import { formatSessionDuration } from '../utils/format';
 import { api } from '../services/api';
 
 // Occupations
@@ -70,17 +71,13 @@ const FINANCIAL_FOCUSES = [
 
 export default function ProfilePage() {
   const nav = useNavigate();
-  const { data, setData, reset, clearAllData, logoutUser, sessionTimeLeft } = useFinance();
+  const { data, setData, reset, clearAllData, logoutUser, sessionTimeLeft, sessionRemembered } = useFinance();
   const [activeTab, setActiveTab] = useState<'identity' | 'risk' | 'security' | 'preferences' | 'subscription' | 'legal' | 'session'>('identity');
 
   const handleLogout = () => {
     logoutUser();
     nav('/login');
   };
-
-  const sessionHours = Math.floor(sessionTimeLeft / 3600000);
-  const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
-  const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
 
   // Form states
   const [name, setName] = useState(data.userName || '');
@@ -1201,7 +1198,7 @@ export default function ProfilePage() {
                 <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700 }}>Session Time Remaining</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                   <p style={{ margin: 0, fontWeight: 800, fontSize: 16, color: 'var(--green)', fontFamily: 'monospace' }}>
-                    {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}m {sessionSecs.toString().padStart(2, '0')}s
+                    {formatSessionDuration(sessionTimeLeft, false)}
                   </p>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', animation: 'pulse 1.5s infinite' }} />
                 </div>
@@ -1214,9 +1211,13 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ padding: '16px 20px', borderRadius: 12, background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)', fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>
-              <p style={{ margin: 0, fontWeight: 600, color: 'var(--text)' }}>Rolling 24-Hour JWT Security Protocol:</p>
+              <p style={{ margin: 0, fontWeight: 600, color: 'var(--text)' }}>
+                {sessionRemembered ? '30-Day Remembered JWT Security Protocol:' : 'Standard 24-Hour Browser Session Protocol:'}
+              </p>
               <p style={{ margin: '4px 0 0' }}>
-                Your session automatically invalidates upon inactivity or browser close. Signing out clears local token storage and revokes authentication keys across all active tabs.
+                {sessionRemembered
+                  ? 'Your trusted device session stays active across restarts for up to 30 days. Signing out immediately revokes all stored authentication tokens.'
+                  : 'Your session automatically invalidates after 24 hours or when your browser closes. Signing out clears local token storage and revokes authentication keys across all active tabs.'}
               </p>
             </div>
           </div>

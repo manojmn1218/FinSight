@@ -43,6 +43,17 @@ export interface FinData {
   };
 }
 
+export interface AuthActionResult {
+  success: boolean;
+  requiresOtp?: boolean;
+  email?: string;
+  purpose?: 'login' | 'signup' | 'google_auth';
+  message?: string;
+  otpPreview?: string;
+  isAdmin?: boolean;
+  error?: string;
+}
+
 interface FinCtx {
   data: FinData;
   setData: (d: Partial<FinData>) => Promise<void>;
@@ -58,39 +69,21 @@ interface FinCtx {
   checkDatabaseStatus: () => Promise<void>;
   formatMoney: (amount: number, options?: FormatOptions) => string;
   loginAs: (email: string) => void;
-  loginWithPassword: (email: string, password: string) => Promise<{
-    success: boolean;
-    requiresOtp?: boolean;
-    email?: string;
-    purpose?: 'login' | 'signup' | 'google_auth';
-    message?: string;
-    otpPreview?: string;
-    error?: string;
-  }>;
-  loginWithGoogle: (payload: { credential?: string; accessToken?: string } | string) => Promise<{
-    success: boolean;
-    requiresOtp?: boolean;
-    email?: string;
-    purpose?: 'login' | 'signup' | 'google_auth';
-    message?: string;
-    otpPreview?: string;
-    error?: string;
-  }>;
-  registerUser: (email: string, password: string, name: string) => Promise<{
-    success: boolean;
-    requiresOtp?: boolean;
-    email?: string;
-    purpose?: 'login' | 'signup' | 'google_auth';
-    message?: string;
-    otpPreview?: string;
-    error?: string;
-  }>;
-  verifyOtpAndLogin: (email: string, otp: string, purpose: 'login' | 'signup' | 'google_auth') => Promise<{ success: boolean; error?: string; isAdmin?: boolean }>;
+  loginWithPassword: (email: string, password: string, rememberMe?: boolean) => Promise<AuthActionResult>;
+  loginWithGoogle: (payload: { credential?: string; accessToken?: string } | string, rememberMe?: boolean) => Promise<AuthActionResult>;
+  registerUser: (email: string, password: string, name: string, rememberMe?: boolean) => Promise<AuthActionResult>;
+  verifyOtpAndLogin: (
+    email: string,
+    otp: string,
+    purpose: 'login' | 'signup' | 'google_auth',
+    rememberMe?: boolean
+  ) => Promise<{ success: boolean; error?: string; isAdmin?: boolean }>;
   resendOtp: (email: string, purpose: string) => Promise<{ success: boolean; message?: string; otpPreview?: string; error?: string }>;
   requestForgotPasswordOtp: (email: string) => Promise<{ success: boolean; message?: string; otpPreview?: string; error?: string }>;
   resetPasswordWithOtp: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   logoutUser: () => void;
   sessionTimeLeft: number;
+  sessionRemembered: boolean;
   refreshUserData: () => Promise<void>;
   // Transaction methods
   addTransactions: (txns: Transaction[], closingBalance?: number) => Promise<void>;
@@ -104,6 +97,35 @@ interface FinCtx {
 }
 
 const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
+const REMEMBER_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SESSION_EXPIRY_KEY = 'fs_session_expires_at';
+const SESSION_REMEMBER_KEY = 'fs_session_remember';
+
+function readStoredSessionExpiry(): number | null {
+  const raw = localStorage.getItem(SESSION_EXPIRY_KEY) || sessionStorage.getItem(SESSION_EXPIRY_KEY);
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function persistSessionMeta(expiresAt: number, rememberMe: boolean): void {
+  localStorage.removeItem('fs_session_start');
+  if (rememberMe) {
+    sessionStorage.removeItem(SESSION_EXPIRY_KEY);
+    localStorage.setItem(SESSION_EXPIRY_KEY, String(expiresAt));
+    localStorage.setItem(SESSION_REMEMBER_KEY, 'true');
+  } else {
+    localStorage.removeItem(SESSION_EXPIRY_KEY);
+    localStorage.removeItem(SESSION_REMEMBER_KEY);
+    sessionStorage.setItem(SESSION_EXPIRY_KEY, String(expiresAt));
+  }
+}
+
+function clearStoredSessionMeta(): void {
+  localStorage.removeItem('fs_session_start');
+  localStorage.removeItem(SESSION_EXPIRY_KEY);
+  localStorage.removeItem(SESSION_REMEMBER_KEY);
+  sessionStorage.removeItem(SESSION_EXPIRY_KEY);
+}
 
 const INIT: FinData = {
   userName: '',
@@ -173,45 +195,48 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [adminUsersList, setAdminUsersList] = useState<FinData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // --- Session timeout ---
-  const [sessionStart, setSessionStart] = useState<number | null>(() => {
-    const s = localStorage.getItem('fs_session_start');
-    return s ? Number(s) : null;
+  // --- Session timeout (24h default, or 30 days when Remember Me is enabled) ---
+  const [sessionRemembered, setSessionRemembered] = useState<boolean>(() => {
+    return localStorage.getItem(SESSION_REMEMBER_KEY) === 'true';
   });
-  const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_TIMEOUT_MS);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(() => readStoredSessionExpiry());
+  const [sessionTimeLeft, setSessionTimeLeft] = useState<number>(() => {
+    const exp = readStoredSessionExpiry();
+    return exp ? Math.max(0, exp - Date.now()) : SESSION_TIMEOUT_MS;
+  });
 
   const isAuthenticated = useMemo(() => {
     if (!currentUserEmail) return false;
-    if (!sessionStart) return false;
+    if (!sessionExpiresAt) return false;
     if (sessionTimeLeft <= 0) return false;
     return true;
-  }, [currentUserEmail, sessionStart, sessionTimeLeft]);
+  }, [currentUserEmail, sessionExpiresAt, sessionTimeLeft]);
 
   const logoutUser = useCallback(() => {
     api.setToken(null);
     api.logout().catch(() => {});
     setCurrentUserEmail(null);
-    setSessionStart(null);
-    localStorage.removeItem('fs_session_start');
-    localStorage.removeItem('fs_auth_token');
-    sessionStorage.removeItem('fs_auth_token');
+    setSessionExpiresAt(null);
+    setSessionRemembered(false);
+    clearStoredSessionMeta();
     setFinData(INIT);
     setAdminUsersList([]);
   }, []);
 
   // Session countdown timer
   useEffect(() => {
-    if (!sessionStart || !currentUserEmail) return;
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - sessionStart;
-      const remaining = Math.max(0, SESSION_TIMEOUT_MS - elapsed);
+    if (!sessionExpiresAt || !currentUserEmail) return;
+    const tick = () => {
+      const remaining = Math.max(0, sessionExpiresAt - Date.now());
       setSessionTimeLeft(remaining);
       if (remaining <= 0) {
         logoutUser();
       }
-    }, 1000);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [sessionStart, currentUserEmail, logoutUser]);
+  }, [sessionExpiresAt, currentUserEmail, logoutUser]);
 
   // Load user data from backend API
   const refreshUserData = useCallback(async () => {
@@ -233,6 +258,16 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       setFinData(finData);
       setCurrentUserEmail(finData.userEmail);
 
+      const remembered = Boolean(meRes.rememberMe ?? (localStorage.getItem(SESSION_REMEMBER_KEY) === 'true'));
+      const effectiveExp =
+        meRes.sessionExpiresAt ||
+        readStoredSessionExpiry() ||
+        Date.now() + (remembered ? REMEMBER_TIMEOUT_MS : SESSION_TIMEOUT_MS);
+      persistSessionMeta(effectiveExp, remembered);
+      setSessionRemembered(remembered);
+      setSessionExpiresAt(effectiveExp);
+      setSessionTimeLeft(Math.max(0, effectiveExp - Date.now()));
+
       // If user is admin, also load all platform users
       if (finData.isAdmin) {
         try {
@@ -245,7 +280,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn('[FinanceContext] Auth check failed:', err);
       api.setToken(null);
+      clearStoredSessionMeta();
       setCurrentUserEmail(null);
+      setSessionExpiresAt(null);
+      setSessionRemembered(false);
       setFinData(INIT);
     } finally {
       setIsLoading(false);
@@ -273,133 +311,164 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [checkDatabaseStatus]);
 
-  const establishSession = useCallback(async (user: UserProfile) => {
-    const [txnsRes, goalsRes] = await Promise.all([
-      api.getTransactions().catch(() => ({ transactions: [] })),
-      api.getGoals().catch(() => ({ goals: [] })),
-    ]);
+  const establishSession = useCallback(
+    async (user: UserProfile, rememberMe = false, serverExpiresAt?: number) => {
+      const [txnsRes, goalsRes] = await Promise.all([
+        api.getTransactions().catch(() => ({ transactions: [] })),
+        api.getGoals().catch(() => ({ goals: [] })),
+      ]);
 
-    const finData = profileToFinData(user, txnsRes.transactions, goalsRes.goals);
-    setFinData(finData);
-    setCurrentUserEmail(finData.userEmail);
+      const finData = profileToFinData(user, txnsRes.transactions, goalsRes.goals);
+      setFinData(finData);
+      setCurrentUserEmail(finData.userEmail);
 
-    const now = Date.now();
-    setSessionStart(now);
-    localStorage.setItem('fs_session_start', String(now));
+      const durationMs = rememberMe ? REMEMBER_TIMEOUT_MS : SESSION_TIMEOUT_MS;
+      const effectiveExp = serverExpiresAt || Date.now() + durationMs;
+      persistSessionMeta(effectiveExp, rememberMe);
+      setSessionRemembered(rememberMe);
+      setSessionExpiresAt(effectiveExp);
+      setSessionTimeLeft(Math.max(0, effectiveExp - Date.now()));
 
-    if (finData.isAdmin) {
-      api.getAdminUsers()
-        .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
-        .catch(() => {});
-    }
-
-    return finData;
-  }, []);
-
-  const loginWithPassword = useCallback(async (email: string, password: string) => {
-    try {
-      const cleanEmail = email.trim().toLowerCase();
-      // Clear any prior credentials and tokens first
-      api.setToken(null);
-      setCurrentUserEmail(null);
-      setSessionStart(null);
-      localStorage.removeItem('fs_session_start');
-
-      const res = await api.login(cleanEmail, password);
-
-      if (res.requiresOtp) {
-        return {
-          success: true,
-          requiresOtp: true,
-          email: res.email || cleanEmail,
-          purpose: res.purpose || 'login',
-          message: res.message,
-          otpPreview: res.otpPreview,
-        };
+      if (finData.isAdmin) {
+        api.getAdminUsers()
+          .then(adminRes => setAdminUsersList(adminRes.users.map(u => profileToFinData(u))))
+          .catch(() => {});
       }
 
-      if (res.user) {
-        await establishSession(res.user);
+      return finData;
+    },
+    []
+  );
+
+  const loginWithPassword = useCallback(
+    async (email: string, password: string, rememberMe = false): Promise<AuthActionResult> => {
+      try {
+        const cleanEmail = email.trim().toLowerCase();
+        // Clear any prior credentials and tokens first
+        api.setToken(null);
+        setCurrentUserEmail(null);
+        setSessionExpiresAt(null);
+        setSessionRemembered(false);
+        clearStoredSessionMeta();
+
+        const res = await api.login(cleanEmail, password, rememberMe);
+
+        if (res.requiresOtp) {
+          return {
+            success: true,
+            requiresOtp: true,
+            email: res.email || cleanEmail,
+            purpose: res.purpose || 'login',
+            message: res.message,
+            otpPreview: res.otpPreview,
+          };
+        }
+
+        if (res.user) {
+          const effectiveRemember = Boolean(res.rememberMe ?? rememberMe);
+          const finData = await establishSession(res.user, effectiveRemember, res.sessionExpiresAt);
+          return { success: true, isAdmin: finData.isAdmin };
+        }
+
+        return { success: true };
+      } catch (error: unknown) {
+        api.setToken(null);
+        setCurrentUserEmail(null);
+        setSessionExpiresAt(null);
+        setSessionRemembered(false);
+        clearStoredSessionMeta();
+        return { success: false, error: getErrorMessage(error, 'Login failed.') };
       }
+    },
+    [establishSession]
+  );
 
-      return { success: true };
-    } catch (error: unknown) {
-      api.setToken(null);
-      setCurrentUserEmail(null);
-      setSessionStart(null);
-      localStorage.removeItem('fs_session_start');
-      return { success: false, error: getErrorMessage(error, 'Login failed.') };
-    }
-  }, [establishSession]);
+  const loginWithGoogle = useCallback(
+    async (
+      payload: { credential?: string; accessToken?: string } | string,
+      rememberMe = false
+    ): Promise<AuthActionResult> => {
+      try {
+        const cred = typeof payload === 'string' ? payload : payload.credential;
+        const access = typeof payload === 'object' ? payload.accessToken : undefined;
+        const res = await api.googleLogin(cred, access, rememberMe);
 
-  const loginWithGoogle = useCallback(async (payload: { credential?: string; accessToken?: string } | string) => {
-    try {
-      const cred = typeof payload === 'string' ? payload : payload.credential;
-      const access = typeof payload === 'object' ? payload.accessToken : undefined;
-      const res = await api.googleLogin(cred, access);
+        if (res.requiresOtp) {
+          return {
+            success: true,
+            requiresOtp: true,
+            email: res.email,
+            purpose: res.purpose || 'google_auth',
+            message: res.message,
+            otpPreview: res.otpPreview,
+          };
+        }
 
-      if (res.requiresOtp) {
-        return {
-          success: true,
-          requiresOtp: true,
-          email: res.email,
-          purpose: res.purpose || 'google_auth',
-          message: res.message,
-          otpPreview: res.otpPreview,
-        };
+        if (res.user) {
+          const effectiveRemember = Boolean(res.rememberMe ?? rememberMe);
+          const finData = await establishSession(res.user, effectiveRemember, res.sessionExpiresAt);
+          return { success: true, isAdmin: finData.isAdmin };
+        }
+
+        return { success: true };
+      } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Google sign-in failed.') };
       }
+    },
+    [establishSession]
+  );
 
-      if (res.user) {
-        await establishSession(res.user);
+  const registerUser = useCallback(
+    async (email: string, password: string, name: string, rememberMe = false): Promise<AuthActionResult> => {
+      try {
+        const cleanEmail = email.trim().toLowerCase();
+        const res = await api.register(cleanEmail, password, name, rememberMe);
+
+        if (res.requiresOtp) {
+          return {
+            success: true,
+            requiresOtp: true,
+            email: res.email || cleanEmail,
+            purpose: res.purpose || 'signup',
+            message: res.message,
+            otpPreview: res.otpPreview,
+          };
+        }
+
+        if (res.user) {
+          const effectiveRemember = Boolean(res.rememberMe ?? rememberMe);
+          const finData = await establishSession(res.user, effectiveRemember, res.sessionExpiresAt);
+          return { success: true, isAdmin: finData.isAdmin };
+        }
+
+        return { success: true };
+      } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Registration failed.') };
       }
+    },
+    [establishSession]
+  );
 
-      return { success: true };
-    } catch (error: unknown) {
-      return { success: false, error: getErrorMessage(error, 'Google sign-in failed.') };
-    }
-  }, [establishSession]);
+  const verifyOtpAndLogin = useCallback(
+    async (
+      email: string,
+      otp: string,
+      purpose: 'login' | 'signup' | 'google_auth',
+      rememberMe = false
+    ): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
+      try {
+        const cleanEmail = email.trim().toLowerCase();
+        const res = await api.verifyOtp(cleanEmail, otp, purpose, rememberMe);
 
-  const registerUser = useCallback(async (email: string, password: string, name: string) => {
-    try {
-      const cleanEmail = email.trim().toLowerCase();
-      const res = await api.register(cleanEmail, password, name);
-
-      if (res.requiresOtp) {
-        return {
-          success: true,
-          requiresOtp: true,
-          email: res.email || cleanEmail,
-          purpose: res.purpose || 'signup',
-          message: res.message,
-          otpPreview: res.otpPreview,
-        };
+        const effectiveRemember = Boolean(res.rememberMe ?? rememberMe);
+        const finData = await establishSession(res.user, effectiveRemember, res.sessionExpiresAt);
+        return { success: true, isAdmin: finData.isAdmin };
+      } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Verification failed.') };
       }
-
-      if (res.user) {
-        await establishSession(res.user);
-      }
-
-      return { success: true };
-    } catch (error: unknown) {
-      return { success: false, error: getErrorMessage(error, 'Registration failed.') };
-    }
-  }, [establishSession]);
-
-  const verifyOtpAndLogin = useCallback(async (
-    email: string,
-    otp: string,
-    purpose: 'login' | 'signup' | 'google_auth'
-  ): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
-    try {
-      const cleanEmail = email.trim().toLowerCase();
-      const res = await api.verifyOtp(cleanEmail, otp, purpose);
-
-      const finData = await establishSession(res.user);
-      return { success: true, isAdmin: finData.isAdmin };
-    } catch (error: unknown) {
-      return { success: false, error: getErrorMessage(error, 'Verification failed.') };
-    }
-  }, [establishSession]);
+    },
+    [establishSession]
+  );
 
   const resendOtp = useCallback(async (email: string, purpose: string) => {
     try {
@@ -435,9 +504,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const loginAs = useCallback((email: string) => {
     setCurrentUserEmail(email);
     setFinData(prev => ({ ...prev, userEmail: email }));
-    const now = Date.now();
-    setSessionStart(now);
-    localStorage.setItem('fs_session_start', String(now));
+    const expiresAt = Date.now() + SESSION_TIMEOUT_MS;
+    persistSessionMeta(expiresAt, false);
+    setSessionRemembered(false);
+    setSessionExpiresAt(expiresAt);
+    setSessionTimeLeft(SESSION_TIMEOUT_MS);
   }, []);
 
   const setData = useCallback(async (d: Partial<FinData>) => {
@@ -652,6 +723,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         resetPasswordWithOtp,
         logoutUser,
         sessionTimeLeft,
+        sessionRemembered,
         refreshUserData,
         addTransactions,
         updateTransaction,

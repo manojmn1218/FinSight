@@ -32,7 +32,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const navigateAfterAuth = (authEmail: string, isAdmin?: boolean) => {
+    const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
+    if (isAdmin || authEmail.toLowerCase() === adminEmail) {
+      nav('/admin');
+    } else {
+      nav('/dashboard');
+    }
+  };
 
   // OTP modal state
   const [otpState, setOtpState] = useState<{
@@ -68,7 +78,7 @@ export default function LoginPage() {
 
     setLoading(true);
     const cleanEmail = email.trim().toLowerCase();
-    const result = await loginWithPassword(cleanEmail, password);
+    const result = await loginWithPassword(cleanEmail, password, rememberMe);
     setLoading(false);
 
     if (result.success) {
@@ -82,12 +92,7 @@ export default function LoginPage() {
         return;
       }
 
-      const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
-      if (cleanEmail === adminEmail) {
-        nav('/admin');
-      } else {
-        nav('/dashboard');
-      }
+      navigateAfterAuth(cleanEmail, result.isAdmin);
     } else {
       setError(result.error || 'Invalid credentials. Access denied.');
     }
@@ -98,7 +103,7 @@ export default function LoginPage() {
       setError('');
       setInfoMsg('');
       setLoading(true);
-      const result = await loginWithGoogle(response.credential);
+      const result = await loginWithGoogle(response.credential, rememberMe);
       setLoading(false);
 
       if (result.success) {
@@ -111,7 +116,7 @@ export default function LoginPage() {
           });
           return;
         }
-        nav('/dashboard');
+        navigateAfterAuth(result.email || '', result.isAdmin);
       } else {
         setError(result.error || 'Google sign-in failed.');
       }
@@ -119,15 +124,10 @@ export default function LoginPage() {
   };
 
   const handleVerifyOtp = async (code: string) => {
-    const res = await verifyOtpAndLogin(otpState.email, code, otpState.purpose);
+    const res = await verifyOtpAndLogin(otpState.email, code, otpState.purpose, rememberMe);
     if (res.success) {
       setOtpState(prev => ({ ...prev, isOpen: false }));
-      const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
-      if (res.isAdmin || otpState.email.toLowerCase() === adminEmail) {
-        nav('/admin');
-      } else {
-        nav('/dashboard');
-      }
+      navigateAfterAuth(otpState.email, res.isAdmin);
       return { success: true };
     }
     return { success: false, error: res.error };
@@ -336,7 +336,40 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: 8 }} disabled={loading}>
+              <label
+                htmlFor="remember-me-30d"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  border: `1px solid ${rememberMe ? 'rgba(139, 92, 246, 0.45)' : 'var(--border)'}`,
+                  background: rememberMe ? 'rgba(139, 92, 246, 0.08)' : 'var(--surface)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input
+                    id="remember-me-30d"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    style={{ width: 16, height: 16, accentColor: 'var(--purple)', cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
+                    Remember me for 30 days
+                  </span>
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: rememberMe ? 'var(--purple)' : 'var(--text3)' }}>
+                  {rememberMe ? '30d active' : '24h session'}
+                </span>
+              </label>
+
+              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: 4 }} disabled={loading}>
                 {loading ? 'Logging in...' : 'Continue'}
               </button>
 

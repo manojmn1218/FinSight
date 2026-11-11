@@ -44,6 +44,19 @@ export interface PortfolioAsset {
   assetType: 'stock' | 'crypto' | 'etf' | 'mutual_fund';
 }
 
+export interface AuthFlowResponse {
+  requiresOtp?: boolean;
+  email?: string;
+  purpose?: 'login' | 'signup' | 'google_auth';
+  message: string;
+  otpPreview?: string;
+  expiresAt?: number;
+  token?: string;
+  rememberMe?: boolean;
+  sessionExpiresAt?: number;
+  user?: UserProfile;
+}
+
 export interface DatabaseStatus {
   connected: boolean;
   mode: string;
@@ -62,8 +75,10 @@ class ApiService {
     this.token = token;
     if (token) {
       if (remember) {
+        sessionStorage.removeItem(TOKEN_KEY);
         localStorage.setItem(TOKEN_KEY, token);
       } else {
+        localStorage.removeItem(TOKEN_KEY);
         sessionStorage.setItem(TOKEN_KEY, token);
       }
     } else {
@@ -134,75 +149,57 @@ class ApiService {
     return data as T;
   }
 
+  private persistAuthToken(data: { token?: string; rememberMe?: boolean }, fallbackRemember: boolean) {
+    if (data.token) {
+      this.setToken(data.token, Boolean(data.rememberMe ?? fallbackRemember));
+    }
+  }
+
   // --- Auth ---
-  async register(email: string, password: string, name: string) {
-    const data = await this.request<{
-      requiresOtp?: boolean;
-      email?: string;
-      purpose?: 'login' | 'signup' | 'google_auth';
-      message: string;
-      otpPreview?: string;
-      expiresAt?: number;
-      token?: string;
-      user?: UserProfile;
-    }>('/api/auth/register', {
+  async register(email: string, password: string, name: string, rememberMe = false) {
+    const data = await this.request<AuthFlowResponse>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, rememberMe }),
     });
-    if (data.token) {
-      this.setToken(data.token);
-    }
+    this.persistAuthToken(data, rememberMe);
     return data;
   }
 
-  async login(email: string, password: string) {
-    const data = await this.request<{
-      requiresOtp?: boolean;
-      email?: string;
-      purpose?: 'login' | 'signup' | 'google_auth';
-      message: string;
-      otpPreview?: string;
-      expiresAt?: number;
-      token?: string;
-      user?: UserProfile;
-    }>('/api/auth/login', {
+  async login(email: string, password: string, rememberMe = false) {
+    const data = await this.request<AuthFlowResponse>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberMe }),
     });
-    if (data.token) {
-      this.setToken(data.token);
-    }
+    this.persistAuthToken(data, rememberMe);
     return data;
   }
 
-  async googleLogin(credential?: string, accessToken?: string) {
-    const data = await this.request<{
-      requiresOtp?: boolean;
-      email?: string;
-      purpose?: 'login' | 'signup' | 'google_auth';
-      message: string;
-      otpPreview?: string;
-      expiresAt?: number;
-      token?: string;
-      user?: UserProfile;
-    }>('/api/auth/google', {
+  async googleLogin(credential?: string, accessToken?: string, rememberMe = false) {
+    const data = await this.request<AuthFlowResponse>('/api/auth/google', {
       method: 'POST',
-      body: JSON.stringify({ credential, accessToken }),
+      body: JSON.stringify({ credential, accessToken, rememberMe }),
     });
-    if (data.token) {
-      this.setToken(data.token);
-    }
+    this.persistAuthToken(data, rememberMe);
     return data;
   }
 
-  async verifyOtp(email: string, otp: string, purpose: 'login' | 'signup' | 'google_auth') {
-    const data = await this.request<{ message: string; token: string; user: UserProfile }>('/api/auth/verify-otp', {
+  async verifyOtp(
+    email: string,
+    otp: string,
+    purpose: 'login' | 'signup' | 'google_auth',
+    rememberMe = false
+  ) {
+    const data = await this.request<{
+      message: string;
+      token: string;
+      rememberMe?: boolean;
+      sessionExpiresAt?: number;
+      user: UserProfile;
+    }>('/api/auth/verify-otp', {
       method: 'POST',
-      body: JSON.stringify({ email, otp, purpose }),
+      body: JSON.stringify({ email, otp, purpose, rememberMe }),
     });
-    if (data.token) {
-      this.setToken(data.token);
-    }
+    this.persistAuthToken(data, rememberMe);
     return data;
   }
 
@@ -241,7 +238,12 @@ class ApiService {
   }
 
   async getMe() {
-    return this.request<{ user: UserProfile; databaseStatus: DatabaseStatus }>('/api/auth/me', {
+    return this.request<{
+      user: UserProfile;
+      databaseStatus: DatabaseStatus;
+      rememberMe?: boolean;
+      sessionExpiresAt?: number;
+    }>('/api/auth/me', {
       method: 'GET',
     });
   }

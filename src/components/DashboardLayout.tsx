@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
+import { formatSessionDuration } from '../utils/format';
 import { detectRecurringGrouped } from '../utils/transactionParser';
 import FinSightChatbot from './FinSightChatbot';
 import FinSightLogo from './FinSightLogo';
@@ -42,10 +43,7 @@ export default function DashboardLayout() {
   void logoutUser;
   void nav;
 
-  const sessionHours = Math.floor(sessionTimeLeft / 3600000);
-  const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
-  const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
-  const sessionLow = sessionHours === 0 && sessionMins < 5;
+  const sessionLow = sessionTimeLeft > 0 && sessionTimeLeft < 5 * 60 * 1000;
 
   const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'finsight27@gmail.com').toLowerCase();
   const isUserAdmin = data.isAdmin || data.userEmail.toLowerCase() === adminEmail;
@@ -209,7 +207,7 @@ export default function DashboardLayout() {
         }}>
           <Timer size={11} />
           <span className="sidebar-session-text">
-            {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}:{sessionSecs.toString().padStart(2, '0')}
+            {formatSessionDuration(sessionTimeLeft, true)}
           </span>
           <div style={{
             width: 5, height: 5, borderRadius: '50%',

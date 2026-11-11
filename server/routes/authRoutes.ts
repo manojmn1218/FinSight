@@ -2,7 +2,15 @@ import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { db } from '../config/db';
-import { generateToken, authenticateToken, setAuthCookie, clearAuthCookie, type AuthenticatedRequest } from '../middleware/auth';
+import {
+  generateToken,
+  authenticateToken,
+  setAuthCookie,
+  clearAuthCookie,
+  DEFAULT_SESSION_MS,
+  REMEMBER_SESSION_MS,
+  type AuthenticatedRequest,
+} from '../middleware/auth';
 import { otpService, type OtpPurpose } from '../services/otpService';
 import type { UserDocument } from '../types';
 import { getErrorMessage } from '../utils/helpers';
@@ -56,11 +64,43 @@ function sanitizeUser(user: UserDocument) {
   };
 }
 
+function getAdminEmail(): string {
+  return (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+}
+
+/**
+ * Enforces exclusive admin flags, issues a JWT (24h or 30d), sets the auth cookie,
+ * and returns the standard authenticated payload.
+ */
+async function issueAuthSession(res: Response, user: UserDocument, rememberMe = false) {
+  const adminEmail = getAdminEmail();
+  const cleanEmail = user.email.trim().toLowerCase();
+  const isSoleAdmin = cleanEmail === adminEmail;
+
+  if (user.isAdmin !== isSoleAdmin) {
+    await db.updateUser(cleanEmail, { isAdmin: isSoleAdmin });
+    user.isAdmin = isSoleAdmin;
+  }
+
+  const persistent = Boolean(rememberMe);
+  const token = generateToken(user, persistent);
+  setAuthCookie(res, token, persistent);
+  const sessionExpiresAt = Date.now() + (persistent ? REMEMBER_SESSION_MS : DEFAULT_SESSION_MS);
+
+  return {
+    message: 'Authentication successful',
+    token,
+    rememberMe: persistent,
+    sessionExpiresAt,
+    user: sanitizeUser(user),
+  };
+}
+
 // POST /api/auth/register
 // Initiates registration: validates details and generates an OTP for email verification
 router.post('/register', async (req, res: Response) => {
   try {
-    const { email, password, name } = req.body || {};
+    const { email, password, name, rememberMe } = req.body || {};
 
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -91,11 +131,11 @@ router.post('/register', async (req, res: Response) => {
     // Hash password with bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Generate and dispatch OTP
+    // Generate and dispatch OTP for new user verification
     const otpData = await otpService.createAndSendOtp(
       cleanEmail,
       'signup',
-      { name: cleanName, passwordHash },
+      { name: cleanName, passwordHash, rememberMe: Boolean(rememberMe) },
       cleanName
     );
 
@@ -113,10 +153,10 @@ router.post('/register', async (req, res: Response) => {
 });
 
 // POST /api/auth/login
-// Verifies credentials, then generates and sends an OTP for 2FA verification
+// Verifies credentials for existing database users directly without repeating OTP prompts
 router.post('/login', async (req, res: Response) => {
   try {
-    const { email, password } = req.body || {};
+    const { email, password, rememberMe } = req.body || {};
 
     if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
       return res.status(400).json({ error: 'Valid email and password are required.' });
@@ -174,16 +214,16 @@ router.post('/login', async (req, res: Response) => {
       });
     }
 
-    // Password is valid! Generate and send OTP for 2-Factor Authentication
-    const otpData = await otpService.createAndSendOtp(cleanEmail, 'login', undefined, user.name);
+    // Reset failed login counters and issue session directly (existing DB user skips repeat OTP)
+    if (user.failedLoginAttempts || user.lockedUntil) {
+      await db.updateUser(cleanEmail, {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      });
+    }
 
-    return res.json({
-      requiresOtp: true,
-      email: cleanEmail,
-      purpose: 'login',
-      message: 'Security verification code sent to your email. Enter the 6-digit code to sign in.',
-      expiresAt: otpData.expiresAt,
-    });
+    const sessionPayload = await issueAuthSession(res, user, Boolean(rememberMe));
+    return res.json(sessionPayload);
   } catch (error: unknown) {
     console.error('[Auth] Login error:', error);
     return res.status(500).json({ error: getErrorMessage(error, 'Internal server error during login.') });
@@ -191,10 +231,10 @@ router.post('/login', async (req, res: Response) => {
 });
 
 // POST /api/auth/google
-// Verifies Google OAuth token, then triggers OTP 2-Factor Authentication
+// Verifies Google OAuth token: signs stored DB users in directly, and triggers OTP only for new users
 router.post('/google', async (req, res: Response) => {
   try {
-    const { credential, accessToken } = req.body || {};
+    const { credential, accessToken, rememberMe } = req.body || {};
     if (!credential && !accessToken) {
       return res.status(400).json({ error: 'Google credential or access token is required.' });
     }
@@ -246,11 +286,30 @@ router.post('/google', async (req, res: Response) => {
     const googleId = payload.sub;
     const avatarUrl = payload.picture;
 
-    // Trigger OTP for Google authentication as requested
+    let existingUser = await db.findUserByEmail(cleanEmail);
+
+    if (existingUser) {
+      // Stored database user: sync missing Google metadata & complete sign-in without OTP
+      const profileUpdates: Partial<UserDocument> = {};
+      if (!existingUser.googleId && googleId) profileUpdates.googleId = googleId;
+      if (!existingUser.avatarUrl && avatarUrl) profileUpdates.avatarUrl = avatarUrl;
+      if (existingUser.failedLoginAttempts) profileUpdates.failedLoginAttempts = 0;
+      if (existingUser.lockedUntil) profileUpdates.lockedUntil = null;
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await db.updateUser(cleanEmail, profileUpdates);
+        existingUser = (await db.findUserByEmail(cleanEmail)) || existingUser;
+      }
+
+      const sessionPayload = await issueAuthSession(res, existingUser, Boolean(rememberMe));
+      return res.json(sessionPayload);
+    }
+
+    // New user (email not yet stored in database): verify email ownership via OTP once
     const otpData = await otpService.createAndSendOtp(
       cleanEmail,
       'google_auth',
-      { name, googleId, avatarUrl },
+      { name, googleId, avatarUrl, rememberMe: Boolean(rememberMe) },
       name
     );
 
@@ -258,7 +317,7 @@ router.post('/google', async (req, res: Response) => {
       requiresOtp: true,
       email: cleanEmail,
       purpose: 'google_auth',
-      message: 'Google identity verified! Enter the 6-digit security code sent to your email to authenticate.',
+      message: 'Google identity verified! Enter the 6-digit security code sent to your email to finish creating your account.',
       expiresAt: otpData.expiresAt,
     });
   } catch (error: unknown) {
@@ -271,7 +330,7 @@ router.post('/google', async (req, res: Response) => {
 // Validates OTP for login, signup, or google_auth and completes authentication
 router.post('/verify-otp', async (req, res: Response) => {
   try {
-    const { email, otp, purpose } = req.body || {};
+    const { email, otp, purpose, rememberMe } = req.body || {};
 
     if (!email || !otp || !purpose) {
       return res.status(400).json({ error: 'Email, OTP, and verification purpose are required.' });
@@ -291,12 +350,13 @@ router.post('/verify-otp', async (req, res: Response) => {
 
     // Verification succeeded! Complete authentication based on purpose
     let user: UserDocument | null = null;
-    const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+    const adminEmail = getAdminEmail();
     const storedUserData = (verification.userData || {}) as {
       name?: string;
       passwordHash?: string;
       googleId?: string;
       avatarUrl?: string;
+      rememberMe?: boolean;
     };
 
     if (purpose === 'signup') {
@@ -378,21 +438,9 @@ router.post('/verify-otp', async (req, res: Response) => {
       return res.status(404).json({ error: 'User account could not be loaded.' });
     }
 
-    // Enforce exclusive administrator privileges
-    const isSoleAdmin = cleanEmail === adminEmail;
-    if (user.isAdmin !== isSoleAdmin) {
-      await db.updateUser(cleanEmail, { isAdmin: isSoleAdmin });
-      user.isAdmin = isSoleAdmin;
-    }
-
-    const token = generateToken(user);
-    setAuthCookie(res, token);
-
-    return res.json({
-      message: 'Authentication successful',
-      token,
-      user: sanitizeUser(user),
-    });
+    const effectiveRememberMe = Boolean(rememberMe ?? storedUserData.rememberMe);
+    const sessionPayload = await issueAuthSession(res, user, effectiveRememberMe);
+    return res.json(sessionPayload);
   } catch (error: unknown) {
     console.error('[Auth] verify-otp error:', error);
     return res.status(500).json({ error: getErrorMessage(error, 'Internal server error during verification.') });
@@ -550,6 +598,8 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Resp
   return res.json({
     user: sanitizeUser(user),
     databaseStatus: db.getStatus(),
+    rememberMe: req.sessionRememberMe ?? false,
+    sessionExpiresAt: req.sessionExpiresAt,
   });
 });
 

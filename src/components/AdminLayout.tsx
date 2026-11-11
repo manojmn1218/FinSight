@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShieldAlert, LayoutDashboard, Users, CreditCard, Settings, Timer, Database, ArrowLeft, Menu, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import { formatSessionDuration } from '../utils/format';
 
 const NAV_ITEMS = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -20,10 +21,7 @@ export default function AdminLayout() {
   void logoutUser;
   void nav;
 
-  const sessionHours = Math.floor(sessionTimeLeft / 3600000);
-  const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);
-  const sessionSecs = Math.floor((sessionTimeLeft % 60000) / 1000);
-  const sessionLow = sessionHours === 0 && sessionMins < 5;
+  const sessionLow = sessionTimeLeft > 0 && sessionTimeLeft < 5 * 60 * 1000;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'Inter', sans-serif" }}>
@@ -145,7 +143,7 @@ export default function AdminLayout() {
         }}>
           <Timer size={12} />
           <span>
-            {sessionHours > 0 ? `${sessionHours}h ` : ''}{sessionMins}:{sessionSecs.toString().padStart(2, '0')}
+            {formatSessionDuration(sessionTimeLeft, true)}
           </span>
           <div style={{
             width: 5, height: 5, borderRadius: '50%',

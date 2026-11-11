@@ -120,7 +120,7 @@ export default function SignupPage() {
           });
           return;
         }
-        nav('/dashboard');
+        nav(result.isAdmin ? '/admin' : '/dashboard');
       } else {
         setError(result.error || 'Google sign-up failed.');
       }
