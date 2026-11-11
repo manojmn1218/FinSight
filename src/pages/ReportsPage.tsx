@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { FileText, Printer, BookOpen, Scale, Landmark, BarChart3, Calendar } from 'lucide-react';
 import { CATEGORY_CONFIG } from '../utils/types';
@@ -10,7 +10,7 @@ import { formatCurrency } from '../utils/format';
 
 export default function ReportsPage() {
   const { data } = useFinance();
-  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
+  const fmt = useCallback((n: number) => formatCurrency(n, !!data.stealthMode), [data.stealthMode]);
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;
 
@@ -121,11 +121,11 @@ export default function ReportsPage() {
       };
     }
     return {
-      status: 'HEATHY',
+      status: 'HEALTHY',
       text: `Your financials reflect a healthy savings rate of ${savingsRate}% (${fmt(netSavings)} surplus). Fixed costs are balanced, and you possess an estimated cash runway of ${healthRatios.survivalRunway} months.`,
       color: 'var(--green)',
     };
-  }, [hasTxns, netSavings, savingsRate, healthRatios]);
+  }, [hasTxns, netSavings, savingsRate, healthRatios, fmt]);
 
   const handlePrint = () => {
     window.print();

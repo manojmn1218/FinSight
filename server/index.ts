@@ -174,11 +174,14 @@ app.use('/api/simulations', simulationRoutes);
 app.use('/api/payment', paymentRoutes);
 
 // Global Error Handler
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[FinSight Server Error]:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-  });
+  const status =
+    err && typeof err === 'object' && 'status' in err && typeof err.status === 'number'
+      ? err.status
+      : 500;
+  const message = err instanceof Error ? err.message : 'Internal server error';
+  res.status(status).json({ error: message });
 });
 
 // Start Server
@@ -203,8 +206,9 @@ async function start() {
         console.log(`🩺 [FinSight Backend] Health check: https://127.0.0.1:${serverPort}/api/health\n`);
       });
       return;
-    } catch (sslErr: any) {
-      console.warn('⚠️ [SSL] Failed to load direct SSL certificates, falling back to reverse proxy mode:', sslErr.message);
+    } catch (sslErr: unknown) {
+      const msg = sslErr instanceof Error ? sslErr.message : String(sslErr);
+      console.warn('⚠️ [SSL] Failed to load direct SSL certificates, falling back to reverse proxy mode:', msg);
     }
   }
 

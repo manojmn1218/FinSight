@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { Shield, Globe, AlertTriangle, Save, Database, CheckCircle2, Server, Key, RefreshCw } from 'lucide-react';
-import { useFinance } from '../context/FinanceContext';
+import { Shield, Globe, AlertTriangle, Save, CheckCircle2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminSettingsPage() {
-  const { databaseStatus } = useFinance();
   const [maintMode, setMaintMode] = useState(() => localStorage.getItem('fs_maint_mode') === 'true');
   const [allowSignups, setAllowSignups] = useState(() => localStorage.getItem('fs_allow_signups') !== 'false');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('fs_master_api_key') || 'fs_live_9d8f3b2a7e1c40f58a62');

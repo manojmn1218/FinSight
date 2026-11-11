@@ -1,7 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { PaymentDocument } from '../types';
+import { mongooseJsonTransform } from '../utils/helpers';
 
-export interface PaymentMongooseDoc extends Omit<PaymentDocument, 'id'>, Document {}
+export interface PaymentMongooseDoc extends Omit<PaymentDocument, 'id'>, Document {
+  id: string;
+}
 
 const PaymentSchema = new Schema(
   {
@@ -20,15 +23,12 @@ const PaymentSchema = new Schema(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret: any) {
-        ret.id = ret._id ? ret._id.toString() : ret.id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
+      virtuals: true,
+      transform: mongooseJsonTransform,
     },
   }
 );
 
-export const PaymentModel = mongoose.model<PaymentMongooseDoc>('Payment', PaymentSchema);
+export const PaymentModel =
+  mongoose.models.Payment || mongoose.model<PaymentMongooseDoc>('Payment', PaymentSchema);
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Lightbulb, TrendingUp, TrendingDown, AlertCircle, ArrowRight, ShoppingBag, RefreshCw, PiggyBank, CalendarDays, Flame, Target, CreditCard, Wallet, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
@@ -8,7 +8,7 @@ import { formatCurrency } from '../utils/format';
 
 export default function InsightsPage() {
   const { data, totalExpenses, budget } = useFinance();
-  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
+  const fmt = useCallback((n: number) => formatCurrency(n, !!data.stealthMode), [data.stealthMode]);
   const usedPct = data.monthlyIncome > 0 ? Math.round((totalExpenses / data.monthlyIncome) * 100) : 0;
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
   const hasTxns = txns.length > 0;
@@ -203,7 +203,7 @@ export default function InsightsPage() {
     }
 
     return results;
-  }, [hasTxns, txns, usedPct, budget, data.totalBalance]);
+  }, [hasTxns, txns, usedPct, budget, data.totalBalance, fmt]);
 
   if (data.currentPlan === 'Basic') {
     return (

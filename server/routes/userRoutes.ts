@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { db } from '../config/db';
 import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
+import type { UserDocument } from '../types';
 
 const router = Router();
 
@@ -77,12 +78,12 @@ router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
       notifications,
     } = req.body;
 
-    const updates: Record<string, any> = {};
+    const updates: Partial<UserDocument> = {};
     if (typeof name === 'string') updates.name = name.trim();
     if (typeof monthlyIncome === 'number') updates.monthlyIncome = monthlyIncome;
     if (typeof totalBalance === 'number') updates.totalBalance = totalBalance;
     if (typeof savingsPercent === 'number') updates.savingsPercent = savingsPercent;
-    if (typeof currentPlan === 'string') updates.currentPlan = currentPlan;
+    if (typeof currentPlan === 'string') updates.currentPlan = currentPlan as UserDocument['currentPlan'];
     if (typeof isOnboarded === 'boolean') updates.isOnboarded = isOnboarded;
     if (Array.isArray(expenses)) updates.expenses = expenses;
     if (typeof statementUploaded === 'boolean') updates.statementUploaded = statementUploaded;
@@ -91,8 +92,8 @@ router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
     if (typeof phone === 'string') updates.phone = phone.trim();
     if (typeof occupation === 'string') updates.occupation = occupation.trim();
     if (typeof city === 'string') updates.city = city.trim();
-    if (typeof riskTolerance === 'string') updates.riskTolerance = riskTolerance;
-    if (typeof investmentHorizon === 'string') updates.investmentHorizon = investmentHorizon;
+    if (typeof riskTolerance === 'string') updates.riskTolerance = riskTolerance as UserDocument['riskTolerance'];
+    if (typeof investmentHorizon === 'string') updates.investmentHorizon = investmentHorizon as UserDocument['investmentHorizon'];
     if (typeof currency === 'string') updates.currency = currency;
     if (typeof stealthMode === 'boolean') updates.stealthMode = stealthMode;
     if (typeof panMasked === 'string') updates.panMasked = panMasked.trim();
@@ -106,7 +107,7 @@ router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
       message: 'Profile updated successfully',
       user: updatedUser,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[User] Update profile error:', error);
     return res.status(500).json({ error: 'Failed to update profile.' });
   }
@@ -135,7 +136,7 @@ router.post('/reset', authenticateToken, async (req: AuthenticatedRequest, res: 
     });
 
     return res.json({ message: 'Financial profile reset successfully', user: updated });
-  } catch (error: any) {
+  } catch {
     return res.status(500).json({ error: 'Failed to reset profile.' });
   }
 });
@@ -172,7 +173,7 @@ router.post('/clear-all', authenticateToken, async (req: AuthenticatedRequest, r
       message: 'All transactions, goals, and financial data have been permanently cleared.',
       user: updated,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[User] Clear all data error:', error);
     return res.status(500).json({ error: 'Failed to clear all data.' });
   }

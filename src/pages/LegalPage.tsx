@@ -10,9 +10,7 @@ import {
   UserCheck,
   AlertTriangle,
   CheckCircle,
-  ExternalLink,
-  ArrowLeft,
-  ChevronRight
+  ArrowLeft
 } from 'lucide-react';
 import FinSightLogo from '../components/FinSightLogo';
 

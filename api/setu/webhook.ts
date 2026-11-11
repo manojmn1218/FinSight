@@ -10,7 +10,7 @@
 // In a production app, you could store these in a database
 // and trigger push notifications to the user.
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

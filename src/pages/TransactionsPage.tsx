@@ -15,7 +15,7 @@ import BankConnect from '../components/BankConnect';
 import CategoryIcon from '../components/CategoryIcon';
 import type { BankDataResult } from '../utils/setuApi';
 import { api, type AiParseResponse, type AiStatusResponse } from '../services/api';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, getErrorMessage } from '../utils/format';
 
 interface AiStagedTransaction {
   id: string;
@@ -255,12 +255,12 @@ export default function TransactionsPage() {
     setKeyModalSuccess('');
     try {
       const res = await api.configureGeminiKey(inputApiKey.trim());
-      setKeyModalSuccess(res.message || 'Gemini 2.5 Flash connected!');
+      setKeyModalSuccess(res.message || 'Gemini AI connected!');
       setAiStatus({
         hasGeminiKey: true,
         activeProvider: 'gemini',
-        model: res.model || 'gemini-2.5-flash',
-        version: '2.5',
+        model: res.model || 'gemini-3.5-flash-lite',
+        version: '3.5',
         features: [
           'Automatic Bank Statement OCR/Text Classification',
           'Merchant Entity Normalization',
@@ -274,8 +274,8 @@ export default function TransactionsPage() {
         setShowAiKeyModal(false);
         setKeyModalSuccess('');
       }, 1500);
-    } catch (err: any) {
-      setKeyModalError(err.message || 'Failed to verify API key. Please check and try again.');
+    } catch (err: unknown) {
+      setKeyModalError(getErrorMessage(err, 'Failed to verify API key. Please check and try again.'));
     } finally {
       setTestingKey(false);
     }
@@ -283,12 +283,12 @@ export default function TransactionsPage() {
 
   const handleReclassifyAll = async () => {
     setReclassifying(true);
-    setReclassifyMsg('Google Gemini 2.5 Flash is analyzing and re-classifying transactions…');
+    setReclassifyMsg('Google Gemini AI is analyzing and re-classifying transactions…');
     try {
       await api.reclassifyWithAi();
       window.location.reload();
-    } catch (err: any) {
-      alert(err.message || 'Failed to reclassify transactions.');
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, 'Failed to reclassify transactions.'));
       setReclassifying(false);
       setReclassifyMsg('');
     }
@@ -311,14 +311,14 @@ export default function TransactionsPage() {
 
       setParsingStage(
         aiStatus?.activeProvider === 'gemini'
-          ? 'Google Gemini 2.5 Flash analyzing merchants & categories…'
+          ? 'Google Gemini AI analyzing merchants & categories…'
           : 'Smart Neural Engine analyzing merchants & categories…'
       );
 
       let aiResult: AiParseResponse;
       try {
         aiResult = await api.parseStatementWithAi(lines);
-      } catch (apiErr: any) {
+      } catch (apiErr: unknown) {
         console.warn('[TransactionsPage] Backend AI request failed, utilizing client fallback:', apiErr);
         const localTxns = extractTransactions(lines);
         const fallbackBal = extractClosingBalance(lines, localTxns);
@@ -502,7 +502,7 @@ export default function TransactionsPage() {
           bankDetected: res.filename,
           categoriesFound: res.summary.categoryBreakdown,
         },
-        transactions: staged as any,
+        transactions: staged,
       });
 
       setShowAiReview(true);
@@ -510,9 +510,9 @@ export default function TransactionsPage() {
       setPdfPassword('');
       setPendingFile(null);
       setPasswordError('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[TransactionsPage] Pandas parsing error:', err);
-      setParseError(err.message || 'Failed to process statement with Pandas service.');
+      setParseError(getErrorMessage(err, 'Failed to process statement with Pandas service.'));
     } finally {
       setParsing(false);
     }

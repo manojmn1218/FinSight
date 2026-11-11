@@ -105,7 +105,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleGoogleSuccess = async (response: any) => {
+  const handleGoogleSuccess = async (response: { credential?: string }) => {
     if (response.credential) {
       setError('');
       setInfoMsg('');

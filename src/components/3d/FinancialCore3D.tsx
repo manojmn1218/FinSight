@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 interface FinancialCore3DProps {
@@ -13,7 +13,6 @@ export default function FinancialCore3D({
   interactive = true,
 }: FinancialCore3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -135,12 +134,15 @@ export default function FinancialCore3D({
 
     // 5. Animation loop
     let animId: number;
-    let clock = new THREE.Clock();
+    const startTime = performance.now();
+    let prevTime = startTime;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime();
+      const now = performance.now();
+      const delta = Math.min((now - prevTime) / 1000, 0.1);
+      prevTime = now;
+      const time = (now - startTime) / 1000;
 
       // Continuous ambient rotation
       coreMesh.rotation.y += delta * 0.25;
@@ -170,6 +172,7 @@ export default function FinancialCore3D({
       if (!container) return;
       const w = container.clientWidth;
       const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
@@ -207,8 +210,6 @@ export default function FinancialCore3D({
         alignItems: 'center',
         justifyContent: 'center',
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         ref={mountRef}

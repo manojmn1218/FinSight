@@ -2,11 +2,13 @@ import { sendOtpEmail } from './emailService';
 
 export type OtpPurpose = 'login' | 'signup' | 'google_auth' | 'forgot_password';
 
+export type OtpUserData = Record<string, unknown>;
+
 export interface OtpRecord {
   email: string;
   code: string;
   purpose: OtpPurpose;
-  userData?: any;
+  userData?: OtpUserData;
   expiresAt: number;
   lastSentAt: number;
   attempts: number;
@@ -28,7 +30,7 @@ class OtpService {
   async createAndSendOtp(
     email: string,
     purpose: OtpPurpose,
-    userData?: any,
+    userData?: OtpUserData,
     name?: string
   ): Promise<{ code: string; expiresAt: number; cooldownSeconds: number }> {
     const cleanEmail = email.trim().toLowerCase();
@@ -81,7 +83,7 @@ class OtpService {
     email: string,
     code: string,
     purpose: OtpPurpose
-  ): { valid: boolean; error?: string; userData?: any } {
+  ): { valid: boolean; error?: string; userData?: OtpUserData } {
     const cleanEmail = email.trim().toLowerCase();
     const key = this.makeKey(cleanEmail, purpose);
 

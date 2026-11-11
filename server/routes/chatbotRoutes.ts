@@ -60,7 +60,10 @@ router.post('/message', authenticateToken, async (req: AuthenticatedRequest, res
       .sort((a, b) => b.total - a.total);
 
     const income = user.monthlyIncome ?? 0;
-    const expenses = user.monthlyExpenses ?? Math.round(totalDebits);
+    const profileExpenses = Array.isArray(user.expenses)
+      ? user.expenses.reduce((sum, item) => sum + (item.amount || 0), 0)
+      : 0;
+    const expenses = profileExpenses > 0 ? profileExpenses : Math.round(totalDebits);
     const surplus = Math.max(0, income - expenses);
     const savingsRate = income > 0 ? Math.round((surplus / income) * 100) : (user.savingsPercent ?? 0);
 
@@ -78,7 +81,7 @@ router.post('/message', authenticateToken, async (req: AuthenticatedRequest, res
     healthScore = Math.min(100, Math.max(10, healthScore));
 
     const uploadCount = user.statementUploadsCount || 0;
-    const currentPlan = (user.currentPlan || user.plan || 'Basic').toLowerCase();
+    const currentPlan = (user.currentPlan || 'Basic').toLowerCase();
     const uploadsRemaining = currentPlan === 'basic' ? Math.max(0, 3 - uploadCount) : 'Unlimited';
 
     const goalsAnalysis = goals.map(g => {
@@ -189,7 +192,7 @@ router.post('/message', authenticateToken, async (req: AuthenticatedRequest, res
       } else if (lowerMsg.includes('income')) {
         fallbackReply = `Your recorded monthly income is **₹${(user.monthlyIncome ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}**.`;
       } else if (lowerMsg.includes('expense') || lowerMsg.includes('spend')) {
-        fallbackReply = `Your recorded monthly expenses are **₹${(user.monthlyExpenses ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}**.`;
+        fallbackReply = `Your recorded monthly expenses are **₹${expenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}**.`;
       } else if (lowerMsg.includes('upload') || lowerMsg.includes('statement')) {
         fallbackReply = `You can upload bank statements by visiting the **Transactions** page (\`/transactions\`) and dragging your PDF statement into the upload box.`;
       } else if (lowerMsg.includes('goal')) {

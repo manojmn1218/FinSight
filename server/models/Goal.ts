@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { GoalDocument } from '../types';
+import { mongooseJsonTransform } from '../utils/helpers';
 
 export interface IGoal extends Omit<GoalDocument, 'id'>, Document {
   id: string;
@@ -18,12 +19,7 @@ const GoalSchema = new Schema<IGoal>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (_doc, ret: Record<string, any>) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
+      transform: mongooseJsonTransform,
     },
   }
 );

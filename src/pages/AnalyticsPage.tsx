@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { TrendingUp, Sparkles, BarChart3, RefreshCw, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
@@ -11,7 +11,7 @@ import { formatCurrency } from '../utils/format';
 
 export default function AnalyticsPage() {
   const { data } = useFinance();
-  const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
+  const fmt = useCallback((n: number) => formatCurrency(n, !!data.stealthMode), [data.stealthMode]);
   const txns = useMemo(() => data.transactions || [], [data.transactions]);
 
   const summaries = useMemo(() => computeMonthSummaries(txns), [txns]);
@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
     });
 
     return recs;
-  }, [txns, catTotals, recurringGroups, totalRecurringAnnual, highCostCount]);
+  }, [txns, catTotals, recurringGroups, totalRecurringAnnual, highCostCount, fmt]);
 
   const tooltipStyle = { background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, color: 'var(--text)', boxShadow: 'var(--shadow)' };
   const an = (i: number) => ({ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { delay: i * 0.06, duration: 0.4, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] } });
@@ -120,8 +120,8 @@ export default function AnalyticsPage() {
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             <TrendingUp size={18} color="var(--purple)" /> Monthly Income vs Expenses
           </h3>
-          <div style={{ height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div style={{ width: '100%', height: 280, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={280} minWidth={0}>
               <BarChart data={summaries} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -140,8 +140,8 @@ export default function AnalyticsPage() {
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Category Breakdown</h3>
           {catTotals.length > 0 ? (
             <>
-              <div style={{ flex: 1, minHeight: 180 }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <div style={{ width: '100%', height: 180, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={180} minWidth={0}>
                   <PieChart>
                     <Pie data={catTotals} dataKey="value" innerRadius={46} outerRadius={72} paddingAngle={3} strokeWidth={0}>
                       {catTotals.map(e => <Cell key={e.name} fill={e.color} />)}
@@ -178,8 +178,8 @@ export default function AnalyticsPage() {
             </div>
           )}
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>Cumulative Savings Trend</h3>
-          <div style={{ height: 240 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div style={{ width: '100%', height: 240, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={240} minWidth={0}>
               <AreaChart data={savingsTimeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="savGrad" x1="0" y1="0" x2="0" y2="1">

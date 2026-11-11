@@ -130,7 +130,7 @@ F. Budget Health & Financial Health:
      -> Explain their score (e.g., 70/100) and give 2 concrete tips based on their actual numbers.
 
 G. FinSight Platform Features & How-To:
-   - How to upload bank statements, password-protected PDFs, supported banks (SBI, HDFC, ICICI, Axis, Kotak, etc.), statement closing balance auto-sync, plans (Basic, Pro, Enterprise), and export options.
+   - How to upload bank statements, password-protected PDFs, supported banks (SBI, HDFC, ICICI, Axis, Kotak, etc.), statement closing balance auto-sync, plans (Basic, Pro, Wealth), and export options.
 
 ═══════════════════════════════════════════════
 2. OUT-OF-SCOPE REFUSAL:
@@ -529,7 +529,7 @@ USER'S QUESTION:
 ═══════════════════════════════════════════════
 {user_message}"""
 
-        candidate_models = ["gemini-3.5-flash-lite"]
+        candidate_models = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
         for model_name in candidate_models:
             try:
                 response = genai_client.models.generate_content(

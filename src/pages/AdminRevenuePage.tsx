@@ -65,8 +65,8 @@ export default function AdminRevenuePage() {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <div className="panel" style={{ padding: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20 }}>Revenue vs Expenses</h3>
-          <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={300} minWidth={0}>
               <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">

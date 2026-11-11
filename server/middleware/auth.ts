@@ -87,7 +87,7 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
 
     req.user = user;
     next();
-  } catch (err: any) {
+  } catch {
     res.status(403).json({ error: 'Invalid or expired token. Please log in again.' });
   }
 }

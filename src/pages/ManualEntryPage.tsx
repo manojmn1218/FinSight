@@ -576,19 +576,21 @@ export default function ManualEntryPage() {
 
       {/* Tabs Navigation */}
       <div className="tabs-container">
-        {[
-          { id: 'transactions', label: 'Detailed Transactions', icon: FileSpreadsheet, count: allManualTxns.length },
-          { id: 'assets', label: 'Assets & Investments', icon: Coins, count: manualAssets.length },
-          { id: 'liabilities', label: 'Liabilities & EMIs', icon: Landmark, count: manualLiabilities.length },
-          { id: 'budgets', label: 'Category Budgets', icon: Sliders },
-          { id: 'presets', label: '1-Click Presets', icon: Sparkles },
-        ].map(tab => {
+        {(
+          [
+            { id: 'transactions', label: 'Detailed Transactions', icon: FileSpreadsheet, count: allManualTxns.length },
+            { id: 'assets', label: 'Assets & Investments', icon: Coins, count: manualAssets.length },
+            { id: 'liabilities', label: 'Liabilities & EMIs', icon: Landmark, count: manualLiabilities.length },
+            { id: 'budgets', label: 'Category Budgets', icon: Sliders },
+            { id: 'presets', label: '1-Click Presets', icon: Sparkles },
+          ] satisfies Array<{ id: typeof activeTab; label: string; icon: React.ElementType; count?: number }>
+        ).map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`tab-btn${isActive ? ' active' : ''}`}
             >
               <Icon size={18} className="tab-icon" />
@@ -801,7 +803,7 @@ export default function ManualEntryPage() {
                 {/* Filter Type */}
                 <select
                   value={filterType}
-                  onChange={e => setFilterType(e.target.value as any)}
+                  onChange={e => setFilterType(e.target.value as 'all' | 'debit' | 'credit')}
                   className="input"
                   style={{ width: 130, height: 38, fontSize: 13, cursor: 'pointer' }}
                 >
@@ -975,7 +977,7 @@ export default function ManualEntryPage() {
                 <label className="label">Asset Classification</label>
                 <select
                   value={assetCategory}
-                  onChange={e => setAssetCategory(e.target.value as any)}
+                  onChange={e => setAssetCategory(e.target.value as ManualAsset['category'])}
                   className="input"
                   style={{ cursor: 'pointer' }}
                 >
@@ -1182,7 +1184,7 @@ export default function ManualEntryPage() {
                 <label className="label">Liability Type</label>
                 <select
                   value={loanType}
-                  onChange={e => setLoanType(e.target.value as any)}
+                  onChange={e => setLoanType(e.target.value as ManualLiability['type'])}
                   className="input"
                   style={{ cursor: 'pointer' }}
                 >

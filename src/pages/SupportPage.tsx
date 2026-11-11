@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, MessageCircle, FileText, Scale, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Mail, MessageCircle, Scale, Phone, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 

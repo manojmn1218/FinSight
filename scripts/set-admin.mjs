@@ -35,3 +35,4 @@ async function setAdmin() {
 }
 
 setAdmin().catch(console.error);
+

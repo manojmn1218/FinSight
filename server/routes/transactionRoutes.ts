@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { db } from '../config/db';
 import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
+import { getParamString } from '../utils/helpers';
+import type { UserDocument } from '../types';
 
 const router = Router();
 
@@ -36,7 +38,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     }
 
     return res.json({ transactions: enriched });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Transactions] Fetch error:', error);
     return res.status(500).json({ error: 'Failed to fetch transactions.' });
   }
@@ -65,7 +67,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
     let updatedTotalBalance: number | undefined = undefined;
     if (currentUser) {
       const newCount = (currentUser.statementUploadsCount || 0) + (Array.isArray(transactions) ? 1 : 0);
-      const userUpdates: Record<string, any> = {
+      const userUpdates: Partial<UserDocument> = {
         statementUploaded: true,
         statementUploadsCount: newCount,
       };
@@ -90,7 +92,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
       transactions: inserted,
       totalBalance: updatedTotalBalance,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Transactions] Add error:', error);
     return res.status(500).json({ error: 'Failed to save transactions.' });
   }
@@ -100,7 +102,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
 router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
-    const txnId = req.params.id;
+    const txnId = getParamString(req.params.id);
     const updates = req.body;
 
     const updated = await db.updateTransaction(userEmail, txnId, updates);
@@ -109,7 +111,7 @@ router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Res
     }
 
     return res.json({ message: 'Transaction updated successfully', transaction: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Transactions] Update error:', error);
     return res.status(500).json({ error: 'Failed to update transaction.' });
   }
@@ -121,7 +123,7 @@ router.delete('/', authenticateToken, async (req: AuthenticatedRequest, res: Res
     const userEmail = req.user!.email;
     const deletedCount = await db.clearTransactions(userEmail);
     return res.json({ message: `Successfully cleared ${deletedCount} transaction(s)`, deletedCount });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Transactions] Clear all error:', error);
     return res.status(500).json({ error: 'Failed to clear transactions.' });
   }
@@ -131,7 +133,7 @@ router.delete('/', authenticateToken, async (req: AuthenticatedRequest, res: Res
 router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
-    const txnId = req.params.id;
+    const txnId = getParamString(req.params.id);
 
     const success = await db.deleteTransaction(userEmail, txnId);
     if (!success) {
@@ -139,7 +141,7 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     }
 
     return res.json({ message: 'Transaction deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Transactions] Delete error:', error);
     return res.status(500).json({ error: 'Failed to delete transaction.' });
   }

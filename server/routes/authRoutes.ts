@@ -4,6 +4,8 @@ import { OAuth2Client } from 'google-auth-library';
 import { db } from '../config/db';
 import { generateToken, authenticateToken, setAuthCookie, clearAuthCookie, type AuthenticatedRequest } from '../middleware/auth';
 import { otpService, type OtpPurpose } from '../services/otpService';
+import type { UserDocument } from '../types';
+import { getErrorMessage } from '../utils/helpers';
 
 const router = Router();
 
@@ -19,7 +21,7 @@ const DEFAULT_EXPENSES = [
   { name: 'Other', amount: 0, color: '#94a3b8' },
 ];
 
-function sanitizeUser(user: any) {
+function sanitizeUser(user: UserDocument) {
   return {
     id: user.id,
     email: user.email,
@@ -104,9 +106,9 @@ router.post('/register', async (req, res: Response) => {
       message: 'Verification code sent to your email. Enter the 6-digit code to complete registration.',
       expiresAt: otpData.expiresAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Auth] Registration error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error during registration.' });
+    return res.status(500).json({ error: getErrorMessage(error, 'Internal server error during registration.') });
   }
 });
 
@@ -173,7 +175,7 @@ router.post('/login', async (req, res: Response) => {
     }
 
     // Password is valid! Generate and send OTP for 2-Factor Authentication
-    const otpData = await otpService.createAndSendOtp(cleanEmail, 'login', null, user.name);
+    const otpData = await otpService.createAndSendOtp(cleanEmail, 'login', undefined, user.name);
 
     return res.json({
       requiresOtp: true,
@@ -182,9 +184,9 @@ router.post('/login', async (req, res: Response) => {
       message: 'Security verification code sent to your email. Enter the 6-digit code to sign in.',
       expiresAt: otpData.expiresAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Auth] Login error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error during login.' });
+    return res.status(500).json({ error: getErrorMessage(error, 'Internal server error during login.') });
   }
 });
 
@@ -197,7 +199,13 @@ router.post('/google', async (req, res: Response) => {
       return res.status(400).json({ error: 'Google credential or access token is required.' });
     }
 
-    let payload: any = null;
+    interface GoogleTokenPayload {
+      email?: string;
+      name?: string;
+      sub?: string;
+      picture?: string;
+    }
+    let payload: GoogleTokenPayload | null | undefined = null;
 
     if (credential) {
       const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
@@ -208,9 +216,10 @@ router.post('/google', async (req, res: Response) => {
           audience: clientId || undefined,
         });
         payload = ticket.getPayload();
-      } catch (verifyErr: any) {
-        console.error('[Google Auth] Token verification failed:', verifyErr.message);
-        return res.status(401).json({ error: 'Failed to verify Google token: ' + verifyErr.message });
+      } catch (verifyErr: unknown) {
+        const msg = getErrorMessage(verifyErr);
+        console.error('[Google Auth] Token verification failed:', msg);
+        return res.status(401).json({ error: 'Failed to verify Google token: ' + msg });
       }
     } else if (accessToken) {
       try {
@@ -220,10 +229,11 @@ router.post('/google', async (req, res: Response) => {
         if (!resp.ok) {
           throw new Error('Google userinfo response status: ' + resp.status);
         }
-        payload = await resp.json();
-      } catch (fetchErr: any) {
-        console.error('[Google Auth] Access token verification failed:', fetchErr.message);
-        return res.status(401).json({ error: 'Failed to verify Google access token: ' + fetchErr.message });
+        payload = (await resp.json()) as GoogleTokenPayload;
+      } catch (fetchErr: unknown) {
+        const msg = getErrorMessage(fetchErr);
+        console.error('[Google Auth] Access token verification failed:', msg);
+        return res.status(401).json({ error: 'Failed to verify Google access token: ' + msg });
       }
     }
 
@@ -251,9 +261,9 @@ router.post('/google', async (req, res: Response) => {
       message: 'Google identity verified! Enter the 6-digit security code sent to your email to authenticate.',
       expiresAt: otpData.expiresAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Google Auth] Unexpected error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error during Google authentication.' });
+    return res.status(500).json({ error: getErrorMessage(error, 'Internal server error during Google authentication.') });
   }
 });
 
@@ -280,11 +290,17 @@ router.post('/verify-otp', async (req, res: Response) => {
     }
 
     // Verification succeeded! Complete authentication based on purpose
-    let user: any = null;
+    let user: UserDocument | null = null;
     const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
+    const storedUserData = (verification.userData || {}) as {
+      name?: string;
+      passwordHash?: string;
+      googleId?: string;
+      avatarUrl?: string;
+    };
 
     if (purpose === 'signup') {
-      const { name, passwordHash } = verification.userData || {};
+      const { name, passwordHash } = storedUserData;
       if (!name || !passwordHash) {
         return res.status(400).json({ error: 'Registration session expired. Please register again.' });
       }
@@ -323,7 +339,7 @@ router.post('/verify-otp', async (req, res: Response) => {
         lockedUntil: null,
       });
     } else if (purpose === 'google_auth') {
-      const { name, googleId, avatarUrl } = verification.userData || {};
+      const { name, googleId, avatarUrl } = storedUserData;
       user = await db.findUserByEmail(cleanEmail);
 
       if (!user) {
@@ -358,9 +374,13 @@ router.post('/verify-otp', async (req, res: Response) => {
       }
     }
 
+    if (!user) {
+      return res.status(404).json({ error: 'User account could not be loaded.' });
+    }
+
     // Enforce exclusive administrator privileges
     const isSoleAdmin = cleanEmail === adminEmail;
-    if (user && user.isAdmin !== isSoleAdmin) {
+    if (user.isAdmin !== isSoleAdmin) {
       await db.updateUser(cleanEmail, { isAdmin: isSoleAdmin });
       user.isAdmin = isSoleAdmin;
     }
@@ -373,9 +393,9 @@ router.post('/verify-otp', async (req, res: Response) => {
       token,
       user: sanitizeUser(user),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Auth] verify-otp error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error during verification.' });
+    return res.status(500).json({ error: getErrorMessage(error, 'Internal server error during verification.') });
   }
 });
 
@@ -395,8 +415,8 @@ router.post('/resend-otp', async (req, res: Response) => {
       message: 'A fresh verification code has been dispatched to your email.',
       expiresAt: otpData.expiresAt,
     });
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message || 'Failed to resend verification code.' });
+  } catch (error: unknown) {
+    return res.status(400).json({ error: getErrorMessage(error, 'Failed to resend verification code.') });
   }
 });
 
@@ -416,7 +436,7 @@ router.post('/forgot-password/request-otp', async (req, res: Response) => {
       return res.status(404).json({ error: 'No account registered with this email address.' });
     }
 
-    const otpData = await otpService.createAndSendOtp(cleanEmail, 'forgot_password', null, user.name);
+    const otpData = await otpService.createAndSendOtp(cleanEmail, 'forgot_password', undefined, user.name);
 
     return res.json({
       success: true,
@@ -424,9 +444,9 @@ router.post('/forgot-password/request-otp', async (req, res: Response) => {
       email: cleanEmail,
       expiresAt: otpData.expiresAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Auth] forgot-password/request-otp error:', error);
-    return res.status(400).json({ error: error.message || 'Failed to send password reset code.' });
+    return res.status(400).json({ error: getErrorMessage(error, 'Failed to send password reset code.') });
   }
 });
 
@@ -480,9 +500,9 @@ router.post('/forgot-password/reset', async (req, res: Response) => {
       success: true,
       message: 'Password reset successfully! You can now log in with your new password.',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Auth] forgot-password/reset error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to reset password.' });
+    return res.status(500).json({ error: getErrorMessage(error, 'Failed to reset password.') });
   }
 });
 
@@ -518,7 +538,7 @@ router.post('/change-password', authenticateToken, async (req: AuthenticatedRequ
     await db.updateUser(userEmail, { passwordHash: newHash });
 
     return res.json({ success: true, message: 'Password updated successfully.' });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Auth] Change password error:', err);
     return res.status(500).json({ error: 'Failed to update password.' });
   }

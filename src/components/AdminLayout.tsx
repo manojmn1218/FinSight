@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, CreditCard, Settings, Timer, Database, ArrowLeft, Menu, X, Scale } from 'lucide-react';
+import { ShieldAlert, LayoutDashboard, Users, CreditCard, Settings, Timer, Database, ArrowLeft, Menu, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 const NAV_ITEMS = [
@@ -17,7 +17,8 @@ export default function AdminLayout() {
   const loc = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const logout = () => { logoutUser(); nav('/login'); };
+  void logoutUser;
+  void nav;
 
   const sessionHours = Math.floor(sessionTimeLeft / 3600000);
   const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);

@@ -9,6 +9,28 @@ export interface RazorpaySuccessResponse {
   razorpay_signature: string;
 }
 
+export interface RazorpayFailureError {
+  code?: string;
+  description?: string;
+  source?: string;
+  step?: string;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (event: string, handler: (res: { error?: RazorpayFailureError }) => void) => void;
+}
+
+type RazorpayConstructor = new (options: Record<string, unknown>) => RazorpayInstance;
+
+declare global {
+  interface Window {
+    Razorpay?: RazorpayConstructor;
+  }
+}
+
 export interface RazorpayCheckoutOptions {
   keyId: string;
   orderId: string;
@@ -24,7 +46,7 @@ export interface RazorpayCheckoutOptions {
   themeColor?: string;
   onSuccess: (response: RazorpaySuccessResponse) => void;
   onDismiss?: () => void;
-  onError?: (error: any) => void;
+  onError?: (error: RazorpayFailureError) => void;
 }
 
 /**
@@ -33,7 +55,7 @@ export interface RazorpayCheckoutOptions {
 export function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined') return resolve(false);
-    if ((window as any).Razorpay) return resolve(true);
+    if (window.Razorpay) return resolve(true);
 
     // Check if script element is already added
     const existing = document.querySelector('script[src*="checkout.razorpay.com"]');
@@ -60,7 +82,7 @@ export function loadRazorpayScript(): Promise<boolean> {
  */
 export async function launchRazorpayCheckout(options: RazorpayCheckoutOptions): Promise<void> {
   const loaded = await loadRazorpayScript();
-  if (!loaded || !(window as any).Razorpay) {
+  if (!loaded || !window.Razorpay) {
     throw new Error('Razorpay SDK could not be loaded. Please ensure you are online and try again.');
   }
 
@@ -100,11 +122,11 @@ export async function launchRazorpayCheckout(options: RazorpayCheckoutOptions): 
     },
   };
 
-  const instance = new (window as any).Razorpay(rzpOptions);
+  const instance = new window.Razorpay(rzpOptions);
 
   if (options.onError) {
-    instance.on('payment.failed', function (res: any) {
-      options.onError?.(res.error || res);
+    instance.on('payment.failed', function (res) {
+      options.onError?.(res.error ?? {});
     });
   }
 

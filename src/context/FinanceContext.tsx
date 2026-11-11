@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { Transaction, FinancialGoal } from '../utils/types';
 import { api, type UserProfile, type DatabaseStatus } from '../services/api';
-import { formatCurrency, type FormatOptions } from '../utils/format';
+import { formatCurrency, getErrorMessage, type FormatOptions } from '../utils/format';
 
 interface ExpenseItem {
   name: string;
@@ -273,7 +273,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [checkDatabaseStatus]);
 
-  const establishSession = useCallback(async (user: any) => {
+  const establishSession = useCallback(async (user: UserProfile) => {
     const [txnsRes, goalsRes] = await Promise.all([
       api.getTransactions().catch(() => ({ transactions: [] })),
       api.getGoals().catch(() => ({ goals: [] })),
@@ -323,12 +323,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       api.setToken(null);
       setCurrentUserEmail(null);
       setSessionStart(null);
       localStorage.removeItem('fs_session_start');
-      return { success: false, error: error.message || 'Login failed.' };
+      return { success: false, error: getErrorMessage(error, 'Login failed.') };
     }
   }, [establishSession]);
 
@@ -354,8 +354,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Google sign-in failed.' };
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Google sign-in failed.') };
     }
   }, [establishSession]);
 
@@ -380,8 +380,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Registration failed.' };
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Registration failed.') };
     }
   }, [establishSession]);
 
@@ -396,8 +396,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
       const finData = await establishSession(res.user);
       return { success: true, isAdmin: finData.isAdmin };
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Verification failed.' };
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Verification failed.') };
     }
   }, [establishSession]);
 
@@ -406,8 +406,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const cleanEmail = email.trim().toLowerCase();
       const res = await api.resendOtp(cleanEmail, purpose);
       return { success: true, message: res.message, otpPreview: res.otpPreview };
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Failed to resend code.' };
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Failed to resend code.') };
     }
   }, []);
 
@@ -416,8 +416,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const cleanEmail = email.trim().toLowerCase();
       const res = await api.requestForgotPasswordOtp(cleanEmail);
       return { success: true, message: res.message, otpPreview: res.otpPreview };
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Failed to send reset code.' };
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Failed to send reset code.') };
     }
   }, []);
 
@@ -426,8 +426,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const cleanEmail = email.trim().toLowerCase();
       const res = await api.resetPassword(cleanEmail, otp, newPassword);
       return { success: true, message: res.message };
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Failed to reset password.' };
+    } catch (error: unknown) {
+      return { success: false, error: getErrorMessage(error, 'Failed to reset password.') };
     }
   }, []);
 
@@ -450,7 +450,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       if (d.monthlyIncome !== undefined) payload.monthlyIncome = d.monthlyIncome;
       if (d.totalBalance !== undefined) payload.totalBalance = d.totalBalance;
       if (d.savingsPercent !== undefined) payload.savingsPercent = d.savingsPercent;
-      if (d.currentPlan !== undefined) payload.currentPlan = d.currentPlan as any;
+      if (d.currentPlan !== undefined) payload.currentPlan = d.currentPlan as UserProfile['currentPlan'];
       if (d.isOnboarded !== undefined) payload.isOnboarded = d.isOnboarded;
       if (d.expenses !== undefined) payload.expenses = d.expenses;
       if (d.statementUploaded !== undefined) payload.statementUploaded = d.statementUploaded;
@@ -495,9 +495,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       }));
       await refreshUserData();
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[FinanceContext] Failed to clear all data:', err);
-      return { success: false, error: err?.message || 'Failed to clear all data.' };
+      return { success: false, error: getErrorMessage(err, 'Failed to clear all data.') };
     }
   }, [refreshUserData]);
 

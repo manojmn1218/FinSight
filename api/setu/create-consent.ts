@@ -3,7 +3,7 @@
 // POST /api/setu/create-consent
 // ═══════════════════════════════════════════════
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_types';
 
 const SETU_BASE_URL = process.env.SETU_BASE_URL || 'https://aa-sandbox.setu.co';
 const SETU_CLIENT_ID = process.env.SETU_CLIENT_ID;

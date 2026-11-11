@@ -129,7 +129,7 @@ def parse_statement_file(file_bytes: bytes, filename: str) -> Dict[str, Any]:
             col_debit = c
         elif not col_credit and any(k in c for k in ["credit", "deposit", "cr", "paidin", "income"]):
             col_credit = c
-        elif not col_amount and any(k in c for k in ["amount", "txn衝", "sum", "total"]):
+        elif not col_amount and any(k in c for k in ["amount", "txnamt", "amt", "sum", "total"]):
             col_amount = c
         elif not col_balance and any(k in c for k in ["balance", "bal", "runningbal", "net"]):
             col_balance = c

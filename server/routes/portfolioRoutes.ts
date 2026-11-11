@@ -10,7 +10,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     const userEmail = req.user!.email;
     const assets = await db.getPortfolio(userEmail);
     return res.json({ assets });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Portfolio] Fetch error:', error);
     return res.status(500).json({ error: 'Failed to fetch portfolio.' });
   }
@@ -28,7 +28,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
 
     const saved = await db.savePortfolio(userEmail, assets);
     return res.json({ message: 'Portfolio saved successfully', assets: saved });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Portfolio] Save error:', error);
     return res.status(500).json({ error: 'Failed to save portfolio.' });
   }

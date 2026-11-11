@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Crown, Plus, Trash2, Calendar, UserCheck, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Sparkles, Info, RefreshCw, Loader2 } from 'lucide-react';
+import { Crown, Plus, Trash2, Calendar, UserCheck, Wallet, LineChart, Briefcase, X, Brain, TrendingUp, BarChart3, Zap, Shield, ArrowUpRight, Info, RefreshCw, Loader2 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
@@ -154,7 +154,7 @@ export default function PortfolioPage() {
         setManualAssets(res.assets.map(a => ({
           id: a.id || a.symbol,
           name: a.name || a.symbol,
-          category: (a.assetType === 'crypto' ? 'Crypto' : a.assetType === 'mutual_fund' ? 'Mutual Funds' : 'Equity') as any,
+          category: (a.assetType === 'crypto' ? 'Crypto' : a.assetType === 'mutual_fund' ? 'Mutual Funds' : 'Equity') as Asset['category'],
           value: (a.shares || 1) * (a.avgBuyPrice || 0),
         })));
       }
@@ -178,7 +178,7 @@ export default function PortfolioPage() {
       name: a.name,
       shares: 1,
       avgBuyPrice: a.value,
-      assetType: (a.category === 'Crypto' ? 'crypto' : a.category === 'Mutual Funds' ? 'mutual_fund' : 'stock') as any,
+      assetType: (a.category === 'Crypto' ? 'crypto' : a.category === 'Mutual Funds' ? 'mutual_fund' : 'stock') as 'stock' | 'crypto' | 'etf' | 'mutual_fund',
     }));
     api.savePortfolio(mapped).catch(err => {
       console.error('[Portfolio] Save failed:', err);
@@ -541,8 +541,8 @@ export default function PortfolioPage() {
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             <LineChart size={18} color="var(--purple)" /> Net Worth growth (statement balance)
           </h3>
-          <div style={{ height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div style={{ width: '100%', height: 260, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={260} minWidth={0}>
               <AreaChart data={netWorthTimeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
@@ -565,8 +565,8 @@ export default function PortfolioPage() {
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Asset Allocation</h3>
           {categoryTotals.length > 0 ? (
             <>
-              <div style={{ flex: 1, minHeight: 160 }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <div style={{ width: '100%', height: 160, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={160} minWidth={0}>
                   <PieChart>
                     <Pie data={categoryTotals} dataKey="value" innerRadius={42} outerRadius={68} paddingAngle={4} strokeWidth={0}>
                       {categoryTotals.map(c => <Cell key={c.name} fill={c.color} />)}

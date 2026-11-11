@@ -6,6 +6,8 @@ import { GoalModel } from '../models/Goal';
 import { AssetModel } from '../models/Asset';
 import { localDb } from '../storage/localDb';
 import { authenticateToken, requireAdmin, type AuthenticatedRequest } from '../middleware/auth';
+import { getParamString } from '../utils/helpers';
+import type { UserDocument } from '../types';
 
 const router = Router();
 
@@ -37,7 +39,7 @@ router.get('/users', async (_req: AuthenticatedRequest, res: Response) => {
       updatedAt: u.updatedAt,
     }));
     return res.json({ users: sanitized });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin] Fetch users error:', error);
     return res.status(500).json({ error: 'Failed to fetch users.' });
   }
@@ -62,7 +64,7 @@ router.get('/stats', async (_req: AuthenticatedRequest, res: Response) => {
         database: db.getStatus(),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin] Stats error:', error);
     return res.status(500).json({ error: 'Failed to fetch stats.' });
   }
@@ -71,11 +73,11 @@ router.get('/stats', async (_req: AuthenticatedRequest, res: Response) => {
 // PUT /api/admin/users/:email
 router.put('/users/:email', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const targetEmail = req.params.email.trim().toLowerCase();
+    const targetEmail = getParamString(req.params.email).trim().toLowerCase();
     const adminEmail = (process.env.ADMIN_EMAIL || 'finsight27@gmail.com').trim().toLowerCase();
     const { currentPlan, isAdmin, unlock } = req.body;
 
-    const updates: Record<string, any> = {};
+    const updates: Partial<UserDocument> = {};
     if (currentPlan) updates.currentPlan = currentPlan;
     if (typeof isAdmin === 'boolean') {
       if (isAdmin && targetEmail !== adminEmail) {
@@ -97,7 +99,7 @@ router.put('/users/:email', async (req: AuthenticatedRequest, res: Response) => 
     }
 
     return res.json({ message: 'User updated successfully', user: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin] Update user error:', error);
     return res.status(500).json({ error: 'Failed to update user.' });
   }
@@ -136,7 +138,7 @@ router.get('/database/overview', async (_req: AuthenticatedRequest, res: Respons
       status: db.getStatus(),
       collections,
     });
-  } catch (error: any) {
+  } catch {
     return res.status(500).json({ error: 'Failed to fetch database overview' });
   }
 });
@@ -144,21 +146,22 @@ router.get('/database/overview', async (_req: AuthenticatedRequest, res: Respons
 // GET /api/admin/database/collection/:name
 router.get('/database/collection/:name', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const name = req.params.name.toLowerCase();
+    const name = getParamString(req.params.name).toLowerCase();
     const isMongo = db.isMongoActive();
-    let documents: any[] = [];
+    let documents: unknown[] = [];
 
     if (isMongo) {
+      let rows: Array<{ toJSON?: () => unknown }> = [];
       if (name === 'users') {
-        documents = await UserModel.find().sort({ createdAt: -1 }).limit(100);
+        rows = await UserModel.find().sort({ createdAt: -1 }).limit(100);
       } else if (name === 'transactions') {
-        documents = await TransactionModel.find().sort({ date: -1 }).limit(100);
+        rows = await TransactionModel.find().sort({ date: -1 }).limit(100);
       } else if (name === 'goals') {
-        documents = await GoalModel.find().sort({ createdAt: -1 }).limit(100);
+        rows = await GoalModel.find().sort({ createdAt: -1 }).limit(100);
       } else if (name === 'assets') {
-        documents = await AssetModel.find().sort({ symbol: 1 }).limit(100);
+        rows = await AssetModel.find().sort({ symbol: 1 }).limit(100);
       }
-      documents = documents.map(d => (d.toJSON ? d.toJSON() : d));
+      documents = rows.map(d => (d.toJSON ? d.toJSON() : d));
     } else {
       const state = localDb.getState();
       if (name === 'users') {
@@ -173,7 +176,7 @@ router.get('/database/collection/:name', async (req: AuthenticatedRequest, res: 
     }
 
     return res.json({ collection: name, count: documents.length, documents });
-  } catch (error: any) {
+  } catch {
     return res.status(500).json({ error: 'Failed to fetch collection data' });
   }
 });

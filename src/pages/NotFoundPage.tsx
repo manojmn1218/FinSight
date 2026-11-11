@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Compass, ArrowLeft, Home, HelpCircle } from 'lucide-react';
+import { Home, HelpCircle } from 'lucide-react';
 import FinSightLogo from '../components/FinSightLogo';
 
 export default function NotFoundPage() {

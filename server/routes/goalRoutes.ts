@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { db } from '../config/db';
 import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
+import { getParamString } from '../utils/helpers';
 
 const router = Router();
 
@@ -10,7 +11,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     const userEmail = req.user!.email;
     const goals = await db.getGoals(userEmail);
     return res.json({ goals });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Goals] Fetch error:', error);
     return res.status(500).json({ error: 'Failed to fetch goals.' });
   }
@@ -35,7 +36,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
     });
 
     return res.status(201).json({ message: 'Goal created successfully', goal: created });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Goals] Create error:', error);
     return res.status(500).json({ error: 'Failed to create goal.' });
   }
@@ -45,7 +46,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res: Respo
 router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
-    const goalId = req.params.id;
+    const goalId = getParamString(req.params.id);
     const updates = req.body;
 
     const updated = await db.updateGoal(userEmail, goalId, updates);
@@ -54,7 +55,7 @@ router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Res
     }
 
     return res.json({ message: 'Goal updated successfully', goal: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Goals] Update error:', error);
     return res.status(500).json({ error: 'Failed to update goal.' });
   }
@@ -64,7 +65,7 @@ router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Res
 router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
-    const goalId = req.params.id;
+    const goalId = getParamString(req.params.id);
 
     const success = await db.deleteGoal(userEmail, goalId);
     if (!success) {
@@ -72,7 +73,7 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     }
 
     return res.json({ message: 'Goal deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Goals] Delete error:', error);
     return res.status(500).json({ error: 'Failed to delete goal.' });
   }

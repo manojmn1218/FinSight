@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, LogOut, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Scale, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, FileText, Lightbulb, Crown, HelpCircle, User, Timer, Upload, BarChart3, Target, Download, Menu, X, FileSpreadsheet, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { detectRecurringGrouped } from '../utils/transactionParser';
@@ -39,7 +39,8 @@ export default function DashboardLayout() {
     return groups.filter(g => g.isHighCost).length;
   }, [data.transactions]);
 
-  const logout = () => { logoutUser(); nav('/login'); };
+  void logoutUser;
+  void nav;
 
   const sessionHours = Math.floor(sessionTimeLeft / 3600000);
   const sessionMins = Math.floor((sessionTimeLeft % 3600000) / 60000);

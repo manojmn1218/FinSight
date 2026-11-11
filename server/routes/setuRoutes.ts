@@ -76,7 +76,7 @@ router.post('/create-consent', async (req: Request, res: Response) => {
       url: data.url,
       status: data.status || 'PENDING',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Setu] Consent creation exception:', err);
     return res.status(500).json({ error: 'Failed to create consent request.' });
   }
@@ -113,7 +113,7 @@ router.get('/consent-status', async (req: Request, res: Response) => {
       consentId: data.id || consentId,
       status: data.status || 'PENDING',
     });
-  } catch (err: any) {
+  } catch {
     return res.status(500).json({ error: 'Failed to check consent status.' });
   }
 });
@@ -190,7 +190,7 @@ router.post('/fetch-data', async (req: Request, res: Response) => {
       status: fiData.status || 'COMPLETED',
       data: fiData.Payload || fiData.payload || fiData,
     });
-  } catch (err: any) {
+  } catch {
     return res.status(500).json({ error: 'Failed to fetch financial data.' });
   }
 });

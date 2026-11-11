@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Lock, ExternalLink, X } from 'lucide-react';
+import { ShieldCheck, ExternalLink, X } from 'lucide-react';
 
 export default function PrivacyConsentBanner() {
   const [visible, setVisible] = useState(false);

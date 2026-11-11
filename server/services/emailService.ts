@@ -1,5 +1,6 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { twilioService } from './twilioService';
+import { getErrorMessage } from '../utils/helpers';
 
 interface SendOtpOptions {
   to: string;
@@ -8,9 +9,9 @@ interface SendOtpOptions {
   name?: string;
 }
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: Transporter | null = null;
 
-function getTransporter(): nodemailer.Transporter | null {
+function getTransporter(): Transporter | null {
   if (transporter) return transporter;
 
   const host = process.env.SMTP_HOST;
@@ -28,8 +29,8 @@ function getTransporter(): nodemailer.Transporter | null {
       });
       console.log(`📧 [EmailService] SMTP Transporter configured (${host}:${port})`);
       return transporter;
-    } catch (e: any) {
-      console.warn('⚠️ [EmailService] Failed to initialize SMTP:', e.message);
+    } catch (e: unknown) {
+      console.warn('⚠️ [EmailService] Failed to initialize SMTP:', getErrorMessage(e));
     }
   }
 
@@ -45,8 +46,8 @@ function getTransporter(): nodemailer.Transporter | null {
       });
       console.log('📧 [EmailService] Gmail Transporter configured');
       return transporter;
-    } catch (e: any) {
-      console.warn('⚠️ [EmailService] Failed to initialize Gmail transport:', e.message);
+    } catch (e: unknown) {
+      console.warn('⚠️ [EmailService] Failed to initialize Gmail transport:', getErrorMessage(e));
     }
   }
 
@@ -156,8 +157,8 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
       });
       console.log(`✅ [EmailService] OTP email successfully sent to ${to}`);
       return { sent: true, channel: 'email' };
-    } catch (err: any) {
-      console.warn(`⚠️ [EmailService] Failed sending OTP email to ${to}:`, err.message);
+    } catch (err: unknown) {
+      console.warn(`⚠️ [EmailService] Failed sending OTP email to ${to}:`, getErrorMessage(err));
       return { sent: false, channel: 'console' };
     }
   }

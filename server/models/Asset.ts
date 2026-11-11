@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { PortfolioAssetDocument } from '../types';
+import { mongooseJsonTransform } from '../utils/helpers';
 
 export interface IAsset extends Omit<PortfolioAssetDocument, 'id'>, Document {
   id: string;
@@ -22,12 +23,7 @@ const AssetSchema = new Schema<IAsset>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (_doc, ret: Record<string, any>) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
+      transform: mongooseJsonTransform,
     },
   }
 );

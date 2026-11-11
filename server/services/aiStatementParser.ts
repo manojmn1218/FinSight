@@ -222,7 +222,7 @@ function matchHeuristicCategory(text: string): { category: FinCategory; confiden
  */
 export function extractClosingBalance(
   lines: string[],
-  transactions?: Array<{ date: string; balance?: number }>
+  transactions?: Array<{ date: string; balance?: number; rawDescription?: string; description?: string }>
 ): number | undefined {
   // 1. Look for explicit closing balance keywords in statement text
   const balancePatterns = [
@@ -271,7 +271,7 @@ export function extractClosingBalance(
     // 2b. If balance field was omitted, inspect rawDescription of newest transactions
     const sortedDesc = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
     for (const t of sortedDesc) {
-      const raw = (t as any).rawDescription || (t as any).description || '';
+      const raw = t.rawDescription || t.description || '';
       const m = raw.match(/[\d,]+\.\d{2}/g);
       if (m && m.length >= 2) {
         const val = parseFloat(m[m.length - 1].replace(/,/g, ''));
@@ -549,8 +549,8 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
     const fallbackTxns = parseFallbackTransactions(lines);
     const fallbackClosingBal = extractClosingBalance(lines, fallbackTxns);
     return buildParseResult('heuristic_fallback', 'smart-nlp-engine', fallbackTxns, undefined, undefined, fallbackClosingBal);
-  } catch (geminiError: any) {
-    console.error('[AI Statement Parser] Gemini API call error:', geminiError?.message || geminiError);
+  } catch (geminiError: unknown) {
+    console.error('[AI Statement Parser] Gemini API call error:', geminiError instanceof Error ? geminiError.message : geminiError);
     console.log('[AI Statement Parser] Engaging resilient Smart Fallback Engine...');
     const fallbackTxns = parseFallbackTransactions(lines);
     const fallbackClosingBal = extractClosingBalance(lines, fallbackTxns);
@@ -704,8 +704,8 @@ HEURISTIC FOR TRANSACTIONS WITH BARE OR MISSING MERCHANT TEXT (e.g. "UPI", "UPI 
           items: results,
         };
       }
-    } catch (err: any) {
-      console.error('[AI Reclassify] Gemini call error:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('[AI Reclassify] Gemini call error:', err instanceof Error ? err.message : err);
     }
   }
 

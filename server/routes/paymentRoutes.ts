@@ -143,10 +143,10 @@ router.post('/create-order', async (req: Request, res: Response): Promise<void> 
       billingCycle: cycle,
       amountInRupees: amountInPaise / 100,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Razorpay Order Creation Error]:', err);
     res.status(500).json({
-      error: err.message || 'Failed to initialize payment order with Razorpay.',
+      error: err instanceof Error ? err.message : 'Failed to initialize payment order with Razorpay.',
     });
   }
 });
@@ -232,10 +232,10 @@ router.post('/verify-payment', async (req: Request, res: Response): Promise<void
       payment: paymentRecord,
       user: updatedUser,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Razorpay Payment Verification Error]:', err);
     res.status(500).json({
-      error: err.message || 'Payment signature verification encountered an internal error.',
+      error: err instanceof Error ? err.message : 'Payment signature verification encountered an internal error.',
     });
   }
 });
@@ -249,7 +249,7 @@ router.get('/history', async (req: Request, res: Response): Promise<void> => {
     const userEmail = await resolveUserEmail(req);
     const history = await db.getPayments(userEmail);
     res.json({ payments: history });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Razorpay History Fetch Error]:', err);
     res.status(500).json({ error: 'Failed to retrieve payment history.' });
   }

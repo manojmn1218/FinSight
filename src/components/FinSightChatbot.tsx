@@ -17,7 +17,7 @@ const SUGGESTED_PROMPTS = [
   'What is my current balance?',
   'How do I upload a statement?',
   'What are my savings goals?',
-  'What features are in Enterprise?',
+  'What features are in Wealth?',
   'How is my budget health calculated?',
 ];
 

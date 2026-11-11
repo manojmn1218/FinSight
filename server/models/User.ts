@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { UserDocument } from '../types';
+import { mongooseJsonTransform } from '../utils/helpers';
 
 export interface IUser extends Omit<UserDocument, 'id'>, Document {
   id: string;
@@ -67,21 +68,11 @@ const UserSchema = new Schema<IUser>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (_doc, ret: Record<string, any>) => {
-        ret.id = ret._id ? ret._id.toString() : ret.id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
+      transform: mongooseJsonTransform,
     },
     toObject: {
       virtuals: true,
-      transform: (_doc, ret: Record<string, any>) => {
-        ret.id = ret._id ? ret._id.toString() : ret.id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
+      transform: mongooseJsonTransform,
     },
   }
 );

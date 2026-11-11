@@ -10,7 +10,9 @@ interface CollectionStat {
 export default function AdminDatabasePage() {
   const [overview, setOverview] = useState<{ status: DatabaseStatus; collections: CollectionStat[] } | null>(null);
   const [selectedCol, setSelectedCol] = useState<string>('users');
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<Array<Record<string, unknown>>>([]);
+  const getDocId = (doc: Record<string, unknown>, index: number): string =>
+    String(doc.id ?? doc._id ?? `doc_${index}`);
   const [loading, setLoading] = useState<boolean>(true);
   const [docsLoading, setDocsLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
@@ -261,8 +263,8 @@ export default function AdminDatabasePage() {
               </thead>
               <tbody>
                 {filteredDocs.map((doc, i) => {
-                  const docId = doc.id || doc._id || `doc_${i}`;
-                  const primaryText = doc.email || doc.description || doc.name || doc.symbol || 'Document';
+                  const docId = getDocId(doc, i);
+                  const primaryText = String(doc.email ?? doc.description ?? doc.name ?? doc.symbol ?? 'Document');
                   const summaryFields = Object.entries(doc)
                     .filter(([k]) => !['id', '_id', '__v', 'passwordHash'].includes(k))
                     .slice(0, 4);
@@ -313,7 +315,7 @@ export default function AdminDatabasePage() {
         ) : (
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
             {filteredDocs.map((doc, i) => {
-              const docId = doc.id || doc._id || `doc_${i}`;
+              const docId = getDocId(doc, i);
               return (
                 <div
                   key={docId}

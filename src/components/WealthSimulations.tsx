@@ -1,27 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   TrendingUp,
-  ShieldAlert,
-  Sparkles,
   BarChart3,
   Calendar,
-  DollarSign,
-  Zap,
-  Info,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  ArrowRight,
   Target,
-  Clock,
-  Layers,
   Cpu
 } from 'lucide-react';
 import {
   AreaChart,
   Area,
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -60,7 +47,8 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
   }, []);
 
   // ─── Monte Carlo State ───
-  const [mcInitial, setMcInitial] = useState(() => (initialNetWorth && initialNetWorth > 0 ? Math.round(initialNetWorth) : 250000));
+  const defaultMcInitial = initialNetWorth && initialNetWorth > 0 ? Math.round(initialNetWorth) : 250000;
+  const [mcInitial, setMcInitial] = useState(defaultMcInitial);
   const [mcMonthly, setMcMonthly] = useState(20000);
   const [mcYears, setMcYears] = useState(15);
   const [mcReturn, setMcReturn] = useState(12);
@@ -70,73 +58,121 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
   const [mcData, setMcData] = useState<MonteCarloResponse | null>(null);
   const [mcError, setMcError] = useState<string | null>(null);
 
-  const runMonteCarlo = async () => {
+  const executeMonteCarlo = useCallback(async (params: {
+    initialInvestment: number;
+    monthlyContribution: number;
+    timeHorizonYears: number;
+    expectedAnnualReturn: number;
+    annualVolatility: number;
+    numSimulations: number;
+    targetGoal: number;
+  }) => {
     setMcLoading(true);
     setMcError(null);
     try {
-      const res = await api.runMonteCarloSimulation({
-        initialInvestment: Number(mcInitial),
-        monthlyContribution: Number(mcMonthly),
-        timeHorizonYears: Number(mcYears),
-        expectedAnnualReturn: Number(mcReturn) / 100,
-        annualVolatility: Number(mcVol) / 100,
-        numSimulations: 500,
-        targetGoal: Number(mcGoal),
-      });
+      const res = await api.runMonteCarloSimulation(params);
       setMcData(res);
-    } catch (err: any) {
-      setMcError(err.message || 'Simulation failed to compute.');
+    } catch (err: unknown) {
+      setMcError(err instanceof Error ? err.message : 'Simulation failed to compute.');
     } finally {
       setMcLoading(false);
     }
-  };
+  }, []);
+
+  const runMonteCarlo = () =>
+    executeMonteCarlo({
+      initialInvestment: Number(mcInitial),
+      monthlyContribution: Number(mcMonthly),
+      timeHorizonYears: Number(mcYears),
+      expectedAnnualReturn: Number(mcReturn) / 100,
+      annualVolatility: Number(mcVol) / 100,
+      numSimulations: 500,
+      targetGoal: Number(mcGoal),
+    });
+
+  const initialMcRef = useRef({
+    initialInvestment: Number(defaultMcInitial),
+    monthlyContribution: 20000,
+    timeHorizonYears: 15,
+    expectedAnnualReturn: 0.12,
+    annualVolatility: 0.16,
+    numSimulations: 500,
+    targetGoal: 10000000,
+  });
 
   // Run initial simulation on load
   useEffect(() => {
-    runMonteCarlo();
-  }, []);
+    void executeMonteCarlo(initialMcRef.current);
+  }, [executeMonteCarlo]);
 
   // ─── Retirement State ───
   const [retCurAge, setRetCurAge] = useState(28);
   const [retAge, setRetAge] = useState(58);
-  const [retLifeExp, setRetLifeExp] = useState(85);
+  const retLifeExp = 85;
   const [retSavings, setRetSavings] = useState(500000);
   const [retMonthlySavings, setRetMonthlySavings] = useState(25000);
   const [retMonthlyExp, setRetMonthlyExp] = useState(40000);
   const [retInflation, setRetInflation] = useState(6);
-  const [retReturnPre, setRetReturnPre] = useState(11);
-  const [retReturnPost, setRetReturnPost] = useState(8);
+  const retReturnPre = 11;
+  const retReturnPost = 8;
   const [retLoading, setRetLoading] = useState(false);
   const [retData, setRetData] = useState<RetirementResponse | null>(null);
   const [retError, setRetError] = useState<string | null>(null);
 
-  const runRetirement = async () => {
+  const executeRetirement = useCallback(async (params: {
+    currentAge: number;
+    retirementAge: number;
+    lifeExpectancy: number;
+    currentSavings: number;
+    monthlySavings: number;
+    currentMonthlyExpenses: number;
+    preRetirementReturn: number;
+    postRetirementReturn: number;
+    inflationRate: number;
+    safeWithdrawalRate: number;
+  }) => {
     setRetLoading(true);
     setRetError(null);
     try {
-      const res = await api.calculateRetirementProjection({
-        currentAge: Number(retCurAge),
-        retirementAge: Number(retAge),
-        lifeExpectancy: Number(retLifeExp),
-        currentSavings: Number(retSavings),
-        monthlySavings: Number(retMonthlySavings),
-        currentMonthlyExpenses: Number(retMonthlyExp),
-        preRetirementReturn: Number(retReturnPre) / 100,
-        postRetirementReturn: Number(retReturnPost) / 100,
-        inflationRate: Number(retInflation) / 100,
-        safeWithdrawalRate: 0.04,
-      });
+      const res = await api.calculateRetirementProjection(params);
       setRetData(res);
-    } catch (err: any) {
-      setRetError(err.message || 'Retirement calculation failed.');
+    } catch (err: unknown) {
+      setRetError(err instanceof Error ? err.message : 'Retirement calculation failed.');
     } finally {
       setRetLoading(false);
     }
-  };
+  }, []);
+
+  const runRetirement = () =>
+    executeRetirement({
+      currentAge: Number(retCurAge),
+      retirementAge: Number(retAge),
+      lifeExpectancy: Number(retLifeExp),
+      currentSavings: Number(retSavings),
+      monthlySavings: Number(retMonthlySavings),
+      currentMonthlyExpenses: Number(retMonthlyExp),
+      preRetirementReturn: Number(retReturnPre) / 100,
+      postRetirementReturn: Number(retReturnPost) / 100,
+      inflationRate: Number(retInflation) / 100,
+      safeWithdrawalRate: 0.04,
+    });
+
+  const initialRetRef = useRef({
+    currentAge: 28,
+    retirementAge: 58,
+    lifeExpectancy: 85,
+    currentSavings: 500000,
+    monthlySavings: 25000,
+    currentMonthlyExpenses: 40000,
+    preRetirementReturn: 0.11,
+    postRetirementReturn: 0.08,
+    inflationRate: 0.06,
+    safeWithdrawalRate: 0.04,
+  });
 
   useEffect(() => {
-    runRetirement();
-  }, []);
+    void executeRetirement(initialRetRef.current);
+  }, [executeRetirement]);
 
   return (
     <div style={{ marginTop: 32 }}>
@@ -426,8 +462,8 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
                   </span>
                 </div>
 
-                <div style={{ width: '100%', height: 360 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <div style={{ width: '100%', height: 360, minWidth: 0 }}>
+                  <ResponsiveContainer width="100%" height={360} minWidth={0}>
                     <AreaChart data={mcData.trajectory} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="p90Grad" x1="0" y1="0" x2="0" y2="1">
@@ -459,7 +495,7 @@ export default function WealthSimulations({ initialNetWorth }: WealthSimulations
                           fontSize: 12,
                           color: 'var(--text)',
                         }}
-                        formatter={(val: any) => [fmt(Number(val)), '']}
+                        formatter={(val: unknown) => [fmt(Number(val ?? 0)), '']}
                         labelFormatter={label => `Year ${label}`}
                       />
                       <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />

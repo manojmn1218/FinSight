@@ -8,7 +8,7 @@ declare module 'razorpay' {
     amount: number;
     currency: string;
     receipt?: string;
-    notes?: Record<string, any>;
+    notes?: Record<string, string | number | boolean | null | undefined>;
     partial_payment?: boolean;
   }
 
@@ -22,7 +22,7 @@ declare module 'razorpay' {
     receipt: string;
     status: string;
     attempts: number;
-    notes: Record<string, any>;
+    notes: Record<string, string | number | boolean | null | undefined>;
     created_at: number;
   }
 
@@ -32,8 +32,8 @@ declare module 'razorpay' {
   }
 
   interface PaymentsAPI {
-    fetch(paymentId: string): Promise<any>;
-    capture(paymentId: string, amount: number, currency: string): Promise<any>;
+    fetch(paymentId: string): Promise<Record<string, unknown>>;
+    capture(paymentId: string, amount: number, currency: string): Promise<Record<string, unknown>>;
   }
 
   class Razorpay {

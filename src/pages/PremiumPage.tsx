@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Check, X, Crown, Sparkles, Zap, Shield, ShieldCheck, Star, ArrowRight, ChevronDown, CreditCard, BarChart3, Download, Bell, Lock, Cpu, Users, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Check, X, Crown, Zap, Shield, ShieldCheck, ArrowRight, ChevronDown, CreditCard, BarChart3, Download, Bell, Lock, Cpu, Smartphone, Building2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance } from '../context/FinanceContext';
 import { api } from '../services/api';
@@ -240,8 +240,8 @@ function CheckoutModal({
               setError(verifyRes.message || 'Payment signature verification failed.');
               setStep('failed');
             }
-          } catch (err: any) {
-            setError(err.message || 'Payment verification failed on server.');
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Payment verification failed on server.');
             setStep('failed');
           }
         },
@@ -253,9 +253,10 @@ function CheckoutModal({
           setError(err?.description || 'Payment was cancelled or declined.');
         },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsInitializing(false);
-      const msg = err.message || err.error || '';
+      const errObj = err && typeof err === 'object' ? (err as { message?: string; error?: string }) : {};
+      const msg = errObj.message || errObj.error || '';
       if (msg.includes('RAZORPAY_KEY') || !isConfigured) {
         setError(
           'Razorpay API keys not yet configured in your .env file. Please paste RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET directly into .env to process real transactions.'

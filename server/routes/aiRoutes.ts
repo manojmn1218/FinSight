@@ -2,6 +2,8 @@ import { Router, Response } from 'express';
 import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
 import { parseStatementWithAi, reclassifyTransactionsWithAi } from '../services/aiStatementParser';
 import { db } from '../config/db';
+import { getErrorMessage } from '../utils/helpers';
+import type { TransactionDocument } from '../types';
 
 const router = Router();
 
@@ -43,10 +45,11 @@ router.post('/configure-key', authenticateToken, async (req: AuthenticatedReques
         contents: 'Ping test',
         config: { maxOutputTokens: 5 },
       });
-    } catch (testErr: any) {
-      console.error('[AI Config] Gemini key validation failed:', testErr?.message || testErr);
+    } catch (testErr: unknown) {
+      const msg = getErrorMessage(testErr, 'Invalid API key or unauthorized');
+      console.error('[AI Config] Gemini key validation failed:', msg);
       return res.status(400).json({
-        error: `Gemini API key verification failed: ${testErr?.message || 'Invalid API key or unauthorized'}. Please verify your key at https://aistudio.google.com.`,
+        error: `Gemini API key verification failed: ${msg}. Please verify your key at https://aistudio.google.com.`,
       });
     }
 
@@ -77,9 +80,9 @@ router.post('/configure-key', authenticateToken, async (req: AuthenticatedReques
       activeProvider: 'gemini',
       model: 'gemini-3.5-flash-lite',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AI Config] Setup error:', error);
-    return res.status(500).json({ error: error?.message || 'Failed to configure Gemini API key.' });
+    return res.status(500).json({ error: getErrorMessage(error, 'Failed to configure Gemini API key.') });
   }
 });
 
@@ -108,10 +111,10 @@ router.post('/parse-statement', authenticateToken, async (req: AuthenticatedRequ
     const result = await parseStatementWithAi(lines);
 
     return res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AI Route] Statement parse error:', error);
     return res.status(500).json({
-      error: error?.message || 'Failed to parse statement with AI.',
+      error: getErrorMessage(error, 'Failed to parse statement with AI.'),
     });
   }
 });
@@ -126,7 +129,7 @@ router.post('/reclassify', authenticateToken, async (req: AuthenticatedRequest, 
       return res.status(400).json({ error: 'No transactions found to reclassify.' });
     }
 
-    const itemsToClassify = currentTxns.map((t: any) => ({
+    const itemsToClassify = currentTxns.map(t => ({
       id: t.id,
       date: t.date,
       amount: t.amount,
@@ -140,7 +143,7 @@ router.post('/reclassify', authenticateToken, async (req: AuthenticatedRequest, 
     // Apply updates in database
     let updatedCount = 0;
     for (const item of result.items) {
-      const updatePayload: Record<string, any> = {
+      const updatePayload: Partial<TransactionDocument> = {
         category: item.category,
         isRecurring: item.isRecurring,
       };
@@ -159,10 +162,10 @@ router.post('/reclassify', authenticateToken, async (req: AuthenticatedRequest, 
       model: result.model,
       transactions: refreshedTxns,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AI Reclassify Route] Error:', error);
     return res.status(500).json({
-      error: error?.message || 'Failed to reclassify transactions with AI.',
+      error: getErrorMessage(error, 'Failed to reclassify transactions with AI.'),
     });
   }
 });

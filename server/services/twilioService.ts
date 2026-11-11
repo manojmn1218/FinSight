@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import sgMail from '@sendgrid/mail';
+import { getErrorMessage } from '../utils/helpers';
 
 interface TwilioEmailOptions {
   to: string;
@@ -24,8 +25,8 @@ export class TwilioService {
         sgMail.setApiKey(sendGridKey);
         this.isSendGridConfigured = true;
         console.log('📡 [Twilio SendGrid] Email Service initialized.');
-      } catch (err: any) {
-        console.warn('⚠️ [Twilio SendGrid] Failed to initialize SendGrid:', err.message);
+      } catch (err: unknown) {
+        console.warn('⚠️ [Twilio SendGrid] Failed to initialize SendGrid:', getErrorMessage(err));
       }
     } else {
       console.log('ℹ️  [Twilio SendGrid] No TWILIO_SENDGRID_API_KEY found in .env.');
@@ -100,9 +101,14 @@ export class TwilioService {
 
         console.log(`✅ [Twilio SendGrid] Successfully delivered OTP email to ${to}`);
         return { sent: true, channel: 'twilio_sendgrid' };
-      } catch (err: any) {
-        console.error(`⚠️ [Twilio SendGrid] Delivery error to ${to}:`, err.response?.body || err.message);
-        return { sent: false, channel: 'failed', error: err.message };
+      } catch (err: unknown) {
+        const msg = getErrorMessage(err);
+        const respBody =
+          err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { body?: unknown } }).response?.body
+            : undefined;
+        console.error(`⚠️ [Twilio SendGrid] Delivery error to ${to}:`, respBody || msg);
+        return { sent: false, channel: 'failed', error: msg };
       }
     }
 

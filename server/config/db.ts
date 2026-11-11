@@ -6,6 +6,7 @@ import { AssetModel } from '../models/Asset';
 import { PaymentModel } from '../models/Payment';
 import { localDb } from '../storage/localDb';
 import type { UserDocument, TransactionDocument, GoalDocument, PortfolioAssetDocument, PaymentDocument } from '../types';
+import { getErrorMessage } from '../utils/helpers';
 
 let isMongoConnected = false;
 let mongoConnectionError: string | null = null;
@@ -80,9 +81,9 @@ export async function initDatabase(): Promise<void> {
       });
       console.log(`👑 [Database] Seeded exclusive administrator (${adminEmail}) into MongoDB`);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     isMongoConnected = false;
-    mongoConnectionError = error?.message || 'Connection failed';
+    mongoConnectionError = getErrorMessage(error, 'Connection failed');
     console.warn(`⚠️ [Database] MongoDB connection failed: ${mongoConnectionError}`);
     console.log('💾 [Database] Fallback active: Running with Local Persistent Database');
   }
@@ -175,7 +176,7 @@ export const db = {
     const cleanEmail = userEmail.trim().toLowerCase();
     if (isMongoConnected) {
       const existing = await TransactionModel.find({ userEmail: cleanEmail }).lean();
-      const existingSigs = new Set(existing.map((t: any) => `${t.date}_${t.amount}_${t.description.slice(0, 20)}`));
+      const existingSigs = new Set(existing.map(t => `${t.date}_${t.amount}_${t.description.slice(0, 20)}`));
 
       const toInsert = txns
         .filter(t => !existingSigs.has(`${t.date}_${t.amount}_${t.description.slice(0, 20)}`))
@@ -188,7 +189,7 @@ export const db = {
       if (toInsert.length === 0) return [];
 
       const inserted = await TransactionModel.insertMany(toInsert);
-      return inserted.map((doc: any) => (doc.toJSON ? doc.toJSON() : doc));
+      return inserted.map(doc => (doc.toJSON ? doc.toJSON() : doc) as TransactionDocument);
     }
     return localDb.addTransactions(cleanEmail, txns);
   },
@@ -313,7 +314,7 @@ export const db = {
           userEmail: cleanEmail,
         }));
         const inserted = await AssetModel.insertMany(toInsert);
-        return inserted.map((doc: any) => (doc.toJSON ? doc.toJSON() : doc));
+        return inserted.map(doc => (doc.toJSON ? doc.toJSON() : doc) as PortfolioAssetDocument);
       }
       return [];
     }

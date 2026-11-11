@@ -9,7 +9,7 @@ export interface UserProfile {
   monthlyIncome: number;
   totalBalance: number;
   savingsPercent: number;
-  currentPlan: 'Basic' | 'Pro' | 'Elite';
+  currentPlan: 'Basic' | 'Pro' | 'Wealth' | 'Elite';
   expenses: Array<{ name: string; amount: number; color: string }>;
   isOnboarded: boolean;
   isAdmin: boolean;
@@ -98,14 +98,16 @@ class ApiService {
         headers,
         credentials: 'include',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If server is still booting up (takes ~3s to connect to MongoDB), give it one retry
       if (retries > 0) {
         await new Promise(res => setTimeout(res, 1200));
         return this.request<T>(endpoint, options, retries - 1);
       }
 
-      const isNetworkErr = err.name === 'TypeError' || String(err.message || '').toLowerCase().includes('fetch');
+      const errName = err instanceof Error ? err.name : '';
+      const errMsg = err instanceof Error ? err.message : String(err || '');
+      const isNetworkErr = errName === 'TypeError' || errMsg.toLowerCase().includes('fetch');
       if (isNetworkErr) {
         throw new Error(
           'Cannot connect to FinSight backend server. Please make sure the server is running on http://127.0.0.1:5000 (run "npm run dev").',
@@ -355,12 +357,12 @@ class ApiService {
   }
 
   async getAdminStats() {
-    return this.request<{ stats: any }>('/api/admin/stats', {
+    return this.request<{ stats: Record<string, unknown> }>('/api/admin/stats', {
       method: 'GET',
     });
   }
 
-  async updateAdminUser(email: string, updates: Record<string, any>) {
+  async updateAdminUser(email: string, updates: Record<string, unknown>) {
     return this.request<{ message: string; user: UserProfile }>(`/api/admin/users/${encodeURIComponent(email)}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
@@ -381,7 +383,7 @@ class ApiService {
   }
 
   async getDatabaseCollection(name: string) {
-    return this.request<{ collection: string; count: number; documents: any[] }>(`/api/admin/database/collection/${name}`, {
+    return this.request<{ collection: string; count: number; documents: Array<Record<string, unknown>> }>(`/api/admin/database/collection/${name}`, {
       method: 'GET',
     });
   }
@@ -507,7 +509,7 @@ class ApiService {
       success: boolean;
       message: string;
       plan: string;
-      payment: any;
+      payment: Record<string, unknown>;
       user: UserProfile;
     }>('/api/payment/verify-payment', {
       method: 'POST',
@@ -516,7 +518,7 @@ class ApiService {
   }
 
   async getPaymentHistory() {
-    return this.request<{ payments: any[] }>('/api/payment/history', { method: 'GET' });
+    return this.request<{ payments: Array<Record<string, unknown>> }>('/api/payment/history', { method: 'GET' });
   }
 }
 

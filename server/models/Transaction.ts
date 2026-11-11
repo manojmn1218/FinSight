@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { TransactionDocument } from '../types';
+import { mongooseJsonTransform } from '../utils/helpers';
 
 export interface ITransaction extends Omit<TransactionDocument, 'id'>, Document {
   id: string;
@@ -21,12 +22,7 @@ const TransactionSchema = new Schema<ITransaction>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (_doc, ret: Record<string, any>) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
+      transform: mongooseJsonTransform,
     },
   }
 );

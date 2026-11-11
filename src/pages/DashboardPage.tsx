@@ -14,28 +14,6 @@ import Tilt3DCard from '../components/3d/Tilt3DCard';
 import HealthGauge3D from '../components/3d/HealthGauge3D';
 import { formatCurrency } from '../utils/format';
 
-// ─── Budget Health Score ───
-function HealthGauge({ score, label }: { score: number; label: string }) {
-  const r = 54;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (score / 100) * circ;
-  const color = score >= 75 ? '#34d399' : score >= 50 ? '#f0b429' : '#f87171';
-
-  return (
-    <div className="health-gauge" style={{ width: 140, height: 140 }}>
-      <svg className="health-gauge-ring" width="140" height="140">
-        <circle className="health-gauge-bg" cx="70" cy="70" r={r} />
-        <circle className="health-gauge-fill" cx="70" cy="70" r={r}
-          stroke={color} strokeDasharray={circ} strokeDashoffset={offset} />
-      </svg>
-      <div className="health-gauge-label">
-        <span style={{ fontSize: 28, fontWeight: 800, color }}>{score}</span>
-        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
-      </div>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const { data, setData, clearAllData } = useFinance();
   const fmt = (n: number) => formatCurrency(n, !!data.stealthMode);
@@ -68,8 +46,8 @@ export default function DashboardPage() {
       } else {
         setClearError(res.error || 'Failed to clear data');
       }
-    } catch (err: any) {
-      setClearError(err?.message || 'Failed to clear data');
+    } catch (err: unknown) {
+      setClearError(err instanceof Error ? err.message : 'Failed to clear data');
     } finally {
       setIsClearing(false);
     }
@@ -706,8 +684,8 @@ export default function DashboardPage() {
           {/* Monthly Bar Chart */}
           <motion.div className="panel" style={{ padding: 20 }} {...an(6)}>
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Monthly Trend</h3>
-            <div style={{ width: '100%', height: 280 }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <div style={{ width: '100%', height: 280, minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height={280} minWidth={0}>
                 <BarChart data={txnStats.monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text3)" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -725,8 +703,8 @@ export default function DashboardPage() {
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Expense Breakdown</h3>
             {txnStats.categoryBreakdown.length > 0 ? (
               <>
-                <div style={{ flex: 1, minHeight: 190 }}>
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <div style={{ width: '100%', height: 190, minWidth: 0 }}>
+                  <ResponsiveContainer width="100%" height={190} minWidth={0}>
                     <PieChart>
                       <Pie data={txnStats.categoryBreakdown} dataKey="value" innerRadius={48} outerRadius={76} paddingAngle={4} strokeWidth={0}>
                         {txnStats.categoryBreakdown.map(e => <Cell key={e.name} fill={e.color} />)}
@@ -767,8 +745,8 @@ export default function DashboardPage() {
         {txnStats.monthlyData.length > 1 && (
           <motion.div className="panel" style={{ padding: 20 }} {...an(8)}>
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Net Savings Trend</h3>
-            <div style={{ width: '100%', height: 200 }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <div style={{ width: '100%', height: 200, minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height={200} minWidth={0}>
                 <AreaChart data={txnStats.monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gNet" x1="0" y1="0" x2="0" y2="1">
@@ -1163,8 +1141,8 @@ export default function DashboardPage() {
       {pieData.length > 0 && (
         <motion.div className="panel" style={{ padding: 20 }} {...an(6)}>
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Expense Breakdown (Profile Data)</h3>
-          <div style={{ height: 200 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <div style={{ width: '100%', height: 200, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={200} minWidth={0}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" innerRadius={48} outerRadius={76} paddingAngle={4} strokeWidth={0}>
                   {pieData.map(e => <Cell key={e.name} fill={e.color} />)}

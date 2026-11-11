@@ -189,8 +189,8 @@ export default function ProfilePage() {
       } else {
         setPwdMsg({ text: res.message || 'Failed to change password.', isError: true });
       }
-    } catch (err: any) {
-      setPwdMsg({ text: err.message || 'Failed to change password.', isError: true });
+    } catch (err: unknown) {
+      setPwdMsg({ text: err instanceof Error ? err.message : 'Failed to change password.', isError: true });
     }
   };
 
@@ -416,7 +416,7 @@ export default function ProfilePage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`tab-btn${isActive ? ' active' : ''}`}
               style={tab.danger && isActive ? { borderColor: 'rgba(248, 113, 113, 0.4)', color: '#fca5a5' } : undefined}
             >
@@ -626,7 +626,7 @@ export default function ProfilePage() {
                 return (
                   <div
                     key={card.id}
-                    onClick={() => setRiskTolerance(card.id as any)}
+                    onClick={() => setRiskTolerance(card.id as 'conservative' | 'moderate' | 'aggressive')}
                     style={{
                       padding: 22,
                       borderRadius: 16,
@@ -930,7 +930,7 @@ export default function ProfilePage() {
                   <label className="label">Date Display Format</label>
                   <select
                     value={dateFormat}
-                    onChange={e => setDateFormat(e.target.value as any)}
+                    onChange={e => setDateFormat(e.target.value as 'DD/MM/YYYY' | 'MM/DD/YYYY')}
                     className="input"
                     style={{ cursor: 'pointer' }}
                   >
@@ -948,14 +948,14 @@ export default function ProfilePage() {
               </h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {[
+                {([
                   { key: 'emailDigest', label: 'Monthly Financial Digest', desc: 'Summary of income, savings rate, and category expenses.' },
                   { key: 'highExpenseAlert', label: 'High Transaction Alert', desc: 'Notify on single transactions exceeding ₹10,000.' },
                   { key: 'budgetWarning', label: 'Budget Threshold Alerts', desc: 'Warn when any category exceeds 80% and 100% of budget cap.' },
                   { key: 'goalMilestones', label: 'Goal Milestone Celebrations', desc: 'Notifications on achieving 25%, 50%, and 100% of financial goals.' },
                   { key: 'securityAlerts', label: 'Security & Sign-in Notices', desc: 'Alerts when account is accessed from new IP addresses.' },
-                ].map(item => {
-                  const checked = (notifications as any)[item.key] !== false;
+                ] as const).map(item => {
+                  const checked = notifications[item.key] !== false;
                   return (
                     <label key={item.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
                       <input
