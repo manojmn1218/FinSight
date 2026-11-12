@@ -18,8 +18,12 @@ export class TwilioService {
     this.init();
   }
 
+  private getApiKey(): string {
+    return (process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY || '').trim();
+  }
+
   private init() {
-    const sendGridKey = process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY;
+    const sendGridKey = this.getApiKey();
     if (sendGridKey) {
       try {
         sgMail.setApiKey(sendGridKey);
@@ -34,7 +38,8 @@ export class TwilioService {
   }
 
   public isAvailable(): boolean {
-    return Boolean(process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY);
+    this.isSendGridConfigured = Boolean(this.getApiKey());
+    return this.isSendGridConfigured;
   }
 
   /**
@@ -87,13 +92,13 @@ export class TwilioService {
       </div>
     `;
 
-    const sendGridKey = process.env.TWILIO_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY;
+    const sendGridKey = this.getApiKey();
     if (sendGridKey) {
       try {
         sgMail.setApiKey(sendGridKey);
         await sgMail.send({
           to,
-          from: fromAddress,
+          from: { email: fromAddress, name: 'FinSight Security' },
           subject: `[FinSight] ${code} is your ${purposeTitle}`,
           text: `${purposeTitle}\n\n${greeting}\n${purposeDescription}\n\nYour 6-digit OTP code is: ${code}\nThis code expires in 10 minutes.\n\nDo not share this code with anyone.`,
           html: htmlContent,
@@ -102,11 +107,12 @@ export class TwilioService {
         console.log(`✅ [Twilio SendGrid] Successfully delivered OTP email to ${to}`);
         return { sent: true, channel: 'twilio_sendgrid' };
       } catch (err: unknown) {
-        const msg = getErrorMessage(err);
         const respBody =
           err && typeof err === 'object' && 'response' in err
-            ? (err as { response?: { body?: unknown } }).response?.body
+            ? (err as { response?: { body?: { errors?: Array<{ message?: string }> } } }).response?.body
             : undefined;
+        const detailedMsg = respBody?.errors?.[0]?.message;
+        const msg = detailedMsg || getErrorMessage(err);
         console.error(`⚠️ [Twilio SendGrid] Delivery error to ${to}:`, respBody || msg);
         return { sent: false, channel: 'failed', error: msg };
       }

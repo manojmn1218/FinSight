@@ -68,11 +68,21 @@ const PURPOSE_DESCRIPTIONS: Record<string, string> = {
   forgot_password: 'We received a request to reset your FinSight account password.',
 };
 
-export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boolean; channel: 'twilio' | 'email' | 'console' }> {
+export async function sendOtpEmail(
+  options: SendOtpOptions
+): Promise<{ sent: boolean; channel: 'twilio' | 'email' | 'console' | 'failed'; error?: string }> {
   const { to, code, purpose, name } = options;
   const title = PURPOSE_TITLES[purpose] || 'Verification Code';
   const desc = PURPOSE_DESCRIPTIONS[purpose] || 'Please use this code to verify your action.';
   const greeting = name ? `Hello ${name},` : 'Hello,';
+
+  const hasTwilio = twilioService.isAvailable();
+  const mailClient = getTransporter();
+  const activeChannelLabel = hasTwilio
+    ? 'TWILIO SENDGRID EMAIL DISPATCH'
+    : mailClient
+      ? 'SMTP / NODEMAILER EMAIL DISPATCH'
+      : 'CONSOLE DEV MODE (NO EMAIL PROVIDER)';
 
   // Always output clean visual OTP banner in the console for instant testing & audit trail
   console.log('\n' + '═'.repeat(66));
@@ -80,13 +90,15 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
   console.log('═'.repeat(66));
   console.log(`  To:       ${to}`);
   console.log(`  Purpose:  ${title.toUpperCase()}`);
-  console.log(`  Channel:  TWILIO SENDGRID EMAIL DISPATCH`);
+  console.log(`  Channel:  ${activeChannelLabel}`);
   console.log(`  OTP Code: ═══[ ${code.split('').join(' ')} ]═══`);
   console.log(`  Validity: 10 minutes`);
   console.log('═'.repeat(66) + '\n');
 
+  let deliveryError: string | undefined;
+
   // 1. Dispatch via Twilio SendGrid Email API
-  if (twilioService.isAvailable()) {
+  if (hasTwilio) {
     const twilioResult = await twilioService.sendOtpEmail({
       to,
       code,
@@ -98,10 +110,10 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
     if (twilioResult.sent) {
       return { sent: true, channel: 'twilio' };
     }
+    deliveryError = twilioResult.error || 'SendGrid email delivery failed.';
   }
 
   // 2. Fallback to standard SMTP / nodemailer if configured
-  const mailClient = getTransporter();
   if (mailClient) {
     const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_FROM || '"FinSight Security" <security@finsight.com>';
 
@@ -158,9 +170,14 @@ export async function sendOtpEmail(options: SendOtpOptions): Promise<{ sent: boo
       console.log(`✅ [EmailService] OTP email successfully sent to ${to}`);
       return { sent: true, channel: 'email' };
     } catch (err: unknown) {
-      console.warn(`⚠️ [EmailService] Failed sending OTP email to ${to}:`, getErrorMessage(err));
-      return { sent: false, channel: 'console' };
+      const smtpError = getErrorMessage(err);
+      console.warn(`⚠️ [EmailService] Failed sending OTP email to ${to}:`, smtpError);
+      return { sent: false, channel: 'failed', error: deliveryError || smtpError };
     }
+  }
+
+  if (deliveryError) {
+    return { sent: false, channel: 'failed', error: deliveryError };
   }
 
   return { sent: true, channel: 'console' };

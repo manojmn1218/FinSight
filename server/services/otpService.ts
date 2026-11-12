@@ -62,12 +62,30 @@ class OtpService {
     this.store.set(key, record);
 
     // Dispatch OTP via email / log
-    await sendOtpEmail({
+    const dispatchResult = await sendOtpEmail({
       to: cleanEmail,
       code,
       purpose,
       name,
     });
+
+    if (!dispatchResult.sent) {
+      // Preserve any existing pending userData while clearing unusable code & cooldown
+      if (existing?.userData) {
+        this.store.set(key, {
+          email: cleanEmail,
+          code: '',
+          purpose,
+          userData: existing.userData,
+          expiresAt: 0,
+          lastSentAt: 0,
+          attempts: 0,
+        });
+      } else {
+        this.store.delete(key);
+      }
+      throw new Error(dispatchResult.error || 'Failed to deliver verification email. Please check email provider settings.');
+    }
 
     return {
       code,
@@ -97,19 +115,22 @@ class OtpService {
     }
 
     const now = Date.now();
-    if (now > record.expiresAt) {
-      this.store.delete(key);
+    if (!record.code || now > record.expiresAt) {
+      // Invalidate code while keeping pending signup/Google userData so Resend Code still works cleanly
+      record.code = '';
+      record.expiresAt = 0;
       return {
         valid: false,
-        error: 'This verification code has expired. Please request a new code.',
+        error: 'This verification code has expired. Please click Resend Code to get a new one.',
       };
     }
 
     if (record.attempts >= this.MAX_ATTEMPTS) {
-      this.store.delete(key);
+      record.code = '';
+      record.expiresAt = 0;
       return {
         valid: false,
-        error: 'Too many incorrect attempts. For security reasons, please request a new verification code.',
+        error: 'Too many incorrect attempts. Please click Resend Code to get a new verification code.',
       };
     }
 
