@@ -14,3 +14,4 @@ export interface VercelResponse {
   send: (body: unknown) => VercelResponse;
   end: () => void;
 }
+
