@@ -27,6 +27,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import ManualEntryPage from './pages/ManualEntryPage';
 import LegalPage from './pages/LegalPage';
 import NotFoundPage from './pages/NotFoundPage';
+import LandingPage from './pages/LandingPage';
 import PrivacyConsentBanner from './components/PrivacyConsentBanner';
 import DocumentMeta from './components/DocumentMeta';
 
@@ -81,8 +82,8 @@ export default function App() {
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="database" element={<AdminDatabasePage />} />
           </Route>
-          <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="insights" element={<InsightsPage />} />
             <Route path="reports" element={<ReportsPage />} />

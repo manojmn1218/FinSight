@@ -619,7 +619,7 @@ export default function TransactionsPage() {
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} />
-              {aiStatus?.activeProvider === 'gemini' ? 'Gemini 2.5 Active' : 'Auto-Categorization'}
+              {aiStatus?.activeProvider === 'gemini' ? 'FinSight AI' : 'Auto-Categorization'}
             </span>
           </div>
           <p style={{ color: 'var(--text2)', fontSize: 14, margin: 0 }}>
