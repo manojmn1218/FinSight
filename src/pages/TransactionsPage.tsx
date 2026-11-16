@@ -432,8 +432,8 @@ export default function TransactionsPage() {
       provider: aiReviewMeta?.provider === 'gemini'
         ? 'Google Gemini 2.5 Flash'
         : aiReviewMeta?.provider === 'pandas'
-        ? 'Python Pandas Engine'
-        : 'Smart Neural Engine',
+          ? 'Python Pandas Engine'
+          : 'Smart Neural Engine',
       model: aiReviewMeta?.model,
       closingBalanceApplied: balToApply,
     });
@@ -1488,8 +1488,8 @@ export default function TransactionsPage() {
                         {aiReviewMeta?.provider === 'gemini'
                           ? 'Gemini 2.5 Categorized'
                           : aiReviewMeta?.provider === 'pandas'
-                          ? 'Spreadsheet Parsed'
-                          : 'Rules Engine'}
+                            ? 'Spreadsheet Parsed'
+                            : 'Rules Engine'}
                       </span>
                     </div>
                     <p style={{ fontSize: 12.5, color: 'var(--text2)', margin: '2px 0 0' }}>
