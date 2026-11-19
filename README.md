@@ -24,7 +24,7 @@
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
-  - [1. Institutional Landing Page & 3D Visuals](#1-institutional-landing-page--3d-visuals)
+  - [1. Interactive Dashboard, 3D Core & Stealth Mode](#1-interactive-dashboard-3d-core--stealth-mode)
   - [2. Bank-Grade Authentication & Persistent Sessions](#2-bank-grade-authentication--persistent-sessions)
   - [3. Transaction Management & Multi-Format Parsing](#3-transaction-management--multi-format-parsing)
   - [4. Financial Intelligence & Quantitative Simulations](#4-financial-intelligence--quantitative-simulations)
@@ -54,11 +54,10 @@ FinSight automatically digests bank statements across formats (**PDF**, **CSV**,
 
 ## ✨ Key Features
 
-### 1. Institutional Landing Page & 3D Visuals
-- **Interactive 3D Financial Core**: Real-time Three.js graphics powered by `@types/three` and `three` (`FinancialCore3D`, `HealthGauge3D`, `InteractiveCard3D`, `Tilt3DCard`).
-- **Interactive Simulation Sandbox**: Live Monte Carlo sliders directly on the landing page allowing visitors to test wealth horizons, expected return rates, and monthly contribution scenarios.
-- **Stealth Mode Preview**: Instant currency privacy masking toggle demonstrated directly within the hero interface.
-- **Enterprise Bento Grid**: Highlights zero-knowledge privacy, WASM execution speed, and institutional bank integrations (SBI, HDFC, ICICI, Axis, Kotak, Zerodha, Groww, Setu AA).
+### 1. Interactive Dashboard, 3D Core & Stealth Mode
+- **Interactive 3D Visualizations**: Real-time Three.js graphics powered by `@types/three` and `three` (`FinancialCore3D`, `HealthGauge3D`, `InteractiveCard3D`, `Tilt3DCard`).
+- **Global Stealth Mode**: Instant currency privacy masking toggle synchronized across all dashboard cards, charts, analytics, and reports.
+- **Real-Time Financial Telemetry**: KPI summary cards for liquid net balance, monthly income, expenses, and net cash flow with live statement synchronization.
 
 ### 2. Bank-Grade Authentication & Persistent Sessions
 - **Multi-Method Auth**: Email/Password authentication with `bcryptjs` (10 rounds) and **Google OAuth 2.0** (`@react-oauth/google` + `google-auth-library`).
@@ -124,7 +123,7 @@ FinSight automatically digests bank statements across formats (**PDF**, **CSV**,
                                 ┌───────────────────────────────────────────────┐
                                 │          FinSight React Client (Port 5173)     │
                                 │                                               │
-                                │   Landing · Dashboard · Analytics · Portfolio │
+                                │   Dashboard · Analytics · Portfolio · Goals   │
                                 │   WealthSimulations · Chatbot · Admin Portal  │
                                 └───────────────────────┬───────────────────────┘
                                                         │ HTTP /api/* (Vite Proxy)
@@ -234,31 +233,28 @@ Create a `.env` file in the root directory. Key options:
 When presenting or demoing FinSight, follow this smooth end-to-end path:
 
 ```
-Landing Page (/) ─► Login (/login) ─► Core Dashboard (/dashboard) ─►
-Transactions (/transactions) ─► Analytics (/analytics) ─► AI Insights (/insights) ─►
-Portfolio (/portfolio) ─► Goals (/goals) ─► Premium (/premium) ─► Admin (/admin/dashboard)
+Login (/login) ─► Core Dashboard (/dashboard) ─► Transactions (/transactions) ─►
+Analytics (/analytics) ─► AI Insights (/insights) ─► Portfolio (/portfolio) ─►
+Goals (/goals) ─► Premium (/premium) ─► Admin (/admin/dashboard)
 ```
 
-1. **Institutional Landing Page (`/`)**:
-   - Showcase the 3D Financial Core canvas and toggle **Stealth Mode** live.
-   - Adjust the interactive Monte Carlo simulation sliders (horizon, monthly investment, expected return) to show real-time percentile outputs.
-2. **Authentication (`/login`)**:
+1. **Authentication (`/login`)**:
    - Highlight the clean split-panel design with bank-grade security badges.
    - Demonstrate the **"Remember me for 30 days"** toggle and show how recognized users sign in seamlessly without repetitive OTP prompts.
-3. **Executive Dashboard (`/dashboard`)**:
-   - Present the KPI cards (Total Balance, Monthly Inflows/Outflows, Net Cash Flow).
+2. **Executive Dashboard (`/dashboard`)**:
+   - Present the KPI cards (Total Balance, Monthly Inflows/Outflows, Net Cash Flow) and toggle **Stealth Mode** live.
    - Review the monthly trends chart and the categorized recent transactions ledger.
-4. **Statement Import & Transactions (`/transactions`)**:
+3. **Statement Import & Transactions (`/transactions`)**:
    - Demonstrate dragging and dropping a PDF/CSV statement to watch AI parsing in action.
    - Perform an instant search, category filter, or CSV/PDF export.
-5. **Wealth Simulations & Portfolio (`/portfolio` & `/analytics`)**:
+4. **Wealth Simulations & Portfolio (`/portfolio` & `/analytics`)**:
    - Showcase multi-asset distribution (Equities, Mutual Funds, Fixed Deposits, Gold).
    - Review stochastic Monte Carlo confidence intervals (`p10` to `p90`) and retirement corpus longevity.
-6. **AI Advisor (`FinSight Chatbot`)**:
+5. **AI Advisor (`FinSight Chatbot`)**:
    - Ask an account-aware question (e.g. *"Can I afford a new laptop for ₹65,000?"* or *"What was my biggest expense this month?"*).
-7. **Premium Monetization (`/premium`)**:
+6. **Premium Monetization (`/premium`)**:
    - Show the pricing plans and open the Razorpay payment modal.
-8. **Admin Operations (`/admin/dashboard`)**:
+7. **Admin Operations (`/admin/dashboard`)**:
    - Sign in as `finsight27@gmail.com` to access live user metrics, revenue graphs, and the MongoDB collection explorer.
 
 ---
@@ -324,7 +320,6 @@ FinSight/
 │   │   └── WealthSimulations.tsx # Interactive Monte Carlo & retirement dashboard
 │   ├── context/FinanceContext.tsx# Unified state management, balance sync & stealth mode
 │   ├── pages/                    # Application page views
-│   │   ├── LandingPage.tsx       # Institutional 3D landing page with simulation sandbox
 │   │   ├── LoginPage.tsx         # Clean split-panel auth with 30-day session toggle
 │   │   ├── DashboardPage.tsx     # Primary KPI and overview workspace
 │   │   ├── TransactionsPage.tsx  # Statement parser, filtering & export workspace
