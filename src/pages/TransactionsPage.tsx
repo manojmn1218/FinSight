@@ -294,59 +294,102 @@ export default function TransactionsPage() {
     }
   };
 
+  const readFileBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const resStr = (reader.result as string) || '';
+        const commaIdx = resStr.indexOf(',');
+        resolve(commaIdx !== -1 ? resStr.slice(commaIdx + 1) : resStr);
+      };
+      reader.onerror = () => reject(new Error('Failed to read file from disk.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   // --- Core parse logic ---
   const doParse = async (file: File, password?: string) => {
     setParsing(true);
-    setParsingStage('Extracting text from PDF pages…');
+    setParsingStage('Analyzing PDF bank statement…');
     setParseError('');
     setParseResult(null);
 
     try {
-      const lines = await parsePdfFile(file, password);
-      if (!lines || lines.length === 0) {
-        setParseError('No text could be extracted from this PDF. It may be a scanned image or empty statement.');
-        setParsing(false);
-        return;
+      const base64Content = await readFileBase64(file);
+      let lines: string[] = [];
+      let clientExtractedOk = false;
+
+      // 1. Try fast in-browser text extraction
+      try {
+        setParsingStage('Extracting text from PDF pages…');
+        lines = await parsePdfFile(file, password);
+        if (lines && lines.length > 0) {
+          clientExtractedOk = true;
+        }
+      } catch (clientErr) {
+        if (clientErr instanceof PasswordRequiredError) {
+          throw clientErr;
+        }
+        console.warn('[TransactionsPage] In-browser PDF extraction error, falling back to direct multimodal parsing:', clientErr);
       }
 
       setParsingStage(
         aiStatus?.activeProvider === 'gemini'
-          ? 'Google Gemini AI analyzing merchants & categories…'
-          : 'Smart Neural Engine analyzing merchants & categories…'
+          ? 'Google Gemini AI analyzing statement & classifying categories…'
+          : 'Smart Neural Engine analyzing statement & classifying categories…'
       );
 
-      let aiResult: AiParseResponse;
-      try {
-        aiResult = await api.parseStatementWithAi(lines);
-      } catch (apiErr: unknown) {
-        console.warn('[TransactionsPage] Backend AI request failed, utilizing client fallback:', apiErr);
-        const localTxns = extractTransactions(lines);
-        const fallbackBal = extractClosingBalance(lines, localTxns);
-        aiResult = {
-          provider: 'heuristic_fallback',
-          model: 'client-nlp-fallback',
-          summary: {
-            totalTransactions: localTxns.length,
-            totalDebits: localTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
-            totalCredits: localTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
-            closingBalance: fallbackBal,
-            categoriesFound: {},
-          },
-          transactions: localTxns.map(t => ({
-            id: t.id,
-            date: t.date,
-            rawDescription: t.description,
-            cleanMerchant: t.description,
-            amount: t.amount,
-            category: t.category,
-            isRecurring: t.isRecurring,
-            confidence: 0.85,
-            balance: t.balance,
-          })),
-        };
+      let aiResult: AiParseResponse | null = null;
+
+      // 2. If lines extracted, try text AI parser
+      if (clientExtractedOk && lines.length > 0) {
+        try {
+          aiResult = await api.parseStatementWithAi(lines);
+        } catch (apiErr: unknown) {
+          console.warn('[TransactionsPage] Text AI parse failed, checking multimodal direct upload:', apiErr);
+        }
       }
 
-      if (!aiResult.transactions || aiResult.transactions.length === 0) {
+      // 3. If text parser yielded 0 transactions or failed, use direct PDF multimodal engine
+      if (!aiResult || !aiResult.transactions || aiResult.transactions.length === 0) {
+        setParsingStage('Google Gemini Multimodal parsing document structure directly…');
+        try {
+          aiResult = await api.parseStatementFileWithAi(base64Content, file.name, password);
+        } catch (fileErr) {
+          console.warn('[TransactionsPage] Multimodal file parse error:', fileErr);
+          // If we had lines from client, try regex heuristic fallback
+          if (lines.length > 0) {
+            const localTxns = extractTransactions(lines);
+            const fallbackBal = extractClosingBalance(lines, localTxns);
+            aiResult = {
+              provider: 'heuristic_fallback',
+              model: 'client-nlp-fallback',
+              summary: {
+                totalTransactions: localTxns.length,
+                totalDebits: localTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+                totalCredits: localTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+                closingBalance: fallbackBal,
+                categoriesFound: {},
+              },
+              transactions: localTxns.map(t => ({
+                id: t.id,
+                date: t.date,
+                rawDescription: t.description,
+                cleanMerchant: t.description,
+                amount: t.amount,
+                category: t.category,
+                isRecurring: t.isRecurring,
+                confidence: 0.85,
+                balance: t.balance,
+              })),
+            };
+          } else {
+            throw fileErr;
+          }
+        }
+      }
+
+      if (!aiResult?.transactions || aiResult.transactions.length === 0) {
         setParseError('Could not find recognizable transactions in this statement. Please verify the file format.');
         setParsing(false);
         return;
@@ -382,17 +425,18 @@ export default function TransactionsPage() {
       setPendingFile(null);
       setPasswordError('');
     } catch (err) {
-      if (err instanceof PasswordRequiredError) {
+      if (err instanceof PasswordRequiredError || (err instanceof Error && err.message.toLowerCase().includes('password'))) {
         setPendingFile(file);
         setNeedsPassword(true);
         setPasswordError(password ? 'Incorrect password. Please try again.' : '');
       } else {
         const message = err instanceof Error ? err.message : String(err);
         setParseError(message || "Failed to parse the PDF. Make sure it's a valid bank statement.");
-        console.error(err);
+        console.error('[TransactionsPage] Parsing exception:', err);
       }
+    } finally {
+      setParsing(false);
     }
-    setParsing(false);
   };
 
   const handleApproveAiTransactions = async () => {

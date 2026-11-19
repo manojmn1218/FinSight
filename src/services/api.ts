@@ -416,6 +416,13 @@ class ApiService {
     });
   }
 
+  async parseStatementFileWithAi(fileBase64: string, filename: string, password?: string) {
+    return this.request<AiParseResponse>('/api/ai/parse-statement', {
+      method: 'POST',
+      body: JSON.stringify({ fileBase64, filename, password }),
+    });
+  }
+
   async reclassifyWithAi() {
     return this.request<{
       message: string;

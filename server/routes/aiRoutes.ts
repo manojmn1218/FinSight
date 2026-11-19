@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth';
-import { parseStatementWithAi, reclassifyTransactionsWithAi } from '../services/aiStatementParser';
+import { parseStatementWithAi, parsePdfBufferWithAi, reclassifyTransactionsWithAi } from '../services/aiStatementParser';
 import { db } from '../config/db';
 import { getErrorMessage } from '../utils/helpers';
 import type { TransactionDocument } from '../types';
@@ -86,17 +86,11 @@ router.post('/configure-key', authenticateToken, async (req: AuthenticatedReques
   }
 });
 
-// POST /api/ai/parse-statement — parse raw PDF text lines with Gemini / Fallback
+// POST /api/ai/parse-statement — parse raw PDF text lines or direct PDF file with Gemini / Fallback
 router.post('/parse-statement', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userEmail = req.user!.email;
-    const { lines } = req.body;
-
-    if (!Array.isArray(lines) || lines.length === 0) {
-      return res.status(400).json({
-        error: 'Invalid request: "lines" must be a non-empty array of text extracted from the bank statement PDF.',
-      });
-    }
+    const { lines, fileBase64, filename, password } = req.body;
 
     // Check user statement upload limits for Basic plan
     const user = await db.findUserByEmail(userEmail);
@@ -107,7 +101,24 @@ router.post('/parse-statement', authenticateToken, async (req: AuthenticatedRequ
       });
     }
 
-    // Process with AI parser
+    // Direct PDF file multimodal ingestion
+    if (fileBase64 && typeof fileBase64 === 'string') {
+      let cleanB64 = fileBase64.trim();
+      if (cleanB64.includes(',')) {
+        cleanB64 = cleanB64.split(',')[1];
+      }
+      const buffer = Buffer.from(cleanB64, 'base64');
+      const result = await parsePdfBufferWithAi(buffer, filename, password);
+      return res.json(result);
+    }
+
+    if (!Array.isArray(lines) || lines.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request: please provide either "lines" array or "fileBase64" bank statement data.',
+      });
+    }
+
+    // Process extracted lines with AI parser
     const result = await parseStatementWithAi(lines);
 
     return res.json(result);

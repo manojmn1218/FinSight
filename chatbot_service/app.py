@@ -673,6 +673,7 @@ def retirement_api():
 @app.route("/api/simulations/parse-statement", methods=["POST"])
 def parse_statement_api():
     file = request.files.get("statement") or request.files.get("file")
+    password = request.form.get("password")
     if file:
         filename = file.filename or "statement.csv"
         file_bytes = file.read()
@@ -680,12 +681,22 @@ def parse_statement_api():
         data = request.get_json(silent=True) or {}
         raw_content = data.get("content", "")
         filename = data.get("filename", "statement.csv")
+        password = data.get("password")
         if not raw_content:
             return jsonify({"error": "No statement file or content provided"}), 400
-        file_bytes = raw_content.encode("utf-8")
+        
+        # Support base64 encoded content (PDF, Excel, binary)
+        import base64
+        try:
+            clean_b64 = raw_content
+            if "," in clean_b64:
+                clean_b64 = clean_b64.split(",", 1)[1]
+            file_bytes = base64.b64decode(clean_b64)
+        except Exception:
+            file_bytes = raw_content.encode("utf-8")
         
     try:
-        result = parse_statement_file(file_bytes=file_bytes, filename=filename)
+        result = parse_statement_file(file_bytes=file_bytes, filename=filename, password=password)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": f"Statement parsing failed: {str(e)}"}), 400

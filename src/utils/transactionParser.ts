@@ -269,15 +269,22 @@ export async function parsePdfFile(file: File, password?: string): Promise<strin
   // Dynamic import to lazy-load pdf.js
   const pdfjsLib = await import('pdfjs-dist');
   
-  // Set worker source using Vite-resolved URL
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+  // Set worker source using Vite-resolved URL with CDN fallback
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl || `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
+  } catch {
+    // Ignore worker assignment failure
+  }
 
   const arrayBuffer = await file.arrayBuffer();
 
-  // Build document options
+  // Build document options with cMaps and standard fonts for complex bank PDFs
   const loadingTask = pdfjsLib.getDocument({
     data: arrayBuffer,
     password: password || undefined,
+    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '4.10.38'}/cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '4.10.38'}/standard_fonts/`,
   });
 
   let pdf;
@@ -303,22 +310,24 @@ export async function parsePdfFile(file: File, password?: string): Promise<strin
     const content = await page.getTextContent();
     
     // Cluster text items into lines within a vertical tolerance (~3.5px) and sort left-to-right (x-axis)
-    const items = content.items as Array<{ str: string; transform: number[] }>;
+    const items = content.items || [];
     const lineBuckets: Array<{ y: number; items: Array<{ x: number; text: string }> }> = [];
     const TOLERANCE = 3.5;
 
     for (const item of items) {
-      const str = (item.str || '').trim();
+      if (!item || typeof item !== 'object') continue;
+      const textItem = item as { str?: string; transform?: number[] };
+      const str = (typeof textItem.str === 'string' ? textItem.str : '').trim();
       if (!str) continue;
-      const x = item.transform[4];
-      const y = item.transform[5];
+      const x = Array.isArray(textItem.transform) ? textItem.transform[4] ?? 0 : 0;
+      const y = Array.isArray(textItem.transform) ? textItem.transform[5] ?? 0 : 0;
 
       // Find an existing bucket within vertical tolerance
       const bucket = lineBuckets.find(b => Math.abs(b.y - y) <= TOLERANCE);
       if (bucket) {
-        bucket.items.push({ x, text: item.str });
+        bucket.items.push({ x, text: textItem.str || '' });
       } else {
-        lineBuckets.push({ y, items: [{ x, text: item.str }] });
+        lineBuckets.push({ y, items: [{ x, text: textItem.str || '' }] });
       }
     }
 
@@ -330,6 +339,15 @@ export async function parsePdfFile(file: File, password?: string): Promise<strin
       bucket.items.sort((a, b) => a.x - b.x);
       const lineText = bucket.items.map(i => i.text).join(' ').replace(/\s{2,}/g, ' ').trim();
       if (lineText) allLines.push(lineText);
+    }
+
+    // Fallback: if bucket clustering yielded no lines but items existed, extract raw text
+    if (lineBuckets.length === 0 && items.length > 0) {
+      const rawText = items
+        .map(it => (it && typeof it === 'object' && 'str' in it ? String((it as { str?: string }).str || '') : ''))
+        .filter(Boolean)
+        .join(' ');
+      if (rawText.trim()) allLines.push(rawText.trim());
     }
   }
 

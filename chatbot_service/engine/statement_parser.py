@@ -58,16 +58,105 @@ def clean_merchant_name(narration: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9\s./-]", "", cleaned)
     return cleaned[:40].strip().title()
 
-def parse_statement_file(file_bytes: bytes, filename: str) -> Dict[str, Any]:
+def parse_statement_file(file_bytes: bytes, filename: str, password: Optional[str] = None) -> Dict[str, Any]:
     """
-    Ingests CSV or Excel bytes using Pandas with multi-bank header auto-discovery.
+    Ingests PDF, CSV or Excel bytes using PyMuPDF / Pandas with multi-bank header auto-discovery.
     Standardizes records and extracts deep accounting statistics.
     """
     name_lower = filename.lower()
     df: Optional[pd.DataFrame] = None
     
     # 1. Read into Pandas with header discovery
-    if name_lower.endswith(".csv"):
+    if name_lower.endswith(".pdf"):
+        import pymupdf
+        try:
+            doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+            if doc.is_encrypted:
+                if password:
+                    if not doc.authenticate(password):
+                        raise ValueError("Incorrect password for protected PDF statement.")
+                else:
+                    raise ValueError("Password required: This PDF statement is password-protected.")
+            
+            # Attempt 1: Table extraction
+            tables_data = []
+            for page in doc:
+                try:
+                    tabs = page.find_tables()
+                    if tabs and len(tabs.tables) > 0:
+                        for tab in tabs:
+                            tab_df = tab.to_pandas()
+                            if tab_df is not None and not tab_df.empty:
+                                tables_data.append(tab_df)
+                except Exception:
+                    pass
+            
+            if tables_data:
+                df = pd.concat(tables_data, ignore_index=True)
+            else:
+                # Attempt 2: Text extraction & structure
+                lines = []
+                for page in doc:
+                    text = page.get_text("text")
+                    for l in text.splitlines():
+                        l_clean = l.strip()
+                        if l_clean:
+                            lines.append(l_clean)
+                
+                rows = []
+                date_pattern = re.compile(r"(\d{2}[-/]\d{2}[-/]\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{2}\s+[A-Za-z]{3}\s+\d{4})")
+                amt_pattern = re.compile(r"[\d,]+\.\d{2}")
+                
+                curr_row = None
+                for line in lines:
+                    d_m = date_pattern.search(line)
+                    amts = amt_pattern.findall(line)
+                    if d_m and amts:
+                        if curr_row:
+                            rows.append(curr_row)
+                        curr_row = {"date": d_m.group(1), "line": line, "amounts": amts}
+                    elif curr_row:
+                        curr_row["line"] += " " + line
+                if curr_row:
+                    rows.append(curr_row)
+                
+                structured = []
+                for r in rows:
+                    l = r["line"]
+                    amts = [float(a.replace(",", "")) for a in r["amounts"]]
+                    desc = l
+                    for a in r["amounts"]:
+                        desc = desc.replace(a, "")
+                    desc = date_pattern.sub("", desc).strip()
+                    desc = re.sub(r"\s+", " ", desc)
+                    
+                    is_cr = any(k in l.lower() for k in ["cr", "credit", "deposit", "salary", "refund"])
+                    is_dr = any(k in l.lower() for k in ["dr", "debit", "withdrawal", "paid", "pos", "upi"])
+                    
+                    amt = amts[0] if amts else 0.0
+                    bal = amts[-1] if len(amts) >= 2 else None
+                    if is_dr and not is_cr:
+                        amt = -abs(amt)
+                    elif is_cr and not is_dr:
+                        amt = abs(amt)
+                    else:
+                        amt = -abs(amt)
+                    
+                    structured.append({
+                        "date": r["date"],
+                        "description": desc[:60],
+                        "amount": amt,
+                        "balance": bal
+                    })
+                
+                if structured:
+                    df = pd.DataFrame(structured)
+        except Exception as e:
+            if "password" in str(e).lower():
+                raise e
+            raise ValueError(f"Failed to read PDF document: {str(e)}")
+
+    elif name_lower.endswith(".csv"):
         # Detect delimiter and skiprows
         for sep in [",", ";", "\t", "|"]:
             try:

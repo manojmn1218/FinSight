@@ -558,6 +558,154 @@ OUTPUT FORMAT: Return strictly valid JSON with this shape:
   }
 }
 
+/**
+ * Direct PDF Buffer Multimodal Parser using Gemini / Python PyMuPDF
+ */
+export async function parsePdfBufferWithAi(
+  fileBuffer: Buffer,
+  filename: string = 'statement.pdf',
+  password?: string
+): Promise<AiParseResult> {
+  const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
+
+  // Try 1: Google Gemini Flash Multimodal
+  if (geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here') {
+    try {
+      console.log(`[AI Statement Parser] Processing direct PDF with Google Gemini Multimodal (${fileBuffer.length} bytes)...`);
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+      const base64Pdf = fileBuffer.toString('base64');
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash-lite',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Extract ALL financial transactions from this bank statement PDF into structured JSON with these 12 strict categories:
+1. "Food & Dining": restaurants, cafes, Swiggy, Zomato, groceries, Zepto, Blinkit, food, bakeries.
+2. "Shopping": Amazon, Flipkart, retail, electronics, clothing, shopping.
+3. "Transport": Uber, Ola, petrol, fuel, flights, IRCTC, train, metro, toll, parking.
+4. "Utilities": mobile, electricity, water, broadband, gas, DTH, bill payments.
+5. "Rent": rent, landlord, maintenance, PG.
+6. "Subscriptions": Netflix, Spotify, Prime, SaaS, memberships.
+7. "Health": pharmacy, hospitals, doctor, medical.
+8. "Education": courses, fees, books, tuition.
+9. "Transfer": personal peer-to-peer transfers to individuals, NEFT/IMPS/RTGS bank transfers.
+10. "ATM": cash withdrawals.
+11. "Salary": salary credit, payroll, income deposits.
+12. "Other": bank charges, interest, cashback, uncategorized.
+
+Amounts must be negative for debits/expenses (e.g. -450.00) and positive for credits/income (e.g. 50000.00).
+Return JSON with this exact schema:
+{
+  "transactions": [
+    {
+      "date": "YYYY-MM-DD",
+      "rawDescription": "string",
+      "cleanMerchant": "string",
+      "amount": number,
+      "category": "one of 12 categories",
+      "isRecurring": boolean,
+      "confidence": number,
+      "balance": number
+    }
+  ],
+  "closingBalance": number,
+  "bankDetected": "string",
+  "period": "string"
+}`,
+              },
+              {
+                inlineData: {
+                  mimeType: 'application/pdf',
+                  data: base64Pdf,
+                },
+              },
+            ],
+          },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+        },
+      });
+
+      const responseText = response.text?.trim() || '{}';
+      const parsedData = JSON.parse(responseText);
+      const rawList = Array.isArray(parsedData.transactions) ? parsedData.transactions : [];
+
+      const allValidatedTxns: ParsedAiTransaction[] = [];
+      for (const item of rawList) {
+        let cat: FinCategory = 'Other';
+        if (FIN_CATEGORIES.includes(item.category)) {
+          cat = item.category as FinCategory;
+        } else {
+          cat = matchHeuristicCategory(item.cleanMerchant || item.rawDescription || '').category;
+        }
+
+        const amt = typeof item.amount === 'number' && !isNaN(item.amount) ? item.amount : 0;
+        if (amt === 0 && !item.cleanMerchant) continue;
+
+        allValidatedTxns.push({
+          id: `tx_ai_${Math.random().toString(36).slice(2, 9)}`,
+          date: item.date || new Date().toISOString().slice(0, 10),
+          rawDescription: item.rawDescription || item.cleanMerchant || 'Transaction',
+          cleanMerchant: item.cleanMerchant || 'Transaction',
+          amount: amt,
+          category: cat,
+          isRecurring: Boolean(item.isRecurring),
+          confidence: typeof item.confidence === 'number' ? item.confidence : 0.95,
+          balance: typeof item.balance === 'number' ? item.balance : undefined,
+        });
+      }
+
+      if (allValidatedTxns.length > 0) {
+        console.log(`[AI Statement Parser] Gemini Multimodal extracted ${allValidatedTxns.length} transactions directly from PDF.`);
+        return buildParseResult('gemini', 'gemini-3.5-flash-lite', allValidatedTxns, parsedData.bankDetected, parsedData.period, parsedData.closingBalance);
+      }
+    } catch (multimodalErr) {
+      console.warn('[AI Statement Parser] Gemini Multimodal PDF parse failed, trying Python PyMuPDF engine:', multimodalErr);
+    }
+  }
+
+  // Try 2: Python Microservice with PyMuPDF Engine
+  try {
+    const pythonUrl = process.env.PYTHON_CHATBOT_URL || 'http://127.0.0.1:5005';
+    const pyRes = await fetch(`${pythonUrl}/api/simulations/parse-statement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: fileBuffer.toString('base64'),
+        filename,
+        password,
+      }),
+    });
+
+    if (pyRes.ok) {
+      const pyData = await pyRes.json();
+      if (Array.isArray(pyData.transactions) && pyData.transactions.length > 0) {
+        const mappedTxns: ParsedAiTransaction[] = pyData.transactions.map((t: { date: string; originalNarration?: string; description: string; amount: number; category: string; balance?: number }) => ({
+          id: `tx_py_${Math.random().toString(36).slice(2, 9)}`,
+          date: t.date,
+          rawDescription: t.originalNarration || t.description,
+          cleanMerchant: t.description,
+          amount: t.amount,
+          category: (FIN_CATEGORIES.includes(t.category as FinCategory) ? t.category : matchHeuristicCategory(t.description).category) as FinCategory,
+          isRecurring: false,
+          confidence: 0.95,
+          balance: t.balance,
+        }));
+        return buildParseResult('gemini', 'python-pymupdf-engine', mappedTxns, pyData.filename, undefined, pyData.summary?.closingBalance);
+      }
+    }
+  } catch (pyErr) {
+    console.warn('[AI Statement Parser] Python microservice fallback failed:', pyErr);
+  }
+
+  throw new Error('Could not extract transactions from this PDF. Please ensure the file contains valid text transactions or verify the password.');
+}
+
 export interface ReclassifyItem {
   id: string;
   date: string;
