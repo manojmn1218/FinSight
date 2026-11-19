@@ -2,7 +2,7 @@
 
 # 💰 FinSight
 
-### AI-Powered Personal Finance Dashboard & Wealth Intelligence Platform
+### AI-Powered Personal Finance Dashboard & Quantitative Wealth Intelligence Platform
 
 **Track spending · Parse PDF/CSV/Excel statements · Run Monte Carlo simulations · Manage investments**
 
@@ -10,7 +10,10 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript)](https://typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
 [![Express](https://img.shields.io/badge/Express-5.3-000000?style=flat-square&logo=express)](https://expressjs.com)
-[![Python](https://img.shields.io/badge/Python-Flask%20%2B%20NumPy%2FPandas-3776AB?style=flat-square&logo=python)](https://flask.palletsprojects.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas%20%2B%20Mongoose-47A248?style=flat-square&logo=mongodb)](https://mongodb.com)
+[![Python](https://img.shields.io/badge/Python-Flask%20%2B%20NumPy%20%2B%20Pandas-3776AB?style=flat-square&logo=python)](https://flask.palletsprojects.com)
+[![Google Gemini](https://img.shields.io/badge/Google-Gemini%20AI-8E75B2?style=flat-square&logo=google)](https://ai.google.dev)
+[![Razorpay](https://img.shields.io/badge/Razorpay-Payment%20Gateway-02042B?style=flat-square&logo=razorpay)](https://razorpay.com)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-000?style=flat-square&logo=vercel)](https://vercel.com)
 
 </div>
@@ -20,332 +23,335 @@
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
-- [Features](#-features)
+- [Key Features](#-key-features)
+  - [1. Institutional Landing Page & 3D Visuals](#1-institutional-landing-page--3d-visuals)
+  - [2. Bank-Grade Authentication & Persistent Sessions](#2-bank-grade-authentication--persistent-sessions)
+  - [3. Transaction Management & Multi-Format Parsing](#3-transaction-management--multi-format-parsing)
+  - [4. Financial Intelligence & Quantitative Simulations](#4-financial-intelligence--quantitative-simulations)
+  - [5. Gemini AI Chatbot & Personalized Advisory](#5-gemini-ai-chatbot--personalized-advisory)
+  - [6. Multi-Asset Portfolio & Goal Tracking](#6-multi-asset-portfolio--goal-tracking)
+  - [7. Premium Subscriptions (Razorpay Gateway)](#7-premium-subscriptions-razorpay-gateway)
+  - [8. Executive Admin Workspace](#8-executive-admin-workspace)
 - [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Getting Started](#-getting-started)
+- [System Architecture](#-system-architecture)
+- [Getting Started & Local Setup](#-getting-started--local-setup)
 - [Environment Variables](#-environment-variables)
-- [API Routes Overview](#-api-routes-overview)
-- [Project Structure](#-project-structure)
-- [Security](#-security)
-- [Deployment](#-deployment)
-- [Roadmap](#-roadmap)
+- [Presentation & Demo Walkthrough](#-presentation--demo-walkthrough)
+- [API Routes Reference](#-api-routes-reference)
+- [Project Directory Structure](#-project-directory-structure)
+- [Security & Compliance](#-security--compliance)
 - [Contributing](#-contributing)
 
 ---
 
 ## 🔍 Overview
 
-FinSight is a full-stack personal finance and wealth management platform combining a **React 19 + TypeScript + Three.js** client, a **Node.js + Express 5 + MongoDB Atlas** REST API (with zero-config local JSON persistence fallback), and a **Python Flask + NumPy/Pandas/OpenPyXL** analytics and AI chatbot microservice.
+**FinSight** is an enterprise-grade full-stack personal finance and wealth management platform designed to eliminate financial ambiguity. It pairs a high-performance **React 19 + TypeScript + Three.js** client with a hardened **Node.js + Express 5 + MongoDB Atlas** backend and a dedicated **Python Flask + NumPy/Pandas/OpenPyXL** actuarial simulation and AI chatbot microservice.
 
-Upload PDF, CSV, or Excel bank statements (or link accounts via Setu Account Aggregator) to extract and categorize transactions, monitor net cash flow, toggle **Stealth Mode** for privacy, run stochastic **Monte Carlo** and **retirement simulations**, ask the **FinSight AI Chatbot** account-aware questions, and manage subscriptions via **Razorpay**.
-
-### Who is it for?
-
-- 🧑‍💻 **Individuals** looking to understand and optimize spending habits with privacy controls
-- 📊 **Freelancers** tracking multi-source income vs. expenses and recurring bills
-- 🎯 **Goal setters** planning savings milestones and inflation-adjusted retirement targets
-- 📈 **Investors** managing multi-asset portfolios with quantitative projections
+FinSight automatically digests bank statements across formats (**PDF**, **CSV**, **Excel**), auto-synchronizes closing balances, provides stochastic **Monte Carlo** and **retirement corpus projections**, provides account-aware AI diagnostics via **Google Gemini**, and protects user privacy through a global **Stealth Mode** toggle.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-### 🏦 Transaction Management & Statement Parsing
-- **Multi-Format Statement Ingestion** — Parses **PDF** statements (`pdfjs-dist` in-browser + Google Gemini AI + local regex fallbacks) as well as **CSV and Excel (`.csv`, `.xlsx`, `.xls`)** statements through the Python Pandas/OpenPyXL engine.
-- **Statement Closing Balance Sync** — Detects closing/available or running ledger balances and synchronizes account balances with a "Statement Balance" indicator.
-- **Password-Protected PDFs** — Prompts securely when opening encrypted bank statements.
-- **Manual Entry & Inline Editing** — Dedicated Manual Entry workspace (`ManualEntryPage`) and single-click category updates, deletions, and duplicate filtering.
-- **Setu Account Aggregator** — Consent flow, status polling, data fetch, and webhook integration via `/api/setu/*` and Vercel serverless functions (`api/setu/`), with mock development mode (`VITE_SETU_MOCK`).
+### 1. Institutional Landing Page & 3D Visuals
+- **Interactive 3D Financial Core**: Real-time Three.js graphics powered by `@types/three` and `three` (`FinancialCore3D`, `HealthGauge3D`, `InteractiveCard3D`, `Tilt3DCard`).
+- **Interactive Simulation Sandbox**: Live Monte Carlo sliders directly on the landing page allowing visitors to test wealth horizons, expected return rates, and monthly contribution scenarios.
+- **Stealth Mode Preview**: Instant currency privacy masking toggle demonstrated directly within the hero interface.
+- **Enterprise Bento Grid**: Highlights zero-knowledge privacy, WASM execution speed, and institutional bank integrations (SBI, HDFC, ICICI, Axis, Kotak, Zerodha, Groww, Setu AA).
 
-### 📊 Dashboard, 3D Visuals & Stealth Mode
-- **Financial Overview** — Real-time KPI cards for total balance, monthly income, expenses, and net cash flow.
-- **Interactive 3D Components** — Three.js visualizations (`FinancialCore3D`, `HealthGauge3D`, `InteractiveCard3D`, `Tilt3DCard`) powered by `@types/three` and `three`.
-- **Stealth Mode (Privacy Masking)** — Global currency masking toggle synchronized across Dashboard, Analytics, Insights, Reports, Portfolio, and Wealth Simulations.
-- **Monthly Trends & Breakdowns** — Interactive Recharts area, bar, pie, and composed charts with recurring debit alerts and cumulative savings timelines.
+### 2. Bank-Grade Authentication & Persistent Sessions
+- **Multi-Method Auth**: Email/Password authentication with `bcryptjs` (10 rounds) and **Google OAuth 2.0** (`@react-oauth/google` + `google-auth-library`).
+- **30-Day "Remember Me" Sessions**: Extended device-level persistent authorization tokens that prevent redundant logins.
+- **Smart OTP Suppression**: Recognized, verified users in the database bypass repetitive 2FA friction upon login, while OTP verification via **Twilio SendGrid** remains strictly enforced for new account registrations and password resets.
+- **Granular RBAC**: Dedicated role-based access control with `finsight27@gmail.com` designated as the sole platform administrator.
 
-### 🧮 Python Financial Intelligence & Wealth Simulations
-- **Stochastic Monte Carlo Portfolio Forecasting** — Geometric Brownian Motion simulations powered by NumPy (`chatbot_service/engine/monte_carlo.py`) generating percentile trajectories (`p10`, `p25`, `p50`, `p75`, `p90`) and target goal probabilities.
-- **Inflation-Adjusted Retirement Projections** — Multi-phase corpus simulation (`chatbot_service/engine/retirement.py`) modeling pre-retirement contributions, inflation-adjusted post-retirement drawdowns, and depletion year indicators.
-- **Resilient Backend Fallback** — Node/TypeScript simulation routes (`server/routes/simulationRoutes.ts`) provide built-in computational fallbacks if the Python microservice is offline.
+### 3. Transaction Management & Multi-Format Parsing
+- **Multi-Engine PDF Parsing**: In-browser client-side text extraction using `pdfjs-dist` coupled with Google Gemini AI for smart categorization and resilient local regex fallback.
+- **CSV & Excel Ingestion**: Python Pandas & OpenPyXL pipeline (`chatbot_service/engine/statement_parser.py`) for automated debit/credit/balance extraction from `.csv`, `.xlsx`, and `.xls` statements.
+- **Statement Balance Sync**: Automatically detects closing or running ledger balances and aligns dashboard totals with a clear "Statement Balance" indicator.
+- **Password-Protected Statements**: Prompts securely for decryption keys when opening encrypted bank PDFs.
+- **Manual Operations**: Fast transaction logging, inline category tag reassignment, duplicate suppression, and bulk deletions.
 
-### 💬 FinSight AI Chatbot *(Python + Gemini)*
-- **Account-Aware Assistant** — Built with Python Flask and Google Gemini (`google-genai`) to answer questions about balances, category spending, recurring bills, and FinSight features.
-- **Affordability Checks** — Evaluates *"Can I afford [item] for ₹[amount]?"* queries against liquid balance, monthly surplus, and savings goals.
-- **Domain Guardrails** — Keeps conversations strictly scoped to personal finance and FinSight account data.
+### 4. Financial Intelligence & Quantitative Simulations
+- **Stochastic Monte Carlo Wealth Modeling**: Geometric Brownian Motion simulations driven by NumPy (`chatbot_service/engine/monte_carlo.py`) generating percentile trajectories (`p10`, `p25`, `p50`, `p75`, `p90`) and goal-reach probabilities.
+- **Inflation-Adjusted Retirement Projections**: Multi-phase actuarial engine (`chatbot_service/engine/retirement.py`) calculating accumulation phases, real-return adjusted drawdowns, and portfolio depletion horizons.
+- **Resilient Fallback Engine**: Built-in computational Node/TypeScript fallbacks (`server/routes/simulationRoutes.ts`) if the Python microservice is temporarily unavailable.
 
-### 📈 Portfolio, Investments & AI Insights
-- **Multi-Asset Tracking *(Wealth)*** — Track Equities, Mutual Funds, Crypto, Gold, Real Estate, and Cash with Alpha Vantage quote integration and server-managed key handling.
-- **AI-Powered Insights *(Pro & Wealth)*** — Anomaly detection, subscription creep alerts, cash-flow insights, and personalized savings recommendations.
-- **Goals & Reports** — Color-coded savings goals with deadline tracking plus CSV, JSON, and print-ready PDF exports.
+### 5. Gemini AI Chatbot & Personalized Advisory
+- **Account-Aware Context**: Powered by Google Gemini (`@google/genai`) to answer questions about live balances, recurring subscriptions, spending patterns, and budget pacing.
+- **Affordability Diagnostics**: Evaluates *"Can I afford X for ₹Y?"* against liquid balances, monthly surplus, and active savings goals.
+- **Domain Guardrails**: Strict boundary enforcement restricting interactions strictly to personal finance and account diagnostics.
 
-### 💳 Premium Plans & Razorpay Payment Gateway
-| Feature | Basic (Free) | Pro (₹99/mo · ₹990/yr) | Wealth (₹149/mo · ₹1,490/yr) |
-|---------|:---:|:---:|:---:|
-| Manual expense entry & charts | ✅ | ✅ | ✅ |
-| PDF uploads | Up to 3/month | Unlimited | Unlimited |
-| AI-powered insights & recurring alerts | ❌ | ✅ | ✅ |
-| Budget health score & gauge | ❌ | ✅ | ✅ |
-| CSV / PDF / Excel exports | CSV only | ✅ | ✅ |
-| Investment & portfolio tracking | ❌ | ❌ | ✅ |
-| Crypto, Net Worth & Wealth Simulations | ❌ | ❌ | ✅ |
-| Priority support & advisor features | ❌ | Email Support | Priority + Advisor |
+### 6. Multi-Asset Portfolio & Goal Tracking
+- **Multi-Asset Allocation**: Monitor Equities, Mutual Funds, Fixed Deposits, Gold, Crypto, and Liquid Cash with real-time valuation updates.
+- **Savings Milestones**: Visual progress gauges, target timelines, and automated monthly contribution calculators.
+- **Audit-Ready Reporting**: Generate monthly and annual balance sheets with one-click export to CSV, JSON, and print-ready PDF formats.
 
-- **Razorpay Checkout** — Server-side order creation (`POST /api/payment/create-order`), HMAC-SHA256 payment signature verification (`POST /api/payment/verify-payment`), and payment history (`GET /api/payment/history`), supporting both Test (`rzp_test_...`) and Live (`rzp_live_...`) keys.
+### 7. Premium Subscriptions (Razorpay Gateway)
+- **Tier Structure**: Basic (Free), Pro (₹99/mo · ₹990/yr), and Wealth (₹149/mo · ₹1,490/yr).
+- **Seamless Checkout**: Server-side order generation (`POST /api/payment/create-order`), HMAC-SHA256 signature verification (`POST /api/payment/verify-payment`), and audit history (`GET /api/payment/history`).
+- **Dual Mode Support**: Seamless toggle between Razorpay Sandbox (`rzp_test_...`) and Live (`rzp_live_...`).
 
-### 🔐 Authentication, Security & Admin Panel
-- **Multi-Method Sign-In** — Email/Password (bcrypt 10 salt rounds) and **Google OAuth 2.0** (`@react-oauth/google` + `google-auth-library`).
-- **OTP Verification & Password Reset** — Email OTP verification and reset flows powered by **Twilio SendGrid** (`@sendgrid/mail`) or Nodemailer SMTP fallback.
-- **Session & Route Protection** — Signed JWT tokens delivered via `HttpOnly` cookies / Bearer auth, brute-force account lockout, Helmet security headers, CORS origin restrictions, and API/auth rate limiting.
-- **Admin Console** — Dedicated `/admin/*` workspace featuring **Executive Dashboard**, **User Management**, **Revenue Analytics**, **Platform Settings**, and a live **Database Collection Explorer** (`/admin/database`). Admin access defaults to `finsight27@gmail.com` (`ADMIN_EMAIL` / `VITE_ADMIN_EMAIL`) and can be synchronized via `scripts/set-admin.mjs`.
+### 8. Executive Admin Workspace
+- **Restricted Access**: Dedicated interface at `/admin/*` protected by admin guards (`finsight27@gmail.com`).
+- **Telemetry & Users**: Real-time user management, account activation toggles, subscription revenue metrics, and platform health telemetry.
+- **Database Collection Explorer**: Live query and inspect interface (`/admin/database`) for MongoDB collections.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | React 19 + TypeScript 6 | Component UI with strict type safety |
-| **Build & Tooling** | Vite 8 + `tsx` + `concurrently` | HMR client, TypeScript watch backend, unified dev runner |
-| **3D & Motion** | Three.js + Framer Motion 12 | Interactive 3D wealth/gauge graphics and transitions |
-| **Data Visualization** | Recharts 3 + Lucide React | Responsive financial charts and SVG iconography |
-| **Backend Server** | Node.js + Express 5 | REST API, JWT/Cookie auth, rate limiting, Razorpay checkout |
-| **Database** | MongoDB Atlas (Mongoose 9) | Cloud persistence with local JSON DB fallback (`server/data/finsight_db.json`) |
-| **Python Microservice** | Flask + NumPy + Pandas + OpenPyXL | Monte Carlo simulations, retirement projections, Excel/CSV parsing, Gemini chat |
-| **AI & Integrations** | `@google/genai`, `google-auth-library`, `razorpay`, `@sendgrid/mail`, `nodemailer` | Statement AI parsing, OAuth 2.0, payments, transactional OTP emails |
-| **PDF & Open Banking** | `pdfjs-dist`, Setu AA, Alpha Vantage | In-browser PDF text extraction, AA bank linking, market quotes |
+| Domain | Technologies |
+|---|---|
+| **Frontend Framework** | React 19.2, TypeScript 6.0, Vite 8.0 |
+| **Styling & Icons** | Tailwind CSS, Lucide React, Inter Font Family |
+| **Motion & 3D Graphics** | Three.js (`@types/three`), Framer Motion 12 |
+| **Charts & Visualization** | Recharts 3 (Area, Bar, Donut, Composed charts) |
+| **Backend Runtime** | Node.js (v18+), Express 5.3, `tsx` TypeScript runtime |
+| **Database & ODM** | MongoDB Atlas, Mongoose 9 (with zero-config local JSON DB fallback) |
+| **Actuarial Microservice** | Python 3.10+, Flask 3.0, NumPy, Pandas, OpenPyXL |
+| **AI Intelligence** | Google Gemini API (`@google/genai`, `google-genai` Python SDK) |
+| **Payments & Verification** | Razorpay SDK, Crypto HMAC-SHA256 verification |
+| **Communications & 2FA** | Twilio SendGrid (`@sendgrid/mail`), Nodemailer SMTP fallback |
+| **Security & Headers** | Helmet 8, CORS, Express Rate Limit, Cookie-Parser |
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                   FinSight React Frontend (Port 5173)                │
-│                                                                      │
-│   Dashboard · Analytics · Portfolio · WealthSimulations · Chatbot    │
-│   Transactions · Goals · Reports · Premium (Razorpay) · Admin        │
-│                    │                                │                │
-│             FinanceContext                  src/services/api.ts      │
-└────────────────────┼────────────────────────────────┼────────────────┘
-                     │   HTTP /api/* (Vite Proxy)     │
-                     ▼                                ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                Node.js Express 5 Backend (Port 5000)                 │
-│                                                                      │
-│  /api/auth     /api/user      /api/transactions   /api/goals         │
-│  /api/portfolio /api/admin    /api/setu           /api/ai            │
-│  /api/chatbot  /api/simulations  /api/payment     /api/health        │
-└──────────┬──────────────────┬────────────────────────┬───────────────┘
-           │                  │                        │
-           ▼                  ▼                        ▼
-┌───────────────────┐ ┌──────────────────────┐ ┌───────────────────────┐
-│ MongoDB Atlas OR  │ │ Python Flask Engine  │ │ External Providers    │
-│ Local JSON Fallback│ │ (Port 5005)          │ │ · Google Gemini AI    │
-│ finsight_db.json  │ │ · NumPy Monte Carlo  │ │ · Razorpay Checkout   │
-└───────────────────┘ │ · Pandas Parser      │ │ · Google OAuth 2.0    │
-                      │ · Gemini Chatbot     │ │ · SendGrid / Setu AA  │
-                      └──────────────────────┘ └───────────────────────┘
+                                ┌───────────────────────────────────────────────┐
+                                │          FinSight React Client (Port 5173)     │
+                                │                                               │
+                                │   Landing · Dashboard · Analytics · Portfolio │
+                                │   WealthSimulations · Chatbot · Admin Portal  │
+                                └───────────────────────┬───────────────────────┘
+                                                        │ HTTP /api/* (Vite Proxy)
+                                                        ▼
+                                ┌───────────────────────────────────────────────┐
+                                │          Express 5 Backend (Port 5000)        │
+                                │                                               │
+                                │   /api/auth       /api/transactions /api/admin│
+                                │   /api/portfolio  /api/goals        /api/user │
+                                │   /api/payment    /api/simulations  /api/ai   │
+                                └───────┬───────────────────────┬───────────────┘
+                                        │                       │
+                       ┌────────────────┴───────────┐           │ HTTP Forwarding
+                       ▼                            ▼           ▼
+        ┌───────────────────────────────┐   ┌───────────────────────────────────┐
+        │       MongoDB Atlas Cloud     │   │   Python Actuarial Service (5005) │
+        │  (or Local JSON DB Fallback)  │   │                                   │
+        │       finsight_db.json        │   │   · NumPy Monte Carlo Simulations │
+        └───────────────────────────────┘   │   · Pandas Statement Ingestion    │
+                                            │   · Google Gemini AI Chatbot      │
+                                            └───────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started & Local Setup
 
 ### Prerequisites
+- **Node.js**: `>= 18.x` (LTS recommended) and **npm**: `>= 9.x`
+- **Python**: `>= 3.10` with `pip`
+- Modern web browser (Chrome, Edge, Firefox, Brave)
 
-- **Node.js** `>= 18.x` and **npm** `>= 9.x`
-- **Python** `>= 3.10` with `pip`
-- A modern browser (Chrome, Edge, Firefox, Safari)
-
-### Installation
-
+### 1. Clone & Install Dependencies
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/manojmn1218/FinSight.git
 cd FinSight
 
-# 2. Install Node.js dependencies
+# Install Node.js frontend and backend dependencies
 npm install
 
-# 3. Install Python microservice dependencies
+# Install Python actuarial and chatbot dependencies
 pip install -r chatbot_service/requirements.txt
+```
 
-# 4. Copy environment template and add your keys
+### 2. Configure Environment
+```bash
+# Create local .env from example template
 cp .env.example .env
+```
+Fill in your credentials (see [Environment Variables](#-environment-variables) below). FinSight works out of the box in zero-config mode with the local JSON database if MongoDB URI is omitted.
 
-# 5. Start Frontend (5173), Backend (5000), and Python Service (5005) concurrently
+### 3. Enforce Admin Access (Optional)
+```bash
+node scripts/set-admin.mjs
+```
+This script ensures `finsight27@gmail.com` is configured as the sole administrator in MongoDB.
+
+### 4. Run the Platform
+You can start all three microservices concurrently with a single command:
+```bash
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser.
+Alternatively, you can launch each service independently:
+```bash
+# Terminal 1: Express Backend (Port 5000)
+npm run server:watch
 
-### Available Scripts
+# Terminal 2: Python Actuarial Microservice (Port 5005)
+npm run chatbot
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Starts Node backend (`5000`), Vite client (`5173`), and Python service (`5005`) together |
-| `npm run client` | Starts Vite development server on port `5173` |
-| `npm run server` | Starts Express backend once (`tsx server/index.ts`) |
-| `npm run server:watch` | Starts Express backend in watch mode |
-| `npm run chatbot` | Starts Python Flask analytics & chatbot service on port `5005` |
-| `npm run build` | Type-checks with `tsc -b` and creates production bundle in `dist/` |
-| `npm run lint` | Runs ESLint across all TypeScript/TSX files |
-| `npm run preview` | Previews the production Vite build |
-| `node scripts/set-admin.mjs` | Promotes `finsight27@gmail.com` as the sole MongoDB admin account |
+# Terminal 3: Vite Client (Port 5173)
+npm run client
+```
+
+Navigate to **`http://localhost:5173`** in your browser.
 
 ---
 
 ## 🔑 Environment Variables
 
-Configure these in `.env` (see [`.env.example`](.env.example)):
+Create a `.env` file in the root directory. Key options:
 
-| Variable | Required | Description |
-|----------|:--------:|-------------|
-| `PORT` | No | Express backend port (default: `5000`) |
-| `NODE_ENV` | No | `development` or `production` |
-| `JWT_SECRET` | Recommended | Secret used to sign/verify JWT session tokens |
-| `MONGODB_URI` | Optional | MongoDB Atlas URI; falls back to `server/data/finsight_db.json` when omitted |
-| `GEMINI_API_KEY` | Recommended | Google Gemini API key for statement parsing and AI chatbot |
-| `CHATBOT_PORT` | No | Python Flask service port (default: `5005`) |
-| `PYTHON_CHATBOT_URL` | No | Express proxy target for Python service (default: `http://127.0.0.1:5005`) |
-| `RAZORPAY_KEY_ID` | For payments | Razorpay Key ID (`rzp_test_...` or `rzp_live_...`) |
-| `RAZORPAY_KEY_SECRET` | For payments | Razorpay Key Secret for HMAC signature verification |
-| `GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Web Client ID (backend verification) |
-| `VITE_GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Web Client ID (frontend button) |
-| `TWILIO_SENDGRID_API_KEY` / `SENDGRID_API_KEY` | Optional | SendGrid API key for OTP verification & password reset emails |
-| `TWILIO_EMAIL_FROM` / `EMAIL_FROM` | Optional | Verified sender email for OTP messages |
-| `ADMIN_EMAIL` / `VITE_ADMIN_EMAIL` | Optional | Designated admin account email (default: `finsight27@gmail.com`) |
-| `SETU_CLIENT_ID` / `SETU_CLIENT_SECRET` / `SETU_PRODUCT_INSTANCE_ID` | Optional | Setu Account Aggregator API credentials |
-| `SETU_BASE_URL` / `SETU_REDIRECT_URL` / `VITE_SETU_MOCK` | Optional | Setu environment & mock toggle (`true` for dev mock data) |
-| `ENFORCE_HTTPS` / `FRONTEND_URL` / `ALLOWED_ORIGINS` | Production | TLS enforcement and CORS origin allowlist |
-
-> **Zero-Config Local Mode:** FinSight works immediately without cloud database or payment keys — user data persists locally in `server/data/finsight_db.json` and Setu AA supports development mock mode.
+| Variable | Required | Description | Default |
+|---|:---:|---|---|
+| `PORT` | No | Express API server port | `5000` |
+| `NODE_ENV` | No | Environment mode (`development` / `production`) | `development` |
+| `JWT_SECRET` | Recommended | Secret key for signing JSON Web Tokens | `your-secret-key` |
+| `MONGODB_URI` | Optional | MongoDB Atlas connection string (uses local JSON if empty) | `""` |
+| `GEMINI_API_KEY` | Recommended | Google Gemini AI key for statement parsing & advisory | `""` |
+| `CHATBOT_PORT` | No | Python microservice port | `5005` |
+| `PYTHON_CHATBOT_URL` | No | Backend proxy destination for Python service | `http://127.0.0.1:5005` |
+| `RAZORPAY_KEY_ID` | Payments | Razorpay API key ID (`rzp_test_...` or `rzp_live_...`) | `""` |
+| `RAZORPAY_KEY_SECRET` | Payments | Razorpay API key secret for HMAC signature validation | `""` |
+| `GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Client ID for server validation | `""` |
+| `VITE_GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Client ID for client button | `""` |
+| `TWILIO_SENDGRID_API_KEY` | Optional | SendGrid API key for 2FA OTP & password resets | `""` |
+| `TWILIO_EMAIL_FROM` | Optional | Verified sender address for transactional emails | `""` |
+| `ADMIN_EMAIL` | Optional | Designated admin email address | `finsight27@gmail.com` |
+| `VITE_ADMIN_EMAIL` | Optional | Client-side admin verification email | `finsight27@gmail.com` |
 
 ---
 
-## 📡 API Routes Overview
+## 🎬 Presentation & Demo Walkthrough
 
-**Express Backend (`http://127.0.0.1:5000`)**
-- `GET /api/health` — Server status, database mode, and TLS diagnostics
-- `/api/auth/*` — Register, login, Google OAuth, OTP verify/resend, forgot/reset password, `/me`, logout
-- `/api/user/*` — Profile read/update, account reset, data wipe
-- `/api/transactions/*` — Transaction list, creation/import, inline update, delete
-- `/api/goals/*` & `/api/portfolio/*` — Savings goals and investment holdings CRUD
-- `/api/simulations/*` — Proxy & fallback for `/status`, `/monte-carlo`, `/retirement`, `/parse-statement`
-- `/api/ai/*` & `/api/chatbot/*` — Gemini statement parsing, transaction reclassification, chatbot proxy
-- `/api/payment/*` — Razorpay `/config`, `/create-order`, `/verify-payment`, `/history`
-- `/api/setu/*` — Setu AA consent creation, status check, FI data fetch, webhook
-- `/api/admin/*` — Admin stats, user management, and database collection explorer
+When presenting or demoing FinSight, follow this smooth end-to-end path:
 
-**Python Microservice (`http://127.0.0.1:5005`)**
-- `GET /health` & `POST /chat` — Service health check and Gemini financial assistant
-- `GET /api/simulations/status` — NumPy/Pandas/OpenPyXL runtime capabilities
-- `POST /api/simulations/monte-carlo` — Stochastic Monte Carlo wealth forecast
-- `POST /api/simulations/retirement` — Inflation-adjusted retirement corpus simulation
-- `POST /api/simulations/parse-statement` — Automated CSV/Excel bank statement parser
+```
+Landing Page (/) ─► Login (/login) ─► Core Dashboard (/dashboard) ─►
+Transactions (/transactions) ─► Analytics (/analytics) ─► AI Insights (/insights) ─►
+Portfolio (/portfolio) ─► Goals (/goals) ─► Premium (/premium) ─► Admin (/admin/dashboard)
+```
+
+1. **Institutional Landing Page (`/`)**:
+   - Showcase the 3D Financial Core canvas and toggle **Stealth Mode** live.
+   - Adjust the interactive Monte Carlo simulation sliders (horizon, monthly investment, expected return) to show real-time percentile outputs.
+2. **Authentication (`/login`)**:
+   - Highlight the clean split-panel design with bank-grade security badges.
+   - Demonstrate the **"Remember me for 30 days"** toggle and show how recognized users sign in seamlessly without repetitive OTP prompts.
+3. **Executive Dashboard (`/dashboard`)**:
+   - Present the KPI cards (Total Balance, Monthly Inflows/Outflows, Net Cash Flow).
+   - Review the monthly trends chart and the categorized recent transactions ledger.
+4. **Statement Import & Transactions (`/transactions`)**:
+   - Demonstrate dragging and dropping a PDF/CSV statement to watch AI parsing in action.
+   - Perform an instant search, category filter, or CSV/PDF export.
+5. **Wealth Simulations & Portfolio (`/portfolio` & `/analytics`)**:
+   - Showcase multi-asset distribution (Equities, Mutual Funds, Fixed Deposits, Gold).
+   - Review stochastic Monte Carlo confidence intervals (`p10` to `p90`) and retirement corpus longevity.
+6. **AI Advisor (`FinSight Chatbot`)**:
+   - Ask an account-aware question (e.g. *"Can I afford a new laptop for ₹65,000?"* or *"What was my biggest expense this month?"*).
+7. **Premium Monetization (`/premium`)**:
+   - Show the pricing plans and open the Razorpay payment modal.
+8. **Admin Operations (`/admin/dashboard`)**:
+   - Sign in as `finsight27@gmail.com` to access live user metrics, revenue graphs, and the MongoDB collection explorer.
 
 ---
 
-## 📁 Project Structure
+## 📡 API Routes Reference
+
+### Express Backend (`http://127.0.0.1:5000`)
+- `GET /api/health` — Microservice health diagnostics and database connection state
+- `POST /api/auth/register` — Create user account with optional 2FA OTP dispatch
+- `POST /api/auth/login` — Sign in with password and 30-day session pinning
+- `POST /api/auth/google` — Google OAuth 2.0 ID token verification
+- `POST /api/auth/verify-otp` — Verify 6-digit OTP code
+- `POST /api/auth/resend-otp` — Resend verification OTP via SendGrid
+- `GET /api/user/profile` — Fetch active authenticated user profile
+- `GET /api/transactions` — Query user transactions with pagination & filters
+- `POST /api/transactions` — Create manual transaction or import statement batch
+- `GET /api/portfolio` & `POST /api/portfolio` — Fetch and mutate investment assets
+- `GET /api/goals` & `POST /api/goals` — Manage financial goals and progress
+- `POST /api/payment/create-order` — Generate Razorpay subscription checkout order
+- `POST /api/payment/verify-payment` — Cryptographic HMAC-SHA256 signature validation
+- `GET /api/admin/stats` — Platform-wide metrics (Admin only)
+- `GET /api/admin/database/collections` — Inspect database collections (Admin only)
+
+### Python Microservice (`http://127.0.0.1:5005`)
+- `GET /health` — Microservice status and Gemini client health
+- `POST /chat` — Account-aware Gemini financial assistant
+- `GET /api/simulations/status` — NumPy/Pandas engine capabilities
+- `POST /api/simulations/monte-carlo` — Stochastic portfolio return projection
+- `POST /api/simulations/retirement` — Multi-phase retirement corpus simulation
+- `POST /api/simulations/parse-statement` — Automated CSV & Excel statement parser
+
+---
+
+## 📁 Project Directory Structure
 
 ```
 FinSight/
-├── api/setu/                     # Vercel serverless Setu AA endpoints + _types.ts
-├── chatbot_service/              # Python Flask microservice (Port 5005)
+├── api/setu/                     # Vercel serverless Setu AA integration endpoints
+├── chatbot_service/              # Python Flask Actuarial & Chatbot Service (Port 5005)
 │   ├── engine/
-│   │   ├── monte_carlo.py        # Geometric Brownian Motion wealth simulations
-│   │   ├── retirement.py         # Inflation-adjusted retirement projection engine
+│   │   ├── monte_carlo.py        # Geometric Brownian Motion simulation engine
+│   │   ├── retirement.py         # Inflation-adjusted retirement corpus engine
 │   │   └── statement_parser.py   # Automated Pandas/OpenPyXL CSV & Excel parser
-│   ├── app.py                    # Flask routes, Gemini integration & guardrails
-│   └── requirements.txt
+│   ├── app.py                    # Flask application entry point & Gemini integration
+│   └── requirements.txt          # Python dependencies
 ├── scripts/
 │   └── set-admin.mjs             # Script to enforce sole admin (finsight27@gmail.com)
 ├── server/                       # Node.js + Express 5 Backend (Port 5000)
-│   ├── config/db.ts              # MongoDB Atlas + local JSON fallback manager
-│   ├── data/                     # Local persistent DB file (when MONGODB_URI unset)
-│   ├── middleware/auth.ts        # JWT auth, cookie parsing & admin guards
-│   ├── models/                   # Mongoose models (Asset, Goal, Payment, Transaction, User)
-│   ├── routes/                   # admin, ai, auth, chatbot, goal, payment, portfolio, setu, simulation, transaction, user
-│   ├── services/                 # aiStatementParser, emailService, otpService, twilioService
-│   ├── types/razorpay.d.ts       # Razorpay SDK TypeScript declarations
-│   ├── utils/helpers.ts          # Error extraction, Express param coercion & JSON transforms
-│   └── index.ts                  # Express app entry point, Helmet, CORS & rate limiters
+│   ├── config/db.ts              # MongoDB Atlas connection + local JSON fallback
+│   ├── data/finsight_db.json     # Zero-config local persistence file
+│   ├── middleware/auth.ts        # JWT verification, cookie handling & admin guards
+│   ├── models/                   # Mongoose models (User, Transaction, Asset, Goal, Payment)
+│   ├── routes/                   # auth, user, transaction, portfolio, goal, payment, admin, ai
+│   ├── services/                 # emailService, otpService, aiStatementParser
+│   └── index.ts                  # Server entry point, Helmet security, rate limiters
 ├── src/                          # React 19 + TypeScript Frontend (Port 5173)
 │   ├── components/
-│   │   ├── 3d/                   # FinancialCore3D, HealthGauge3D, InteractiveCard3D, Tilt3DCard
-│   │   ├── AdminLayout.tsx
-│   │   ├── BankConnect.tsx
-│   │   ├── CategoryIcon.tsx
-│   │   ├── DashboardLayout.tsx
-│   │   ├── DocumentMeta.tsx
-│   │   ├── FinSightChatbot.tsx
-│   │   ├── FinSightLogo.tsx
-│   │   ├── OtpModal.tsx
-│   │   ├── PrivacyConsentBanner.tsx
-│   │   └── WealthSimulations.tsx # Monte Carlo & Retirement simulation UI
-│   ├── context/FinanceContext.tsx
-│   ├── pages/                    # Dashboard, Transactions, ManualEntry, Analytics, Insights,
-│   │                             # Reports, Goals, Portfolio, Export, Premium, Profile, Support,
-│   │                             # Login, Signup, ForgotPassword, Onboarding, Legal, ComingSoon,
-│   │                             # NotFound & Admin (Dashboard, Users, Revenue, Settings, Database)
-│   ├── services/api.ts           # Typed API client with credential/JWT handling
-│   └── utils/                    # format, razorpay, setuApi, setuMockData, setuTransformer, stockApi, transactionParser, types
-├── .env.example                  # Environment variable template
-├── index.html                    # HTML entry with CSP headers & Razorpay script support
-├── vite.config.ts                # Vite proxy (/api -> 5000, /api/alphavantage)
-├── vercel.json                   # Vercel build & /api rewrites
-├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
-└── package.json
+│   │   ├── 3d/                   # Three.js 3D visual components
+│   │   ├── AdminLayout.tsx       # Admin workspace layout & navigation
+│   │   ├── DashboardLayout.tsx   # Authenticated app shell & sidebar
+│   │   ├── FinSightChatbot.tsx   # Floating AI assistant dialog
+│   │   ├── OtpModal.tsx          # 6-digit 2FA OTP modal dialog
+│   │   └── WealthSimulations.tsx # Interactive Monte Carlo & retirement dashboard
+│   ├── context/FinanceContext.tsx# Unified state management, balance sync & stealth mode
+│   ├── pages/                    # Application page views
+│   │   ├── LandingPage.tsx       # Institutional 3D landing page with simulation sandbox
+│   │   ├── LoginPage.tsx         # Clean split-panel auth with 30-day session toggle
+│   │   ├── DashboardPage.tsx     # Primary KPI and overview workspace
+│   │   ├── TransactionsPage.tsx  # Statement parser, filtering & export workspace
+│   │   ├── AnalyticsPage.tsx     # Cash flow analysis & category charts
+│   │   ├── InsightsPage.tsx      # Gemini AI diagnostics & anomaly detection
+│   │   ├── PortfolioPage.tsx     # Multi-asset allocation & equity tracker
+│   │   ├── GoalsPage.tsx         # Savings targets & milestone simulator
+│   │   ├── ReportsPage.tsx       # Audit-ready statement generator
+│   │   ├── PremiumPage.tsx       # Pricing tiers with Razorpay checkout
+│   │   └── admin/                # Admin Dashboard, Users, Revenue, Settings, Database
+│   ├── services/api.ts           # Typed Axios/Fetch client with credentials handling
+│   └── utils/                    # Formatting, types, Razorpay helper, statement parser
+├── .env.example                  # Environment configuration template
+├── package.json                  # Scripts & dependencies
+├── vite.config.ts                # Vite config & API reverse proxy
+└── vercel.json                   # Vercel deployment configuration
 ```
 
 ---
 
-## 🔒 Security
+## 🔒 Security & Compliance
 
-| Layer | Implementation |
-|-------|---------------|
-| **Password Hashing** | `bcryptjs` with 10 salt rounds |
-| **Session Tokens** | Signed JWT tokens in `HttpOnly` cookies & `Authorization` headers |
-| **OAuth & OTP** | Google ID token verification (`google-auth-library`) & SendGrid/SMTP OTP verification |
-| **Payment Integrity** | Server-side Razorpay order verification using HMAC-SHA256 signatures |
-| **Rate Limiting & Lockout** | Global API limiter (400 req/15m), strict Auth limiter (25 req/15m), failed login lockouts |
-| **HTTP Security** | Helmet headers, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, optional HTTPS redirect & HSTS |
-| **Data Privacy** | Strict secret isolation from client bundles + in-app **Stealth Mode** currency masking |
-
----
-
-## 🌐 Deployment
-
-### Vercel (Frontend + Setu Serverless API)
-1. Push your repository to GitHub and import it on [vercel.com](https://vercel.com).
-2. `vercel.json` is preconfigured with `npm run build`, output directory `dist`, and `/api/*` rewrites.
-3. Add environment variables in **Project Settings → Environment Variables**.
-4. Note that the persistent Express server (`server/`) and Python Flask engine (`chatbot_service/`) can be hosted separately (e.g., Render, Railway, or a VM) and connected via `VITE_API_URL` and `PYTHON_CHATBOT_URL`.
-
-### Production Build Check
-
-```bash
-npm run lint
-npm run build
-npm run preview
-```
-
----
-
-## 🗺️ Roadmap
-
-- [x] 🔐 Express 5 backend with MongoDB Atlas & local JSON fallback
-- [x] 🤖 Google Gemini AI statement parsing & closing balance sync
-- [x] 📈 NumPy/Pandas financial simulations (Monte Carlo & Retirement projections)
-- [x] 📊 Automated CSV & Excel (`.csv`, `.xlsx`, `.xls`) bank statement parsing
-- [x] 💬 Python Flask FinSight AI Chatbot with domain guardrails
-- [x] 💳 Razorpay payment gateway & subscription tier management (Basic, Pro, Wealth)
-- [x] 🛡️ Google OAuth 2.0, SendGrid/SMTP Email OTP & Stealth Mode privacy masking
-- [ ] 📱 Progressive Web App (PWA) with offline support
-- [ ] 🔔 Scheduled bill reminders & recurring alert notifications
-- [ ] 📂 Legacy bank statement formats (OFX, QIF)
-- [ ] 🌍 Multi-currency portfolio support
+- **Cryptographic Storage**: Passwords hashed using `bcryptjs` with 10 salt rounds.
+- **Session Pinning**: High-entropy JWT tokens delivered via `HttpOnly`, `SameSite` cookies with 30-day trusted device options.
+- **Payment Verification**: Razorpay order signatures verified via HMAC-SHA256 with timing-safe string comparison.
+- **Defense in Depth**: Strict Helmet HTTP headers, CORS origin whitelisting, account lockout thresholds, and distinct rate limiters for general API requests and authentication attempts.
+- **Privacy First (Stealth Mode)**: Financial numbers can be masked instantly in the UI for discretion in public or collaborative environments.
 
 ---
 
@@ -353,18 +359,18 @@ npm run preview
 
 Contributions are welcome:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m "Add your feature"`)
-4. Push to your branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+1. Fork the project repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m "feat: add amazing feature"`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
 
 ---
 
 <div align="center">
 
-**Built for smarter personal finance & quantitative wealth planning**
+**Built for intelligent personal finance, automated statement parsing, and quantitative wealth planning.**
 
-[Report Bug](https://github.com/manojmn1218/FinSight/issues) · [Request Feature](https://github.com/manojmn1218/FinSight/issues)
+[Report an Issue](https://github.com/manojmn1218/FinSight/issues) · [Submit a Feature Request](https://github.com/manojmn1218/FinSight/issues)
 
 </div>
