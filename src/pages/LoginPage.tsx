@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import OtpModal from '../components/OtpModal';
 import FinSightLogo from '../components/FinSightLogo';
-import Tilt3DCard from '../components/3d/Tilt3DCard';
+import InteractiveCard3D from '../components/3d/InteractiveCard3D';
 
 function GoogleIcon() {
   return (
@@ -44,62 +44,6 @@ function GoogleIcon() {
     </svg>
   );
 }
-
-// Surrounding floating telemetry satellites to fill the atmosphere dynamically
-const FLOATING_SATELLITES = [
-  {
-    id: 'vault',
-    icon: Shield,
-    title: 'Zero-Knowledge Vault',
-    desc: 'AES-256 client encryption',
-    tag: 'BANK-GRADE',
-    color: '#15803d',
-    bg: 'rgba(21, 128, 61, 0.12)',
-    style: { top: '12%', left: 'max(3%, calc(50% - 640px))' },
-    anim: { y: [0, -12, 0] },
-    duration: 6.5,
-    delay: 0,
-  },
-  {
-    id: 'forecast',
-    icon: TrendingUp,
-    title: 'Monte Carlo Engine',
-    desc: 'Stochastic runway & wealth',
-    tag: '+18.4% YOY',
-    color: '#ea580c',
-    bg: 'rgba(234, 88, 12, 0.12)',
-    style: { top: '16%', right: 'max(3%, calc(50% - 640px))' },
-    anim: { y: [0, 14, 0] },
-    duration: 7.2,
-    delay: 0.8,
-  },
-  {
-    id: 'ai-parser',
-    icon: Zap,
-    title: 'Gemini Multimodal AI',
-    desc: '12-category PDF ingestion',
-    tag: '180ms OCR',
-    color: '#0284c7',
-    bg: 'rgba(2, 132, 199, 0.12)',
-    style: { bottom: '14%', left: 'max(4%, calc(50% - 620px))' },
-    anim: { y: [0, 10, 0] },
-    duration: 6.8,
-    delay: 0.4,
-  },
-  {
-    id: 'sessions',
-    icon: Activity,
-    title: 'Persistent Session',
-    desc: '30-day device authorization',
-    tag: '0 REPETITIVE OTP',
-    color: '#b45309',
-    bg: 'rgba(180, 83, 9, 0.12)',
-    style: { bottom: '15%', right: 'max(4%, calc(50% - 620px))' },
-    anim: { y: [0, -11, 0] },
-    duration: 6.0,
-    delay: 1.2,
-  },
-];
 
 export default function LoginPage() {
   const nav = useNavigate();
@@ -326,32 +270,29 @@ export default function LoginPage() {
         minHeight: '100vh',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px 16px',
+        padding: '32px 16px',
         position: 'relative',
         overflow: 'hidden',
+        background: 'var(--bg)',
       }}
     >
       {/* Dynamic ambient luminous blobs */}
-      <div className="blob blob-1" style={{ opacity: 0.7 }} />
-      <div className="blob blob-2" style={{ opacity: 0.55 }} />
+      <div className="blob blob-1" style={{ opacity: 0.65 }} />
+      <div className="blob blob-2" style={{ opacity: 0.5 }} />
 
       {/* Floating Top Header Bar */}
       <motion.header
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         style={{
-          position: 'absolute',
-          top: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'calc(100% - 48px)',
-          maxWidth: 1200,
+          width: '100%',
+          maxWidth: 1040,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          marginBottom: 24,
           zIndex: 10,
-          pointerEvents: 'auto',
         }}
       >
         <Link
@@ -364,10 +305,10 @@ export default function LoginPage() {
             color: 'inherit',
           }}
         >
-          <FinSightLogo size={36} className="app-logo auth-blend" />
+          <FinSightLogo size={38} className="app-logo auth-blend" />
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.3 }}>FinSight</div>
-            <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>FinSight</div>
+            <div style={{ fontSize: 10.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8 }}>
               Wealth Engine
             </div>
           </div>
@@ -414,118 +355,58 @@ export default function LoginPage() {
       </motion.header>
 
       {/* ═══════════════════════════════════════════════ */}
-      {/* FLOATING SATELLITES (Visible on >= 1024px)       */}
-      {/* ═══════════════════════════════════════════════ */}
-      <div className="hidden lg:block pointer-events-none" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-        {FLOATING_SATELLITES.map(s => {
-          const Icon = s.icon;
-          return (
-            <motion.div
-              key={s.id}
-              style={{
-                position: 'absolute',
-                ...s.style,
-                padding: '14px 18px',
-                borderRadius: 16,
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-3d)',
-                backdropFilter: 'blur(16px)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                width: 250,
-                pointerEvents: 'auto',
-                transition: 'transform 0.2s ease, border-color 0.2s ease',
-              }}
-              animate={s.anim}
-              transition={{
-                repeat: Infinity,
-                duration: s.duration,
-                ease: 'easeInOut',
-                delay: s.delay,
-              }}
-              whileHover={{ scale: 1.04, borderColor: s.color }}
-            >
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: s.bg,
-                  color: s.color,
-                  flexShrink: 0,
-                }}
-              >
-                <Icon size={18} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {s.title}
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {s.desc}
-                </div>
-                <div style={{ marginTop: 3 }}>
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      color: s.color,
-                      letterSpacing: 0.5,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {s.tag}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* ═══════════════════════════════════════════════ */}
-      {/* FLOATING CENTERPIECE AUTHENTICATION CARD        */}
+      {/* FLOATING COMMAND DECK MASTER CONTAINER          */}
       {/* ═══════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         style={{
           width: '100%',
-          maxWidth: 440,
+          maxWidth: 1040,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 24,
+          boxShadow: 'var(--shadow-3d)',
+          backdropFilter: 'blur(28px)',
+          display: 'flex',
+          flexDirection: 'row',
+          overflow: 'hidden',
           zIndex: 5,
           position: 'relative',
-          margin: '72px 0 24px 0',
         }}
       >
-        <Tilt3DCard
-          maxTilt={4}
-          glareOpacity={0.1}
-          glowColor="rgba(234, 88, 12, 0.2)"
+        {/* ───────────────────────────────────────────── */}
+        {/* LEFT WING: THE LIVE FINANCIAL TELEMETRY DECK  */}
+        {/* ───────────────────────────────────────────── */}
+        <div
+          className="hidden md:flex"
           style={{
-            borderRadius: 'var(--radius)',
+            flex: '1 1 50%',
+            padding: '40px 36px',
+            background: 'var(--bg2)',
+            borderRight: '1px solid var(--border)',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            position: 'relative',
             overflow: 'hidden',
           }}
         >
+          {/* Subtle Ambient Radial Light */}
           <div
             style={{
-              padding: '40px 36px 32px 36px',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              boxShadow: 'var(--shadow-3d)',
-              backdropFilter: 'blur(24px)',
-              position: 'relative',
+              position: 'absolute',
+              top: '-20%',
+              left: '-20%',
+              width: '140%',
+              height: '140%',
+              background: 'radial-gradient(circle at 30% 30%, rgba(234, 88, 12, 0.08) 0%, transparent 60%)',
+              pointerEvents: 'none',
             }}
-          >
-            {/* Top Security Pill Badge */}
+          />
+
+          <div>
+            {/* Top Deck Badge */}
             <div
               style={{
                 display: 'inline-flex',
@@ -533,24 +414,107 @@ export default function LoginPage() {
                 gap: 6,
                 padding: '4px 10px',
                 borderRadius: 20,
-                background: 'rgba(234, 88, 12, 0.08)',
+                background: 'rgba(234, 88, 12, 0.1)',
                 color: 'var(--pop)',
-                fontSize: 11,
-                fontWeight: 600,
+                fontSize: 10.5,
+                fontWeight: 700,
                 letterSpacing: 0.6,
                 textTransform: 'uppercase',
                 marginBottom: 16,
               }}
             >
               <Sparkles size={12} />
-              <span>Institutional Gate</span>
+              <span>Autonomous Balance Sheet</span>
+            </div>
+
+            <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.25, letterSpacing: -0.4, marginBottom: 10 }}>
+              Institutional precision for personal net worth.
+            </h2>
+            <p style={{ fontSize: 13.5, color: 'var(--text2)', lineHeight: 1.55, marginBottom: 24 }}>
+              Interact with your financial cockpit. Client-side encrypted statement parsing, automated cash runway models, and predictive actuarial intelligence.
+            </p>
+
+            {/* Embedded Interactive 3D Card Showcase */}
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 24px 0' }}>
+              <InteractiveCard3D
+                balance={384500}
+                userName="FinSight Vault Account"
+                bankName="Obsidian Sovereign"
+                currency="₹"
+              />
+            </div>
+          </div>
+
+          {/* Bottom Live Telemetry Pillars */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+            <div style={{ padding: '10px 12px', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#15803d', marginBottom: 4 }}>
+                <TrendingUp size={14} />
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>Runway</span>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>14.2 mos</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>+18.4% YoY</div>
+            </div>
+
+            <div style={{ padding: '10px 12px', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--pop)', marginBottom: 4 }}>
+                <Zap size={14} />
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>Multimodal</span>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>180ms</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>12 Categories</div>
+            </div>
+
+            <div style={{ padding: '10px 12px', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#0284c7', marginBottom: 4 }}>
+                <Shield size={14} />
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>Security</span>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>AES-256</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>0 Plain-Text</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ───────────────────────────────────────────── */}
+        {/* RIGHT WING: THE FLOATING AUTHENTICATION GATE  */}
+        {/* ───────────────────────────────────────────── */}
+        <div
+          style={{
+            flex: '1 1 50%',
+            padding: '44px 40px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            background: 'var(--surface)',
+          }}
+        >
+          <div style={{ maxWidth: 380, width: '100%', margin: '0 auto' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                borderRadius: 20,
+                background: 'rgba(21, 128, 61, 0.08)',
+                color: '#15803d',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: 0.6,
+                textTransform: 'uppercase',
+                marginBottom: 12,
+              }}
+            >
+              <Activity size={13} />
+              <span>Secure Authentication</span>
             </div>
 
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>
               Welcome back
             </h1>
-            <p style={{ fontSize: 13.5, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 24 }}>
-              Sign in to access your autonomous financial command center.
+            <p style={{ fontSize: 13.5, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 22 }}>
+              Log in to manage your unified wealth, transactions, and simulations.
             </p>
 
             {/* Google Authentication — Single One-Click Action */}
@@ -562,7 +526,7 @@ export default function LoginPage() {
                   theme="filled_black"
                   shape="pill"
                   text="continue_with"
-                  width="368"
+                  width="380"
                 />
               ) : (
                 <button
@@ -624,7 +588,7 @@ export default function LoginPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                margin: '18px 0 20px 0',
+                margin: '16px 0 18px 0',
                 color: 'var(--text3)',
                 fontSize: 11,
                 fontWeight: 600,
@@ -633,7 +597,7 @@ export default function LoginPage() {
               }}
             >
               <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-              <span>Or with email</span>
+              <span>Or sign in with email</span>
               <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
             </div>
 
@@ -662,7 +626,7 @@ export default function LoginPage() {
             )}
 
             {/* Credentials Form */}
-            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
               {/* Email Input */}
               <div>
                 <label
@@ -675,7 +639,7 @@ export default function LoginPage() {
                     color: 'var(--text)',
                   }}
                 >
-                  Work or personal email
+                  Email address
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -793,13 +757,12 @@ export default function LoginPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '10px 14px',
+                  padding: '9px 12px',
                   borderRadius: 12,
                   background: 'var(--bg2)',
                   border: '1px solid var(--border)',
                   cursor: 'pointer',
                   userSelect: 'none',
-                  transition: 'border-color 0.15s ease',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -809,18 +772,18 @@ export default function LoginPage() {
                     onChange={e => setRememberMe(e.target.checked)}
                     style={{
                       accentColor: 'var(--pop)',
-                      width: 16,
-                      height: 16,
+                      width: 15,
+                      height: 15,
                       cursor: 'pointer',
                     }}
                   />
-                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text)' }}>
                     Remember me for 30 days
                   </span>
                 </div>
                 <span
                   style={{
-                    fontSize: 10.5,
+                    fontSize: 10,
                     fontWeight: 700,
                     letterSpacing: 0.4,
                     color: rememberMe ? 'var(--pop)' : 'var(--text3)',
@@ -837,9 +800,9 @@ export default function LoginPage() {
                 className="btn-primary"
                 style={{
                   width: '100%',
-                  marginTop: 6,
-                  padding: '13px 20px',
-                  fontSize: 14,
+                  marginTop: 4,
+                  padding: '12px 20px',
+                  fontSize: 13.5,
                   fontWeight: 600,
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -851,7 +814,7 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <RefreshCw size={16} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
-                    <span>Verifying credentials...</span>
+                    <span>Authenticating...</span>
                   </>
                 ) : (
                   <>
@@ -862,7 +825,7 @@ export default function LoginPage() {
               </button>
 
               {/* Sign up prompt */}
-              <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', marginTop: 4 }}>
+              <p style={{ fontSize: 13, color: 'var(--text2)', textAlign: 'center', marginTop: 2 }}>
                 Don't have an account?{' '}
                 <Link
                   to="/signup"
@@ -879,14 +842,14 @@ export default function LoginPage() {
               {/* Security & Compliance Badges */}
               <div
                 style={{
-                  marginTop: 8,
-                  paddingTop: 14,
+                  marginTop: 6,
+                  paddingTop: 12,
                   borderTop: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 12,
-                  fontSize: 10.5,
+                  fontSize: 10,
                   fontWeight: 600,
                   color: 'var(--text3)',
                   letterSpacing: 0.5,
@@ -903,7 +866,7 @@ export default function LoginPage() {
               <div
                 style={{
                   textAlign: 'center',
-                  fontSize: 11,
+                  fontSize: 10.5,
                   color: 'var(--text3)',
                   marginTop: -4,
                 }}
@@ -922,7 +885,7 @@ export default function LoginPage() {
               </div>
             </form>
           </div>
-        </Tilt3DCard>
+        </div>
       </motion.div>
 
       {/* OTP Verification Modal */}
